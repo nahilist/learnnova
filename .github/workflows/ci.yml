@@ -124,7 +124,7 @@ jobs:
           NODE_ENV: "production"
 
       - name: Upload Standalone Build Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nextjs-build-artifact
           path: |
