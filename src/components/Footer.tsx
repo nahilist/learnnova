@@ -38,21 +38,23 @@ export function Footer({ onOpenDemo }: FooterProps) {
             {/* Column 1 */}
             <div className="space-y-3.5">
               <div>
-                <button
-                  onClick={() => onOpenDemo("Discord Community", "Join over 50,000 students and educators discussing AI learning strategies.")}
+                <a
+                  href="https://discord.gg/jJbfJvsQGw"
+                  target="_blank"
+                  rel="noreferrer"
                   className="hover:text-neutral-950 transition-colors text-left cursor-pointer"
                 >
                   Discord Community
-                </button>
+                </a>
               </div>
 
               <div>
-                <button
-                  onClick={() => onOpenDemo("Blogs", "Read articles, study tips, and product update notes.")}
+                <Link
+                  href="/blogs"
                   className="hover:text-neutral-950 transition-colors text-left cursor-pointer"
                 >
                   Blogs
-                </button>
+                </Link>
               </div>
 
               <div>
@@ -65,33 +67,33 @@ export function Footer({ onOpenDemo }: FooterProps) {
               </div>
 
               <div>
-                <button
-                  onClick={() => onOpenDemo("Careers", "View open roles across AI research, product design, and mobile engineering.")}
+                <Link
+                  href="/careers"
                   className="hover:text-neutral-950 transition-colors text-left cursor-pointer"
                 >
                   Careers
-                </button>
+                </Link>
               </div>
             </div>
 
             {/* Column 2 */}
             <div className="space-y-3.5">
               <div>
-                <button
-                  onClick={() => onOpenDemo("Terms & Conditions", "Review our terms of service and acceptable use policy.")}
+                <Link
+                  href="/terms-conditions"
                   className="hover:text-neutral-950 transition-colors text-left cursor-pointer"
                 >
                   Terms &amp; Conditions
-                </button>
+                </Link>
               </div>
 
               <div>
-                <button
-                  onClick={() => onOpenDemo("Privacy Policy", "We protect student privacy and do not sell personal data.")}
+                <Link
+                  href="/privacy-policy"
                   className="hover:text-neutral-950 transition-colors text-left cursor-pointer"
                 >
                   Privacy Policy
-                </button>
+                </Link>
               </div>
 
               <div>
