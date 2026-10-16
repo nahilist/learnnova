@@ -9,13 +9,10 @@ import {
   Play, 
   Pause, 
   Menu, 
-  Bookmark, 
-  Check, 
   FileText, 
   Video, 
   FileSpreadsheet, 
-  Headphones, 
-  Image as ImageIcon 
+  Headphones 
 } from "lucide-react";
 
 interface FeatureSectionProps {

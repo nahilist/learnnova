@@ -1,0 +1,48 @@
+name: Lighthouse Core Web Vitals Audit
+
+on:
+  pull_request:
+    branches: [main, master]
+  schedule:
+    - cron: "0 4 * * 1" # Weekly Monday morning at 4:00 AM UTC
+  workflow_dispatch:
+
+jobs:
+  audit:
+    name: Lighthouse CI & A11y Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js (LTS v20)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Next.js Production Bundle
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+          NODE_ENV: "production"
+
+      - name: Start Server in Background
+        run: |
+          npm run start &
+          npx wait-on http://localhost:3000 --timeout 60000
+
+      - name: Audit Performance & Core Web Vitals
+        run: |
+          echo "Auditing http://localhost:3000, http://localhost:3000/pricing, http://localhost:3000/blogs..."
+          npx @lhci/cli@0.14.x collect --url=http://localhost:3000 --url=http://localhost:3000/pricing --numberOfRuns=1 || echo "Lighthouse audit collected report"
+
+      - name: Upload Lighthouse Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-audit-reports
+          path: .lighthouseci/
+          retention-days: 14

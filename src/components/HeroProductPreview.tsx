@@ -4,13 +4,11 @@ import React, { useState } from "react";
 import { 
   BookOpen, 
   Layers, 
-  Sparkles, 
   Send, 
   Paperclip, 
   Mic, 
   Camera, 
   RotateCcw, 
-  Check, 
   ChevronDown, 
   CornerDownRight, 
   X,

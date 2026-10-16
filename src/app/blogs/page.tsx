@@ -1,8 +1,8 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import React, { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { 
@@ -12,7 +12,6 @@ import {
   Clock, 
   Share2, 
   Sparkles, 
-  Bookmark, 
   ArrowRight,
   BookOpen,
   CheckCircle2,
@@ -413,7 +412,7 @@ export default function BlogsPage() {
     return matchesSearch && matchesCategory;
   });
 
-  const handleShare = (post: BlogPost) => {
+  const handleShare = () => {
     if (typeof window !== "undefined") {
       navigator.clipboard.writeText(window.location.href);
       setCopiedLink(true);
@@ -598,7 +597,7 @@ export default function BlogsPage() {
 
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => handleShare(activePost)}
+                  onClick={() => handleShare()}
                   className="p-2 rounded-full hover:bg-neutral-100 text-neutral-600 transition-colors relative"
                   title="Share article"
                 >

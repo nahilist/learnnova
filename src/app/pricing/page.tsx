@@ -5,14 +5,7 @@ import Link from "next/link";
 import { 
   Check, 
   ChevronDown, 
-  Menu, 
-  HelpCircle, 
-  Sparkles, 
-  ArrowRight, 
-  Plus, 
-  X,
-  CreditCard,
-  ShieldCheck
+  ArrowRight
 } from "lucide-react";
 import { YouLearnLogo, StanfordSeal, HarvardSeal, PrincetonSeal, UCLASeal } from "@/components/Icons";
 import { ModalDemo } from "@/components/ModalDemo";

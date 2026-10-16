@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { ChevronLeft, ChevronRight, Star } from "lucide-react";
+import React from "react";
+import { Star } from "lucide-react";
 
 export function Testimonials() {
   const testimonials = [

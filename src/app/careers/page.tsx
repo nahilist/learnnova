@@ -1,20 +1,17 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { 
   ChevronRight, 
   MapPin, 
-  Briefcase, 
   Clock, 
   CheckCircle2, 
   X, 
   Upload, 
   Sparkles, 
   ArrowLeft,
-  Building,
   HeartHandshake,
   Zap,
   Globe2

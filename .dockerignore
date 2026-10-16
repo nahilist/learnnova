@@ -1,0 +1,16 @@
+.git
+.github
+.next
+.vscode
+.idea
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+tests
+*.md
+.env*.local
+.lighthouseci
+Dockerfile*
+.dockerignore
