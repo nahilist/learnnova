@@ -8,16 +8,12 @@ import {
   Mic, 
   Search, 
   Plus, 
-  Clock, 
   BookOpen, 
   Sparkles, 
   Send, 
-  RotateCcw, 
   ChevronRight, 
   FileText, 
   Video, 
-  Layers, 
-  CheckCircle2, 
   X,
   ArrowLeft,
   Compass,
@@ -25,8 +21,7 @@ import {
   Pause,
   Volume2,
   Check,
-  Award,
-  HelpCircle
+  Award
 } from "lucide-react";
 import { YouLearnLogo } from "@/components/Icons";
 
@@ -655,7 +650,7 @@ export default function AppWorkspacePage() {
                       <button
                         onClick={() => {
                           setInputMessage("Generate 3 practice questions on the Wobble hypothesis");
-                          setTimeout(() => handleSendMessage({ preventDefault: () => {} } as any), 100);
+                          setTimeout(() => handleSendMessage(), 100);
                         }}
                         className="px-3.5 py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-medium cursor-pointer"
                       >
@@ -664,7 +659,7 @@ export default function AppWorkspacePage() {
                       <button
                         onClick={() => {
                           setInputMessage("Summarize the key points of this section");
-                          setTimeout(() => handleSendMessage({ preventDefault: () => {} } as any), 100);
+                          setTimeout(() => handleSendMessage(), 100);
                         }}
                         className="px-3.5 py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-medium cursor-pointer"
                       >

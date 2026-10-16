@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { YouLearnLogo, AppleIcon } from "@/components/Icons";
-import { Eye, EyeOff, Menu, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, ArrowRight } from "lucide-react";
 
 export function GoogleLogo({ className = "w-5 h-5" }: { className?: string }) {
   return (
@@ -45,8 +45,12 @@ export default function SignInPage() {
     }, 700);
   };
 
-  const handleOAuth = (provider: string) => {
+  const handleOAuth = (provider?: string) => {
     setIsLoading(true);
+    if (provider) {
+      // Simulate OAuth provider handshake
+      sessionStorage.setItem("auth_provider", provider);
+    }
     setTimeout(() => {
       router.push("/app");
     }, 600);

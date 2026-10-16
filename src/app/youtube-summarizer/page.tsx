@@ -14,13 +14,11 @@ import {
   ArrowRight, 
   RotateCcw, 
   Layers, 
-  Share2, 
-  ExternalLink,
-  ChevronRight,
-  BookOpen,
-  MessageSquare,
-  Copy,
-  Check
+  ChevronRight, 
+  BookOpen, 
+  MessageSquare, 
+  Copy, 
+  Check 
 } from "lucide-react";
 
 interface SampleVideo {

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { ChevronDown, Menu, X, ArrowUpRight } from "lucide-react";
+import { ChevronDown, Menu, X } from "lucide-react";
 import { YouLearnLogo } from "./Icons";
 
 interface NavbarProps {
