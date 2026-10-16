@@ -79,26 +79,24 @@ export function Navbar({ onOpenDemo }: NavbarProps) {
                   >
                     Mobile
                   </button>
-                  <button
-                    onClick={() => {
-                      setFeaturesOpen(false);
-                      onOpenDemo("YouTube Summarizer", "Turn full YouTube lectures into high-yield summaries, timestamps, and quizzes.");
-                    }}
-                    className="w-full text-left px-3.5 py-2 rounded-xl text-[14px] text-neutral-700 hover:text-neutral-950 hover:bg-neutral-50 font-medium transition-colors cursor-pointer"
+                  <Link
+                    href="/youtube-summarizer"
+                    onClick={() => setFeaturesOpen(false)}
+                    className="block w-full text-left px-3.5 py-2 rounded-xl text-[14px] text-neutral-700 hover:text-neutral-950 hover:bg-neutral-50 font-medium transition-colors cursor-pointer"
                   >
                     YouTube Summarizer
-                  </button>
+                  </Link>
                 </div>
               </div>
             )}
           </div>
 
-          <button
-            onClick={() => onOpenDemo("YouLearn Blogs", "Read the latest study guides, AI learning techniques, and student stories.")}
+          <Link
+            href="/blogs"
             className="hover:text-neutral-950 transition-colors cursor-pointer"
           >
             Blogs
-          </button>
+          </Link>
 
           <Link
             href="/pricing"
@@ -107,12 +105,12 @@ export function Navbar({ onOpenDemo }: NavbarProps) {
             Pricing
           </Link>
 
-          <button
-            onClick={() => onOpenDemo("Careers at YouLearn", "We're hiring passionate educators, AI researchers, and engineers to reinvent education.")}
+          <Link
+            href="/careers"
             className="hover:text-neutral-950 transition-colors cursor-pointer"
           >
             Careers
-          </button>
+          </Link>
         </nav>
 
         {/* Right: CTA Button */}
@@ -169,28 +167,24 @@ export function Navbar({ onOpenDemo }: NavbarProps) {
                   >
                     Mobile
                   </button>
-                  <button
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      onOpenDemo("YouTube Summarizer", "Summarize video lectures in seconds.");
-                    }}
+                  <Link
+                    href="/youtube-summarizer"
+                    onClick={() => setMobileMenuOpen(false)}
                     className="hover:text-black py-1"
                   >
                     YouTube Summarizer
-                  </button>
+                  </Link>
                 </div>
               )}
             </div>
 
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                onOpenDemo("Blogs", "Read guides and study research.");
-              }}
-              className="py-1"
+            <Link
+              href="/blogs"
+              onClick={() => setMobileMenuOpen(false)}
+              className="py-1 hover:text-black"
             >
               Blogs
-            </button>
+            </Link>
             <Link
               href="/pricing"
               onClick={() => setMobileMenuOpen(false)}
@@ -198,15 +192,13 @@ export function Navbar({ onOpenDemo }: NavbarProps) {
             >
               Pricing
             </Link>
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                onOpenDemo("Careers", "Join our growing team.");
-              }}
-              className="py-1"
+            <Link
+              href="/careers"
+              onClick={() => setMobileMenuOpen(false)}
+              className="py-1 hover:text-black"
             >
               Careers
-            </button>
+            </Link>
           </div>
 
           <div className="w-full pt-4 border-t border-neutral-100">
