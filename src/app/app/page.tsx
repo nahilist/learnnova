@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { signOut } from "firebase/auth";
 import { 
   Upload, 
   Link as LinkIcon, 
@@ -21,27 +23,21 @@ import {
   Pause,
   Volume2,
   Check,
-  Award
+  Award,
+  LogOut,
 } from "lucide-react";
 import { LearnNovaLogo } from "@/components/Icons";
-
-interface SpaceItem {
-  id: string;
-  title: string;
-  count: number;
-  bgGradient: string;
-  description: string;
-}
-
-interface DocumentItem {
-  id: string;
-  title: string;
-  type: "pdf" | "youtube" | "recording";
-  space: string;
-  date: string;
-  pagesOrDuration: string;
-  summaryText: string;
-}
+import { getFirebaseAuth } from "@/lib/firebase/client";
+import {
+  createDocument,
+  createSpace,
+  DEFAULT_DOCUMENTS,
+  initializeUserWorkspace,
+  subscribeToDocuments,
+  subscribeToSpaces,
+  type DocumentItem,
+  type SpaceItem,
+} from "@/lib/firebase/workspace";
 
 interface Flashcard {
   id: number;
@@ -59,17 +55,10 @@ interface QuizQuestion {
 }
 
 export default function AppWorkspacePage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"dashboard" | "study">("dashboard");
   const [studyTool, setStudyTool] = useState<"reader" | "flashcards" | "quiz" | "podcast">("reader");
-  const [selectedDoc, setSelectedDoc] = useState<DocumentItem>({
-    id: "doc-1",
-    title: "The Genetic Code & Translation (Chapter 11)",
-    type: "pdf",
-    space: "Human Behavioral Biology",
-    date: "Today",
-    pagesOrDuration: "24 pages",
-    summaryText: "Transfer RNAs act as adaptors between codons and amino acids. Wobble base pairing at the 3' position allows 61 codons to be recognized with fewer tRNAs.",
-  });
+  const [selectedDoc, setSelectedDoc] = useState<DocumentItem>(DEFAULT_DOCUMENTS[0]);
 
   const [chatMessages, setChatMessages] = useState<Array<{ sender: "user" | "ai"; text: string }>>([
     {
@@ -83,6 +72,9 @@ export default function AppWorkspacePage() {
   const [uploadType, setUploadType] = useState<"file" | "paste" | "record">("file");
   const [pasteUrl, setPasteUrl] = useState("");
   const [uploadedFileName, setUploadedFileName] = useState("");
+  const [isWorkspaceLoading, setIsWorkspaceLoading] = useState(true);
+  const [isSavingContent, setIsSavingContent] = useState(false);
+  const [workspaceError, setWorkspaceError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Flashcards State
@@ -146,59 +138,62 @@ export default function AppWorkspacePage() {
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [audioSpeed, setAudioSpeed] = useState<"1x" | "1.5x" | "2x">("1x");
 
-  const [spaces, setSpaces] = useState<SpaceItem[]>([
-    {
-      id: "bio",
-      title: "Human Behavioral Biology",
-      count: 21,
-      bgGradient: "from-amber-700 via-orange-600 to-amber-900",
-      description: "Evolutionary genetics, neuroscience, and behavior biology lectures.",
-    },
-    {
-      id: "ml",
-      title: "Machine Learning & AI",
-      count: 18,
-      bgGradient: "from-slate-800 via-zinc-900 to-neutral-950",
-      description: "Transformers, neural network architectures, and mathematical loss functions.",
-    },
-    {
-      id: "psych",
-      title: "Intro to Psychology",
-      count: 6,
-      bgGradient: "from-teal-700 via-emerald-800 to-cyan-900",
-      description: "Cognitive biases, memory systems, and developmental psychology.",
-    },
-  ]);
+  const [spaces, setSpaces] = useState<SpaceItem[]>([]);
+  const [recentDocs, setRecentDocs] = useState<DocumentItem[]>([]);
 
-  const [recentDocs, setRecentDocs] = useState<DocumentItem[]>([
-    {
-      id: "doc-1",
-      title: "The Genetic Code & Translation (Chapter 11)",
-      type: "pdf",
-      space: "Human Behavioral Biology",
-      date: "Today",
-      pagesOrDuration: "24 pages",
-      summaryText: "Transfer RNAs act as adaptors between codons and amino acids. Wobble base pairing at the 3' position allows 61 codons to be recognized with fewer tRNAs.",
-    },
-    {
-      id: "doc-2",
-      title: "Justice 01: The Moral Side of Murder (Harvard)",
-      type: "youtube",
-      space: "Philosophy & Law",
-      date: "Yesterday",
-      pagesOrDuration: "54 mins",
-      summaryText: "Explores utilitarian ethics versus categorical moral duties through famous ethical dilemmas like the trolley problem.",
-    },
-    {
-      id: "doc-3",
-      title: "Teaching CS50 with AI (ACM SIGCSE 2024)",
-      type: "pdf",
-      space: "Machine Learning & AI",
-      date: "3 days ago",
-      pagesOrDuration: "8 pages",
-      summaryText: "Analyzes student engagement and outcomes when using 24/7 AI teaching assistants in large introductory programming courses.",
-    },
-  ]);
+  useEffect(() => {
+    let isActive = true;
+    let unsubscribeSpaces: (() => void) | undefined;
+    let unsubscribeDocuments: (() => void) | undefined;
+    const user = getFirebaseAuth().currentUser;
+
+    if (!user) {
+      return;
+    }
+
+    const handleDataError = (error: Error) => {
+      if (!isActive) return;
+      const message = error.message.toLowerCase().includes("permission")
+        ? "Firestore access was denied. Publish the included firestore.rules in Firebase Console."
+        : "Your workspace could not be loaded. Confirm that Cloud Firestore is enabled in Firebase Console.";
+      setWorkspaceError(message);
+      setIsWorkspaceLoading(false);
+    };
+
+    initializeUserWorkspace(user)
+      .then(() => {
+        if (!isActive) return;
+
+        unsubscribeSpaces = subscribeToSpaces(
+          user.uid,
+          (nextSpaces) => {
+            setSpaces(nextSpaces);
+            setIsWorkspaceLoading(false);
+          },
+          handleDataError,
+        );
+        unsubscribeDocuments = subscribeToDocuments(
+          user.uid,
+          (nextDocuments) => {
+            setRecentDocs(nextDocuments);
+            setSelectedDoc((current) =>
+              nextDocuments.find((documentItem) => documentItem.id === current.id) ??
+              nextDocuments[0] ??
+              current,
+            );
+            setIsWorkspaceLoading(false);
+          },
+          handleDataError,
+        );
+      })
+      .catch(handleDataError);
+
+    return () => {
+      isActive = false;
+      unsubscribeSpaces?.();
+      unsubscribeDocuments?.();
+    };
+  }, []);
 
   const handleOpenDoc = (doc: DocumentItem) => {
     setSelectedDoc(doc);
@@ -219,7 +214,13 @@ export default function AppWorkspacePage() {
     }
   };
 
-  const handleProcessUpload = () => {
+  const handleProcessUpload = async () => {
+    const user = getFirebaseAuth().currentUser;
+    if (!user) {
+      setWorkspaceError("Your session expired. Please sign in again.");
+      return;
+    }
+
     const title = uploadedFileName || (pasteUrl ? "YouTube Video Lecture" : "New Classroom Audio Recording");
     const newDoc: DocumentItem = {
       id: `doc-${Date.now()}`,
@@ -231,12 +232,46 @@ export default function AppWorkspacePage() {
       summaryText: "AI generated study notes and practice flashcards are ready for review.",
     };
 
-    setRecentDocs((prev) => [newDoc, ...prev]);
-    setSelectedDoc(newDoc);
-    setUploadModalOpen(false);
-    setActiveTab("study");
-    setUploadedFileName("");
-    setPasteUrl("");
+    try {
+      setIsSavingContent(true);
+      setWorkspaceError("");
+      await createDocument(user.uid, newDoc);
+      setSelectedDoc(newDoc);
+      setUploadModalOpen(false);
+      setActiveTab("study");
+      setUploadedFileName("");
+      setPasteUrl("");
+    } catch {
+      setWorkspaceError("The material could not be saved. Check your Firestore configuration and try again.");
+    } finally {
+      setIsSavingContent(false);
+    }
+  };
+
+  const handleCreateSpace = async () => {
+    const user = getFirebaseAuth().currentUser;
+    const newName = prompt("Enter new space name (e.g. Organic Chemistry):")?.trim();
+    if (!user || !newName) return;
+
+    const newSpace: SpaceItem = {
+      id: `space-${Date.now()}`,
+      title: newName,
+      count: 0,
+      bgGradient: "from-blue-700 via-indigo-800 to-slate-900",
+      description: "Custom user study collection.",
+    };
+
+    try {
+      setWorkspaceError("");
+      await createSpace(user.uid, newSpace);
+    } catch {
+      setWorkspaceError("The space could not be created. Check your Firestore configuration and try again.");
+    }
+  };
+
+  const handleSignOut = async () => {
+    await signOut(getFirebaseAuth());
+    router.replace("/signin");
   };
 
   const handleSendMessage = (e?: React.FormEvent) => {
@@ -334,21 +369,7 @@ export default function AppWorkspacePage() {
             <div className="flex items-center justify-between text-[11px] font-semibold text-neutral-400 uppercase tracking-wider mb-2 px-3">
               <span>My Spaces</span>
               <button
-                onClick={() => {
-                  const newName = prompt("Enter new space name (e.g. Organic Chemistry):");
-                  if (newName) {
-                    setSpaces((prev) => [
-                      ...prev,
-                      {
-                        id: `space-${Date.now()}`,
-                        title: newName,
-                        count: 1,
-                        bgGradient: "from-blue-700 via-indigo-800 to-slate-900",
-                        description: "Custom user study collection.",
-                      },
-                    ]);
-                  }
-                }}
+                onClick={handleCreateSpace}
                 className="hover:text-black cursor-pointer"
                 title="Create Space"
               >
@@ -361,7 +382,7 @@ export default function AppWorkspacePage() {
                 <button
                   key={space.id}
                   onClick={() => {
-                    handleOpenDoc(recentDocs[0]);
+                    if (recentDocs[0]) handleOpenDoc(recentDocs[0]);
                   }}
                   className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg hover:bg-neutral-50 text-left truncate cursor-pointer"
                 >
@@ -390,6 +411,14 @@ export default function AppWorkspacePage() {
               Upgrade now →
             </span>
           </Link>
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="mt-3 w-full flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs font-medium text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-950"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            Sign out
+          </button>
         </div>
       </aside>
 
@@ -407,6 +436,22 @@ export default function AppWorkspacePage() {
                 Upload lectures, PDFs, or paste links to generate notes and chat with your AI tutor.
               </p>
             </div>
+
+            {workspaceError && (
+              <div
+                role="alert"
+                className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+              >
+                {workspaceError}
+              </div>
+            )}
+
+            {isWorkspaceLoading && (
+              <div className="mb-6 flex items-center gap-2 text-sm text-neutral-500" aria-live="polite">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-200 border-t-neutral-900" />
+                Loading your workspace...
+              </div>
+            )}
 
             {/* 3 Upload Action Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
@@ -516,6 +561,11 @@ export default function AppWorkspacePage() {
                     </div>
                   </div>
                 ))}
+                {!isWorkspaceLoading && spaces.length === 0 && (
+                  <div className="sm:col-span-3 rounded-3xl border border-dashed border-neutral-300 bg-white p-8 text-center text-sm text-neutral-500">
+                    Create your first space with the + button in the sidebar.
+                  </div>
+                )}
               </div>
             </div>
 
@@ -558,6 +608,11 @@ export default function AppWorkspacePage() {
                     </div>
                   </div>
                 ))}
+                {!isWorkspaceLoading && recentDocs.length === 0 && (
+                  <div className="p-8 text-center text-sm text-neutral-500">
+                    Add your first learning material to start studying.
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1020,9 +1075,10 @@ export default function AppWorkspacePage() {
 
             <button
               onClick={handleProcessUpload}
-              className="w-full py-3 rounded-full bg-neutral-900 hover:bg-black text-white text-xs font-semibold shadow-md active:scale-[0.98] transition-all cursor-pointer"
+              disabled={isSavingContent}
+              className="w-full py-3 rounded-full bg-neutral-900 hover:bg-black text-white text-xs font-semibold shadow-md active:scale-[0.98] transition-all cursor-pointer disabled:cursor-wait disabled:opacity-60"
             >
-              Start AI Processing
+              {isSavingContent ? "Saving material..." : "Start AI Processing"}
             </button>
           </div>
         </div>
