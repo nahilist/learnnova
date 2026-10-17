@@ -1,11 +1,12 @@
 .yl-demo-stage {
   position: relative;
   width: min(calc(100% - 32px), 1080px);
-  height: clamp(520px, 54vw, 670px);
+  height: clamp(560px, 58vw, 720px);
   margin: 0 auto;
-  padding-top: 36px;
+  padding-top: 42px;
   perspective: 1700px;
   overflow: visible;
+  isolation: isolate;
 }
 
 .yl-demo-glow {
@@ -16,6 +17,8 @@
     radial-gradient(circle at 32% 26%, rgba(116, 218, 187, 0.16), transparent 42%),
     radial-gradient(circle at 72% 36%, rgba(132, 169, 236, 0.1), transparent 44%);
   filter: blur(46px);
+  transform-origin: 50% 50%;
+  will-change: transform, opacity;
 }
 
 .yl-demo-frame {
@@ -31,6 +34,8 @@
     0 2px 5px rgba(19, 23, 21, 0.08),
     0 26px 68px rgba(19, 26, 23, 0.14);
   transform-origin: 50% 100%;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
   will-change: transform, border-radius;
 }
 
@@ -94,6 +99,7 @@
   height: calc(100% - 35px);
   overflow: hidden;
   background: #fff;
+  will-change: clip-path;
 }
 
 .yl-demo-video {
@@ -102,12 +108,28 @@
   height: 100%;
   background: #fff;
   object-fit: contain;
+  transform-origin: 50% 48%;
+  backface-visibility: hidden;
+  will-change: transform;
+}
+
+.yl-demo-lens {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    118deg,
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(255, 255, 255, 0) 24%,
+    rgba(255, 255, 255, 0) 76%,
+    rgba(255, 255, 255, 0.08) 100%
+  );
 }
 
 @media (max-width: 767px) {
   .yl-demo-stage {
     width: calc(100% - 20px);
-    height: clamp(300px, 81vw, 430px);
+    height: clamp(320px, 86vw, 450px);
     padding-top: 20px;
     perspective: 1200px;
     overflow: hidden;
@@ -133,6 +155,15 @@
   .yl-demo-frame {
     transform: none !important;
     border-radius: 14px;
+  }
+
+  .yl-demo-viewport {
+    clip-path: none !important;
+  }
+
+  .yl-demo-video,
+  .yl-demo-glow {
+    transform: none !important;
   }
 
   .yl-demo-shadow {

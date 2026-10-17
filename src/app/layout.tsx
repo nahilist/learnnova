@@ -18,7 +18,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "YouLearn AI - An AI tutor made for you",
+  title: "LearnNova AI - An AI tutor made for you",
   description:
     "An AI tutor made for you. Learn from an AI tutor that understands your pdfs, youtube videos, and recorded lectures.",
   icons: {

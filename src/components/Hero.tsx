@@ -2,7 +2,6 @@
 
 import React from "react";
 import Link from "next/link";
-import { YCBadgeIcon } from "./Icons";
 
 interface HeroProps {
   onOpenDemo: (title: string, subtitle: string) => void;
@@ -12,14 +11,6 @@ interface HeroProps {
 export function Hero({ onOpenDemo, onScrollToFeatures }: HeroProps) {
   return (
     <section className="relative pt-12 pb-14 md:pt-16 md:pb-16 flex flex-col items-center text-center px-4 max-w-[1280px] mx-auto overflow-hidden">
-      {/* Top Badge: Backed by Y Combinator */}
-      <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#f3f4f6] border border-neutral-200/80 shadow-xs mb-8 transition-transform hover:scale-[1.02] cursor-default select-none">
-        <YCBadgeIcon className="w-4 h-4 text-xs font-semibold" />
-        <span className="text-[13px] font-medium text-neutral-700 tracking-normal">
-          Backed by Y Combinator
-        </span>
-      </div>
-
       {/* Main Headline */}
       <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-[70px] font-semibold text-neutral-900 tracking-[-0.035em] leading-[1.08] max-w-4xl mx-auto mb-6">
         An AI tutor made for you
@@ -41,7 +32,7 @@ export function Hero({ onOpenDemo, onScrollToFeatures }: HeroProps) {
         </button>
 
         <button
-          onClick={() => onOpenDemo("Download the App", "Get the YouLearn mobile app on iOS and Android to study anywhere.")}
+          onClick={() => onOpenDemo("Download the App", "Get the LearnNova mobile app on iOS and Android to study anywhere.")}
           className="sm:hidden inline-flex items-center justify-center px-6 py-3.5 rounded-full bg-[#f3f4f6] hover:bg-neutral-200 border border-neutral-200 text-neutral-900 font-medium text-[15px] transition-all active:scale-[0.98] shadow-xs cursor-pointer flex-1"
         >
           Get the app

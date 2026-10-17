@@ -8,7 +8,7 @@ export function Testimonials() {
     {
       id: 1,
       quote:
-        "Youlearn.ai is awesome , just used it to learn from a biotech roundtable discussion!",
+        "LearnNova.ai is awesome , just used it to learn from a biotech roundtable discussion!",
       name: "Rohan Robinson",
       role: "Software Engineer, Independent",
       avatarInitials: "RR",
@@ -17,7 +17,7 @@ export function Testimonials() {
     {
       id: 2,
       quote:
-        'This YouLearn site, with features like "Chat with PDF," has become an integral part of our daily workflow. It\'s streamlined our process of understanding videos and PDFs.',
+        'This LearnNova site, with features like "Chat with PDF," has become an integral part of our daily workflow. It\'s streamlined our process of understanding videos and PDFs.',
       name: "Jason Patel",
       role: "Writer",
       avatarInitials: "JP",
@@ -35,7 +35,7 @@ export function Testimonials() {
     {
       id: 4,
       quote:
-        "I definitely plan to experiment with YouLearn in my online course this summer to offer students an additional method of engagement with more complex topics.",
+        "I definitely plan to experiment with LearnNova in my online course this summer to offer students an additional method of engagement with more complex topics.",
       name: "G. Shaw Jr.",
       role: "Assistant Professor, UNC",
       avatarInitials: "GS",
@@ -44,7 +44,7 @@ export function Testimonials() {
     {
       id: 5,
       quote:
-        "I use YouLearn on a daily basis now. It's streamlined our research and greatly improved how I learn complex materials.",
+        "I use LearnNova on a daily basis now. It's streamlined our research and greatly improved how I learn complex materials.",
       name: "Kate Doe",
       role: "Content Manager",
       avatarInitials: "KD",
@@ -53,7 +53,7 @@ export function Testimonials() {
     {
       id: 6,
       quote:
-        "YouLearn turns 80-page slide decks into high-yield quizzes and flashcards in seconds. It saved me dozens of hours studying for board exams.",
+        "LearnNova turns 80-page slide decks into high-yield quizzes and flashcards in seconds. It saved me dozens of hours studying for board exams.",
       name: "Marcus Vance",
       role: "Medical Student",
       avatarInitials: "MV",

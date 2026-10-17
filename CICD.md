@@ -1,4 +1,4 @@
-# 🚀 YouLearn AI — Production CI/CD Architecture
+# 🚀 LearnNova AI — Production CI/CD Architecture
 
 This repository uses a production-grade CI/CD pipeline built on **GitHub Actions**, designed for high velocity, automated quality gates, security audits, and multi-cloud container deployment.
 
@@ -114,8 +114,8 @@ You can build and run the optimized standalone container locally:
 
 ```bash
 # Build production multi-stage container
-docker build -t youlearn-ai:latest .
+docker build -t learnnova-ai:latest .
 
 # Run on port 3000 with healthcheck
-docker run -p 3000:3000 --rm --name youlearn youlearn-ai:latest
+docker run -p 3000:3000 --rm --name learnnova learnnova-ai:latest
 ```

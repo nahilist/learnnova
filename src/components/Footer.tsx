@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { YouLearnLogo } from "./Icons";
+import { LearnNovaLogo } from "./Icons";
 import { Landmark } from "lucide-react";
 
 interface FooterProps {
@@ -18,11 +18,11 @@ export function Footer({ onOpenDemo }: FooterProps) {
           {/* Left Column: Brand, Copyright & Partner Badge */}
           <div className="md:col-span-6 lg:col-span-5 space-y-5">
             <Link href="/" className="inline-block focus:outline-none">
-              <YouLearnLogo />
+              <LearnNovaLogo />
             </Link>
 
             <p className="text-sm text-neutral-500 font-normal">
-              © Copyright 2026 YouLearn Inc.
+              © Copyright 2026 LearnNova Inc.
             </p>
 
             <div className="pt-2">
@@ -59,7 +59,7 @@ export function Footer({ onOpenDemo }: FooterProps) {
 
               <div>
                 <button
-                  onClick={() => onOpenDemo("Invite & Earn", "Invite classmates to YouLearn and earn free months of Unlimited Pro access.")}
+                  onClick={() => onOpenDemo("Invite & Earn", "Invite classmates to LearnNova and earn free months of Unlimited Pro access.")}
                   className="hover:text-neutral-950 transition-colors text-left cursor-pointer"
                 >
                   Invite &amp; Earn
@@ -98,7 +98,7 @@ export function Footer({ onOpenDemo }: FooterProps) {
 
               <div>
                 <button
-                  onClick={() => onOpenDemo("Contact Us", "Reach our support team anytime at support@youlearn.ai")}
+                  onClick={() => onOpenDemo("Contact Us", "Reach our support team anytime at support@learnnova.ai")}
                   className="hover:text-neutral-950 transition-colors text-left cursor-pointer"
                 >
                   Contact Us

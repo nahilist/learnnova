@@ -40,21 +40,21 @@ export default function TermsPage() {
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-neutral-900">1. Acceptance of Terms</h2>
             <p>
-              By accessing or using YouLearn (&ldquo;Service&rdquo;), provided by YouLearn Inc., you agree to be bound by these Terms and Conditions. If you do not agree with any portion of these terms, you may not access or use our services.
+              By accessing or using LearnNova (&ldquo;Service&rdquo;), provided by LearnNova Inc., you agree to be bound by these Terms and Conditions. If you do not agree with any portion of these terms, you may not access or use our services.
             </p>
           </section>
 
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-neutral-900">2. Description of Service</h2>
             <p>
-              YouLearn is an AI-powered personalized tutoring workspace designed to help students analyze and study their own educational materials, including YouTube lectures, slide decks, PDFs, and notes. The service generates study guides, interactive flashcards, practice quizzes, and conversational tutoring assistance.
+              LearnNova is an AI-powered personalized tutoring workspace designed to help students analyze and study their own educational materials, including YouTube lectures, slide decks, PDFs, and notes. The service generates study guides, interactive flashcards, practice quizzes, and conversational tutoring assistance.
             </p>
           </section>
 
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-neutral-900">3. Academic Integrity &amp; Acceptable Use</h2>
             <p>
-              YouLearn is built to foster genuine conceptual mastery, active recall, and pedagogical understanding. You agree not to use YouLearn for unauthorized academic dishonesty, cheating on live proctored examinations, or circumventing institutional codes of conduct.
+              LearnNova is built to foster genuine conceptual mastery, active recall, and pedagogical understanding. You agree not to use LearnNova for unauthorized academic dishonesty, cheating on live proctored examinations, or circumventing institutional codes of conduct.
             </p>
           </section>
 
@@ -68,14 +68,14 @@ export default function TermsPage() {
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-neutral-900">5. Subscription &amp; Billing</h2>
             <p>
-              Certain advanced features (such as YouLearn Pro and YouLearn Max) require paid subscriptions billed either monthly or annually. You may cancel your subscription at any time directly through your account settings or Stripe portal.
+              Certain advanced features (such as LearnNova Pro and LearnNova Max) require paid subscriptions billed either monthly or annually. You may cancel your subscription at any time directly through your account settings or Stripe portal.
             </p>
           </section>
 
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-neutral-900">6. Contact Information</h2>
             <p>
-              Questions regarding these Terms should be sent to <span className="font-semibold text-neutral-900">legal@youlearn.ai</span>.
+              Questions regarding these Terms should be sent to <span className="font-semibold text-neutral-900">legal@learnnova.ai</span>.
             </p>
           </section>
         </div>

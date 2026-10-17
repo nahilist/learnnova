@@ -8,34 +8,34 @@ export function FaqSection() {
 
   const faqs = [
     {
-      question: "What is YouLearn?",
+      question: "What is LearnNova?",
       answer:
-        "YouLearn is an AI tutor personalized to each student. It turns your learning materials into notes, interactive chats, quizzes, flashcards, podcasts, and personalized practice tests.",
+        "LearnNova is an AI tutor personalized to each student. It turns your learning materials into notes, interactive chats, quizzes, flashcards, podcasts, and personalized practice tests.",
     },
     {
-      question: "How does YouLearn help me study for exams?",
+      question: "How does LearnNova help me study for exams?",
       answer:
-        "YouLearn helps you study for exams by turning dense class materials into clear notes, quizzes, and practice tests, so you can understand faster, review smarter, and remember more.",
+        "LearnNova helps you study for exams by turning dense class materials into clear notes, quizzes, and practice tests, so you can understand faster, review smarter, and remember more.",
     },
     {
-      question: "What kinds of materials can I use with YouLearn?",
+      question: "What kinds of materials can I use with LearnNova?",
       answer:
         "You can upload PDFs, lecture slides, YouTube videos, recorded lectures, photos, and text to create study tools from the materials you already use.",
     },
     {
       question: "Can I ask questions and chat with my materials?",
       answer:
-        "Yes. YouLearn includes an AI tutor that understands your materials and helps explain confusing topics, answer questions, and guide your studying.",
+        "Yes. LearnNova includes an AI tutor that understands your materials and helps explain confusing topics, answer questions, and guide your studying.",
     },
     {
-      question: "Does YouLearn make quizzes, flashcards, and practice tests?",
+      question: "Does LearnNova make quizzes, flashcards, and practice tests?",
       answer:
-        "Yes. YouLearn generates quizzes, flashcards, and personalized tests from your materials so you can actively practice and prepare for exams.",
+        "Yes. LearnNova generates quizzes, flashcards, and personalized tests from your materials so you can actively practice and prepare for exams.",
     },
     {
-      question: "Is YouLearn free to use?",
+      question: "Is LearnNova free to use?",
       answer:
-        "Yes. YouLearn offers free access to get started, with paid plans for higher limits and more advanced features.",
+        "Yes. LearnNova offers free access to get started, with paid plans for higher limits and more advanced features.",
     },
   ];
 

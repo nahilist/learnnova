@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 
-describe("YouLearn Production Route & Asset Validation", () => {
+describe("LearnNova Production Route & Asset Validation", () => {
   const rootDir = process.cwd();
 
   const requiredPages = [
@@ -37,7 +37,7 @@ describe("YouLearn Production Route & Asset Validation", () => {
     const iconsPath = path.join(rootDir, "src/components/Icons.tsx");
     assert.ok(fs.existsSync(iconsPath), "Icons.tsx missing");
     const iconsContent = fs.readFileSync(iconsPath, "utf-8");
-    assert.ok(iconsContent.includes("YouLearnLogo"), "YouLearnLogo missing from Icons.tsx");
+    assert.ok(iconsContent.includes("LearnNovaLogo"), "LearnNovaLogo missing from Icons.tsx");
     assert.ok(iconsContent.includes("StanfordSeal"), "StanfordSeal missing from Icons.tsx");
     assert.ok(iconsContent.includes("HarvardSeal"), "HarvardSeal missing from Icons.tsx");
   });

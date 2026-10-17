@@ -274,7 +274,7 @@ export function FeatureSection({ onOpenDemo }: FeatureSectionProps) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Card 1: Upload any content */}
         <div 
-          onClick={() => onOpenDemo("Upload Any Content", "YouLearn accepts PDF textbooks, lecture slides, YouTube links, audio recordings, and photos.")}
+          onClick={() => onOpenDemo("Upload Any Content", "LearnNova accepts PDF textbooks, lecture slides, YouTube links, audio recordings, and photos.")}
           className="bg-[#f3f4f6] rounded-3xl sm:rounded-[32px] border border-neutral-200/90 p-7 sm:p-8 flex flex-col justify-between hover:border-neutral-300 transition-all hover:shadow-md cursor-pointer group"
         >
           <div>

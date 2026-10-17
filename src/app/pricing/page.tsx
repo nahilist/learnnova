@@ -7,7 +7,7 @@ import {
   ChevronDown, 
   ArrowRight
 } from "lucide-react";
-import { YouLearnLogo, StanfordSeal, HarvardSeal, PrincetonSeal, UCLASeal } from "@/components/Icons";
+import { LearnNovaLogo, StanfordSeal, HarvardSeal, PrincetonSeal, UCLASeal } from "@/components/Icons";
 import { ModalDemo } from "@/components/ModalDemo";
 
 export default function PricingPage() {
@@ -29,7 +29,7 @@ export default function PricingPage() {
   const handleSelectPlan = (planName: string, price: string) => {
     setModalState({
       isOpen: true,
-      title: `Upgrade to YouLearn ${planName}`,
+      title: `Upgrade to LearnNova ${planName}`,
       subtitle: `Start your 7-day free trial on the ${planName} plan (${price} billed ${billingCycle}). Cancel anytime in 1 click.`,
     });
   };
@@ -78,7 +78,7 @@ export default function PricingPage() {
       a: "We accept all major credit and debit cards (Visa, MasterCard, American Express), Apple Pay, Google Pay, and UPI / NetBanking for regional currencies.",
     },
     {
-      q: "Can I cancel my YouLearn plan at any time?",
+      q: "Can I cancel my LearnNova plan at any time?",
       a: "Yes! You can cancel your subscription at any time with a single click from your account settings. You will retain full access until the end of your billing cycle.",
     },
     {
@@ -87,7 +87,7 @@ export default function PricingPage() {
     },
     {
       q: "What is your refund policy?",
-      a: "We offer a 100% money-back guarantee within 7 days of purchase if you are not completely satisfied with YouLearn.",
+      a: "We offer a 100% money-back guarantee within 7 days of purchase if you are not completely satisfied with LearnNova.",
     },
   ];
 
@@ -98,7 +98,7 @@ export default function PricingPage() {
         <div className="max-w-[1240px] mx-auto px-6 h-18 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link href="/" className="hover:opacity-80 transition-opacity">
-              <YouLearnLogo />
+              <LearnNovaLogo />
             </Link>
           </div>
 
@@ -145,7 +145,7 @@ export default function PricingPage() {
               onClick={() =>
                 setModalState({
                   isOpen: true,
-                  title: "Sign in to YouLearn",
+                  title: "Sign in to LearnNova",
                   subtitle: "Access your saved lecture notes, spaces, and generated quizzes.",
                 })
               }
@@ -429,7 +429,7 @@ export default function PricingPage() {
                   setModalState({
                     isOpen: true,
                     title: "Contact Support",
-                    subtitle: "Our student support team typically replies within 2 hours at support@youlearn.ai",
+                    subtitle: "Our student support team typically replies within 2 hours at support@learnnova.ai",
                   })
                 }
                 className="underline hover:text-black font-medium"

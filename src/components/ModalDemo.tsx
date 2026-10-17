@@ -2,7 +2,7 @@
 
 import React from "react";
 import { X, Sparkles, CheckCircle2 } from "lucide-react";
-import { YouLearnLogo } from "./Icons";
+import { LearnNovaLogo } from "./Icons";
 
 interface ModalDemoProps {
   isOpen: boolean;
@@ -31,7 +31,7 @@ export function ModalDemo({ isOpen, onClose, title, subtitle }: ModalDemoProps) 
 
         <div className="flex flex-col items-center text-center">
           <div className="mb-4">
-            <YouLearnLogo />
+            <LearnNovaLogo />
           </div>
 
           <div className="w-12 h-12 rounded-2xl bg-orange-50 border border-orange-200 flex items-center justify-center text-[#ff6600] mb-4">
