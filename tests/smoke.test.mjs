@@ -51,4 +51,21 @@ describe("LearnNova Production Route & Asset Validation", () => {
       "next.config.ts must have output: 'standalone' for containerized deployments"
     );
   });
+
+  it("should have Firebase authentication configuration and a protected workspace", () => {
+    const firebaseClientPath = path.join(rootDir, "src/lib/firebase/client.ts");
+    const authGuardPath = path.join(rootDir, "src/components/AuthGuard.tsx");
+    const appLayoutPath = path.join(rootDir, "src/app/app/layout.tsx");
+    const envExamplePath = path.join(rootDir, ".env.example");
+
+    assert.ok(fs.existsSync(firebaseClientPath), "Firebase client configuration is missing");
+    assert.ok(fs.existsSync(authGuardPath), "AuthGuard is missing");
+    assert.ok(fs.existsSync(appLayoutPath), "Protected app layout is missing");
+    assert.ok(fs.existsSync(envExamplePath), ".env.example is missing");
+
+    const appLayout = fs.readFileSync(appLayoutPath, "utf-8");
+    const envExample = fs.readFileSync(envExamplePath, "utf-8");
+    assert.ok(appLayout.includes("AuthGuard"), "The workspace must be wrapped in AuthGuard");
+    assert.ok(envExample.includes("NEXT_PUBLIC_FIREBASE_API_KEY"), "Firebase API key variable is undocumented");
+  });
 });

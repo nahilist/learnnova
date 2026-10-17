@@ -1,4 +1,18 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LearnNova
+
+LearnNova is a Next.js AI learning workspace with Firebase Authentication.
+
+## Firebase Authentication Setup
+
+1. Create a Firebase project and register a Web app.
+2. In Firebase Console, open **Authentication → Sign-in method** and enable:
+   - Email/Password
+   - Google
+   - Apple (requires Apple Developer configuration)
+3. Copy `.env.example` to `.env.local` and add the Firebase Web app config values.
+4. Add your local and deployed hosts under **Authentication → Settings → Authorized domains**.
+
+Firebase Web API keys are public client identifiers. Do not add Firebase Admin service-account credentials to any `NEXT_PUBLIC_` variable.
 
 ## Getting Started
 
@@ -14,7 +28,7 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser. The `/app` route redirects unauthenticated users to `/signin`.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 

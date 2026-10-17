@@ -2,6 +2,8 @@
 
 import React, { useState, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { signOut } from "firebase/auth";
 import { 
   Upload, 
   Link as LinkIcon, 
@@ -21,9 +23,11 @@ import {
   Pause,
   Volume2,
   Check,
-  Award
+  Award,
+  LogOut,
 } from "lucide-react";
 import { LearnNovaLogo } from "@/components/Icons";
+import { getFirebaseAuth } from "@/lib/firebase/client";
 
 interface SpaceItem {
   id: string;
@@ -59,6 +63,7 @@ interface QuizQuestion {
 }
 
 export default function AppWorkspacePage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"dashboard" | "study">("dashboard");
   const [studyTool, setStudyTool] = useState<"reader" | "flashcards" | "quiz" | "podcast">("reader");
   const [selectedDoc, setSelectedDoc] = useState<DocumentItem>({
@@ -239,6 +244,11 @@ export default function AppWorkspacePage() {
     setPasteUrl("");
   };
 
+  const handleSignOut = async () => {
+    await signOut(getFirebaseAuth());
+    router.replace("/signin");
+  };
+
   const handleSendMessage = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!inputMessage.trim()) return;
@@ -390,6 +400,14 @@ export default function AppWorkspacePage() {
               Upgrade now →
             </span>
           </Link>
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="mt-3 w-full flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs font-medium text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-950"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            Sign out
+          </button>
         </div>
       </aside>
 

@@ -1,10 +1,21 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import {
+  createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  OAuthProvider,
+  onAuthStateChanged,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+} from "firebase/auth";
 import { LearnNovaLogo, AppleIcon } from "@/components/Icons";
 import { Eye, EyeOff, ArrowRight } from "lucide-react";
+import { getAuthErrorMessage } from "@/lib/firebase/auth-errors";
+import { getFirebaseAuth, isFirebaseConfigured } from "@/lib/firebase/client";
 
 export function GoogleLogo({ className = "w-5 h-5" }: { className?: string }) {
   return (
@@ -36,24 +47,84 @@ export default function SignInPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setTimeout(() => {
-      router.push("/app");
-    }, 700);
+  useEffect(() => {
+    if (!isFirebaseConfigured) return;
+
+    return onAuthStateChanged(getFirebaseAuth(), (user) => {
+      if (user) router.replace("/app");
+    });
+  }, [router]);
+
+  const finishAuthentication = () => {
+    const nextPath = new URLSearchParams(window.location.search).get("next");
+    router.replace(nextPath?.startsWith("/") && !nextPath.startsWith("//") ? nextPath : "/app");
   };
 
-  const handleOAuth = (provider?: string) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage("");
+    setSuccessMessage("");
     setIsLoading(true);
-    if (provider) {
-      // Simulate OAuth provider handshake
-      sessionStorage.setItem("auth_provider", provider);
+
+    try {
+      const auth = getFirebaseAuth();
+      if (isSignUp) {
+        await createUserWithEmailAndPassword(auth, email.trim(), password);
+      } else {
+        await signInWithEmailAndPassword(auth, email.trim(), password);
+      }
+      finishAuthentication();
+    } catch (error) {
+      setErrorMessage(getAuthErrorMessage(error));
+      setIsLoading(false);
     }
-    setTimeout(() => {
-      router.push("/app");
-    }, 600);
+  };
+
+  const handleOAuth = async (providerName: "Google" | "Apple") => {
+    setErrorMessage("");
+    setSuccessMessage("");
+    setIsLoading(true);
+
+    try {
+      const provider =
+        providerName === "Google"
+          ? new GoogleAuthProvider()
+          : new OAuthProvider("apple.com");
+
+      if (provider instanceof OAuthProvider) {
+        provider.addScope("email");
+        provider.addScope("name");
+      }
+
+      await signInWithPopup(getFirebaseAuth(), provider);
+      finishAuthentication();
+    } catch (error) {
+      setErrorMessage(getAuthErrorMessage(error));
+      setIsLoading(false);
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    if (!email.trim()) {
+      setErrorMessage("Enter your email address first, then request a password reset.");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await sendPasswordResetEmail(getFirebaseAuth(), email.trim());
+      setSuccessMessage("Password reset email sent. Check your inbox.");
+    } catch (error) {
+      setErrorMessage(getAuthErrorMessage(error));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -97,12 +168,30 @@ export default function SignInPage() {
               : "Let's continue your learning journey."}
           </p>
 
+          {!isFirebaseConfigured && (
+            <div role="alert" className="mb-5 w-full rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-left text-xs leading-5 text-amber-900">
+              Firebase is not configured. Add the values from <code>.env.example</code> to <code>.env.local</code> and restart the server.
+            </div>
+          )}
+
+          {errorMessage && (
+            <div role="alert" className="mb-5 w-full rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-left text-xs leading-5 text-red-700">
+              {errorMessage}
+            </div>
+          )}
+
+          {successMessage && (
+            <div role="status" className="mb-5 w-full rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-left text-xs leading-5 text-emerald-700">
+              {successMessage}
+            </div>
+          )}
+
           {/* Social Logins */}
           <div className="w-full space-y-3 mb-6">
             <button
               onClick={() => handleOAuth("Google")}
-              disabled={isLoading}
-              className="w-full py-3 px-4 rounded-2xl bg-white hover:bg-neutral-50 border border-neutral-200/90 text-sm font-medium text-neutral-800 shadow-2xs flex items-center justify-center gap-3 transition-all active:scale-[0.98] cursor-pointer"
+              disabled={isLoading || !isFirebaseConfigured}
+              className="w-full py-3 px-4 rounded-2xl bg-white hover:bg-neutral-50 border border-neutral-200/90 text-sm font-medium text-neutral-800 shadow-2xs flex items-center justify-center gap-3 transition-all active:scale-[0.98] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
             >
               <GoogleLogo className="w-4 h-4" />
               <span>Continue with Google</span>
@@ -110,8 +199,8 @@ export default function SignInPage() {
 
             <button
               onClick={() => handleOAuth("Apple")}
-              disabled={isLoading}
-              className="w-full py-3 px-4 rounded-2xl bg-white hover:bg-neutral-50 border border-neutral-200/90 text-sm font-medium text-neutral-800 shadow-2xs flex items-center justify-center gap-3 transition-all active:scale-[0.98] cursor-pointer"
+              disabled={isLoading || !isFirebaseConfigured}
+              className="w-full py-3 px-4 rounded-2xl bg-white hover:bg-neutral-50 border border-neutral-200/90 text-sm font-medium text-neutral-800 shadow-2xs flex items-center justify-center gap-3 transition-all active:scale-[0.98] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
             >
               <AppleIcon className="w-4 h-4 text-black" />
               <span>Continue with Apple</span>
@@ -133,6 +222,7 @@ export default function SignInPage() {
               <input
                 type="email"
                 required
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
@@ -144,6 +234,8 @@ export default function SignInPage() {
               <input
                 type={showPassword ? "text" : "password"}
                 required
+                minLength={6}
+                autoComplete={isSignUp ? "new-password" : "current-password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
@@ -162,7 +254,8 @@ export default function SignInPage() {
               <div className="text-right">
                 <button
                   type="button"
-                  onClick={() => alert("Password reset link has been sent to your email.")}
+                  onClick={handlePasswordReset}
+                  disabled={isLoading || !isFirebaseConfigured}
                   className="text-xs text-neutral-500 hover:text-black transition-colors"
                 >
                   Forgot password?
@@ -172,11 +265,11 @@ export default function SignInPage() {
 
             <button
               type="submit"
-              disabled={isLoading}
-              className="w-full py-3.5 px-6 rounded-full bg-neutral-800 hover:bg-black text-white font-medium text-sm transition-all shadow-md active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 mt-4"
+              disabled={isLoading || !isFirebaseConfigured}
+              className="w-full py-3.5 px-6 rounded-full bg-neutral-800 hover:bg-black text-white font-medium text-sm transition-all shadow-md active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 mt-4 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLoading ? (
-                <span>Entering study workspace...</span>
+                <span>{isSignUp ? "Creating your account..." : "Signing you in..."}</span>
               ) : (
                 <>
                   <span>{isSignUp ? "Sign Up" : "Sign In"}</span>
@@ -191,7 +284,11 @@ export default function SignInPage() {
             {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
             <button
               type="button"
-              onClick={() => setIsSignUp(!isSignUp)}
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                setErrorMessage("");
+                setSuccessMessage("");
+              }}
               className="font-semibold text-neutral-900 hover:underline cursor-pointer ml-1"
             >
               {isSignUp ? "Sign in" : "Sign up"}
