@@ -13,6 +13,7 @@ LearnNova is a Next.js AI learning workspace with Firebase Authentication.
 4. Add your local and deployed hosts under **Authentication → Settings → Authorized domains**.
 
 Firebase Web API keys are public client identifiers. Do not add Firebase Admin service-account credentials to any `NEXT_PUBLIC_` variable.
+<<<<<<< HEAD
 
 ## Cloud Firestore Setup
 
@@ -21,6 +22,8 @@ Firebase Web API keys are public client identifiers. Do not add Firebase Admin s
 3. Open the **Rules** tab, replace its contents with [`firestore.rules`](./firestore.rules), and publish the rules.
 
 The authenticated workspace creates `users/{uid}` and stores each user's spaces and documents in private subcollections. The included rules only allow a signed-in user to access data under their own UID.
+=======
+>>>>>>> 5d66da33deeec2530ed911f657e3f8b838d87124
 
 ## Getting Started
 
