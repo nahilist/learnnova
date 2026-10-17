@@ -3,10 +3,29 @@ import React from "react";
 export function LearnNovaLogo({ className = "h-6" }: { className?: string }) {
   return (
     <div className={`flex items-center gap-2.5 font-bold tracking-tight text-xl text-neutral-900 select-none ${className}`}>
-      <svg width="24" height="24" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
-        <rect x="3" y="4" width="6" height="20" rx="3" fill="#000000" />
-        <rect x="13" y="10" width="6" height="14" rx="3" fill="#000000" />
-        <circle cx="23" cy="7" r="3" fill="#000000" />
+      <svg
+        width="26"
+        height="26"
+        viewBox="0 0 28 28"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="shrink-0"
+        aria-hidden="true"
+      >
+        <path
+          d="M6.5 21V8L19.5 21V7"
+          stroke="currentColor"
+          strokeWidth="3.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M3.5 16.2C5.8 9.1 14.7 4.2 22.8 7.1"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
+        <circle cx="23" cy="7" r="2.8" fill="currentColor" />
       </svg>
       <span className="font-semibold text-[20px] text-black tracking-[-0.02em]">LearnNova</span>
     </div>
