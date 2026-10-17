@@ -1,6 +1,6 @@
 import React from "react";
 
-export function YouLearnLogo({ className = "h-6" }: { className?: string }) {
+export function LearnNovaLogo({ className = "h-6" }: { className?: string }) {
   return (
     <div className={`flex items-center gap-2.5 font-bold tracking-tight text-xl text-neutral-900 select-none ${className}`}>
       <svg width="24" height="24" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
@@ -8,7 +8,7 @@ export function YouLearnLogo({ className = "h-6" }: { className?: string }) {
         <rect x="13" y="10" width="6" height="14" rx="3" fill="#000000" />
         <circle cx="23" cy="7" r="3" fill="#000000" />
       </svg>
-      <span className="font-semibold text-[20px] text-black tracking-[-0.02em]">YouLearn</span>
+      <span className="font-semibold text-[20px] text-black tracking-[-0.02em]">LearnNova</span>
     </div>
   );
 }

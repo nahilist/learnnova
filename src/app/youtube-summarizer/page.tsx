@@ -288,10 +288,10 @@ export default function YouTubeSummarizerPage() {
           id: "custom-" + Date.now(),
           youtubeId: "custom",
           title: "Custom YouTube Lecture Summary",
-          channel: "Educational Stream • YouLearn AI Processor",
+          channel: "Educational Stream • LearnNova AI Processor",
           duration: "32:15",
           url: inputUrl,
-          summary: "YouLearn processed this video stream, extracted speech transcripts, and synthesized conceptual frameworks and review materials.",
+          summary: "LearnNova processed this video stream, extracted speech transcripts, and synthesized conceptual frameworks and review materials.",
           keyTakeaways: [
             "Core conceptual framework explained with clear step-by-step methodologies.",
             "Key definitions and operational constraints highlighted for exam preparation.",
@@ -374,7 +374,7 @@ export default function YouTubeSummarizerPage() {
           </h1>
 
           <p className="text-neutral-500 text-base sm:text-lg max-w-[620px] mx-auto leading-relaxed">
-            Paste any educational YouTube URL. YouLearn extracts the key frameworks, builds timestamped chapters, and creates interactive flashcards.
+            Paste any educational YouTube URL. LearnNova extracts the key frameworks, builds timestamped chapters, and creates interactive flashcards.
           </p>
 
           {/* URL Input Form */}
@@ -519,7 +519,7 @@ export default function YouTubeSummarizerPage() {
                   <div className="mt-5 p-4 rounded-2xl bg-blue-50/70 border border-blue-100 space-y-2">
                     <div className="flex items-center gap-2 text-xs font-bold text-blue-950">
                       <MessageSquare className="w-4 h-4 text-blue-600" />
-                      <span>Chat with this video in YouLearn</span>
+                      <span>Chat with this video in LearnNova</span>
                     </div>
                     <p className="text-xs text-blue-800 leading-relaxed">
                       Ask your AI tutor questions like: &ldquo;Explain the difference between Bentham and Kant like I&apos;m 12&rdquo; or &ldquo;Give me an exam problem based on chapter 3.&rdquo;
@@ -535,7 +535,7 @@ export default function YouTubeSummarizerPage() {
                 </div>
 
                 <div className="pt-6 mt-6 border-t border-neutral-200/60 text-[11px] text-neutral-400">
-                  Processed with YouLearn Multimodal Audio &amp; Video Engine
+                  Processed with LearnNova Multimodal Audio &amp; Video Engine
                 </div>
               </div>
 
@@ -849,7 +849,7 @@ export default function YouTubeSummarizerPage() {
             </div>
             <h3 className="text-base font-bold text-neutral-900">Automatic Spaced Repetition</h3>
             <p className="text-xs text-neutral-500 leading-relaxed">
-              Export generated flashcards directly into your YouLearn workspace to review them before midterms and finals.
+              Export generated flashcards directly into your LearnNova workspace to review them before midterms and finals.
             </p>
           </div>
         </section>

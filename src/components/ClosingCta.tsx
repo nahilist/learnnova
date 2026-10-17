@@ -36,7 +36,7 @@ export function ClosingCta({ onOpenDemo }: ClosingCtaProps) {
         <div className="flex flex-wrap items-center justify-center gap-3.5 sm:gap-4 select-none">
           {/* Apple App Store */}
           <button
-            onClick={() => onOpenDemo("Apple App Store", "Download YouLearn on your iPhone and iPad.")}
+            onClick={() => onOpenDemo("Apple App Store", "Download LearnNova on your iPhone and iPad.")}
             className="inline-flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-white hover:bg-neutral-50 border border-neutral-200/90 text-neutral-900 shadow-2xs transition-all active:scale-[0.98] cursor-pointer"
           >
             <AppleIcon className="w-6 h-6 text-black" />
@@ -48,7 +48,7 @@ export function ClosingCta({ onOpenDemo }: ClosingCtaProps) {
 
           {/* Google Play Store */}
           <button
-            onClick={() => onOpenDemo("Google Play Store", "Download YouLearn for Android devices on Google Play.")}
+            onClick={() => onOpenDemo("Google Play Store", "Download LearnNova for Android devices on Google Play.")}
             className="inline-flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-white hover:bg-neutral-50 border border-neutral-200/90 text-neutral-900 shadow-2xs transition-all active:scale-[0.98] cursor-pointer"
           >
             <GooglePlayIcon className="w-5 h-5" />

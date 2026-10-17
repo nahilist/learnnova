@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { ChevronDown, Menu, X } from "lucide-react";
-import { YouLearnLogo } from "./Icons";
+import { LearnNovaLogo } from "./Icons";
 
 interface NavbarProps {
   onOpenDemo: (title: string, subtitle: string) => void;
@@ -33,7 +33,7 @@ export function Navbar({ onOpenDemo }: NavbarProps) {
       <div className="max-w-[1280px] mx-auto px-6 h-20 flex items-center justify-between">
         {/* Left: Logo */}
         <Link href="/" className="transition-opacity hover:opacity-85 focus:outline-none">
-          <YouLearnLogo />
+          <LearnNovaLogo />
         </Link>
 
         {/* Center: Desktop Navigation */}
@@ -64,7 +64,7 @@ export function Navbar({ onOpenDemo }: NavbarProps) {
                   <button
                     onClick={() => {
                       setFeaturesOpen(false);
-                      onOpenDemo("All Features", "Explore YouLearn's complete AI tutoring suite, note generation, quizzes, and chat.");
+                      onOpenDemo("All Features", "Explore LearnNova's complete AI tutoring suite, note generation, quizzes, and chat.");
                     }}
                     className="w-full text-left px-3.5 py-2 rounded-xl text-[14px] text-neutral-700 hover:text-neutral-950 hover:bg-neutral-50 font-medium transition-colors cursor-pointer"
                   >
@@ -73,7 +73,7 @@ export function Navbar({ onOpenDemo }: NavbarProps) {
                   <button
                     onClick={() => {
                       setFeaturesOpen(false);
-                      onOpenDemo("YouLearn Mobile", "Take your AI tutor anywhere with iOS and Android applications.");
+                      onOpenDemo("LearnNova Mobile", "Take your AI tutor anywhere with iOS and Android applications.");
                     }}
                     className="w-full text-left px-3.5 py-2 rounded-xl text-[14px] text-neutral-700 hover:text-neutral-950 hover:bg-neutral-50 font-medium transition-colors cursor-pointer"
                   >
@@ -152,7 +152,7 @@ export function Navbar({ onOpenDemo }: NavbarProps) {
                   <button
                     onClick={() => {
                       setMobileMenuOpen(false);
-                      onOpenDemo("All Features", "Explore YouLearn's complete AI tutoring suite.");
+                      onOpenDemo("All Features", "Explore LearnNova's complete AI tutoring suite.");
                     }}
                     className="hover:text-black py-1"
                   >

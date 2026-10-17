@@ -23,7 +23,7 @@ import {
   Check,
   Award
 } from "lucide-react";
-import { YouLearnLogo } from "@/components/Icons";
+import { LearnNovaLogo } from "@/components/Icons";
 
 interface SpaceItem {
   id: string;
@@ -74,7 +74,7 @@ export default function AppWorkspacePage() {
   const [chatMessages, setChatMessages] = useState<Array<{ sender: "user" | "ai"; text: string }>>([
     {
       sender: "ai",
-      text: "👋 Hi! I'm your YouLearn AI tutor. I've analyzed your document. What would you like to explore? You can ask me to explain concepts, generate practice quizzes, or create flashcards.",
+      text: "👋 Hi! I'm your LearnNova AI tutor. I've analyzed your document. What would you like to explore? You can ask me to explain concepts, generate practice quizzes, or create flashcards.",
     },
   ]);
   const [inputMessage, setInputMessage] = useState("");
@@ -276,7 +276,7 @@ export default function AppWorkspacePage() {
           {/* Logo & workspace title */}
           <div className="flex items-center justify-between pb-6 mb-4 border-b border-neutral-100">
             <Link href="/" className="hover:opacity-80 transition-opacity">
-              <YouLearnLogo />
+              <LearnNovaLogo />
             </Link>
           </div>
 
@@ -890,7 +890,7 @@ export default function AppWorkspacePage() {
               <div className="pb-3 border-b border-neutral-200 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
-                  <span className="font-semibold text-xs text-neutral-900">YouLearn AI Tutor</span>
+                  <span className="font-semibold text-xs text-neutral-900">LearnNova AI Tutor</span>
                 </div>
                 <span className="text-[11px] text-neutral-400 font-mono">GPT-5 Learn+</span>
               </div>

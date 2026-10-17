@@ -40,7 +40,7 @@ export default function PrivacyPage() {
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-neutral-900">1. Student Privacy First</h2>
             <p>
-              At YouLearn, protecting student and educator privacy is central to our core mission. We respect your trust and are committed to safeguarding personal information collected through our website, mobile applications, and AI tutoring services.
+              At LearnNova, protecting student and educator privacy is central to our core mission. We respect your trust and are committed to safeguarding personal information collected through our website, mobile applications, and AI tutoring services.
             </p>
           </section>
 
@@ -70,7 +70,7 @@ export default function PrivacyPage() {
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-neutral-900">5. Contact Our Data Protection Team</h2>
             <p>
-              If you have any questions or requests regarding your personal data or account deletion, please email our privacy team at <span className="font-semibold text-neutral-900">privacy@youlearn.ai</span>.
+              If you have any questions or requests regarding your personal data or account deletion, please email our privacy team at <span className="font-semibold text-neutral-900">privacy@learnnova.ai</span>.
             </p>
           </section>
         </div>

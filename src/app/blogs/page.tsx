@@ -50,10 +50,10 @@ const BLOG_POSTS: BlogPost[] = [
       intro: "In 2026, artificial intelligence has shifted from generic text completion into context-aware, multimodal study partners. Students are no longer just looking up answers; they are using AI to model deep conceptual understanding.",
       sections: [
         {
-          heading: "1. YouLearn: The Ultimate Personalized AI Tutor",
+          heading: "1. LearnNova: The Ultimate Personalized AI Tutor",
           body: [
-            "YouLearn stands apart by converting your raw syllabus materials—YouTube lectures, 100-page slide decks, textbook PDFs, and recorded seminars—into an active study workspace.",
-            "Instead of merely regurgitating summaries, YouLearn generates flashcard decks with spaced repetition, builds practice exams calibrated to your syllabus, and hosts an AI tutor who cross-references every claim with exact citations in your source file."
+            "LearnNova stands apart by converting your raw syllabus materials—YouTube lectures, 100-page slide decks, textbook PDFs, and recorded seminars—into an active study workspace.",
+            "Instead of merely regurgitating summaries, LearnNova generates flashcard decks with spaced repetition, builds practice exams calibrated to your syllabus, and hosts an AI tutor who cross-references every claim with exact citations in your source file."
           ],
           keyPoint: "Best for: Students taking rigorous STEM, medical, or humanities courses who want everything grounded in their professor's material."
         },
@@ -72,7 +72,7 @@ const BLOG_POSTS: BlogPost[] = [
           ]
         }
       ],
-      conclusion: "Choosing the right AI study stack is about finding tools that foster active recall rather than passive consumption. Platforms like YouLearn ensure you stay in the driver's seat of your own education."
+      conclusion: "Choosing the right AI study stack is about finding tools that foster active recall rather than passive consumption. Platforms like LearnNova ensure you stay in the driver's seat of your own education."
     }
   },
   {
@@ -119,7 +119,7 @@ const BLOG_POSTS: BlogPost[] = [
           heading: "Timestamped Concept Mapping",
           body: [
             "Top-tier video summarizers break long lectures down into discrete conceptual modules with exact clickable timestamps.",
-            "YouLearn's YouTube integration not only transcribes the speech but extracts formulas written on the blackboard and compiles them into downloadable cheat sheets."
+            "LearnNova's YouTube integration not only transcribes the speech but extracts formulas written on the blackboard and compiles them into downloadable cheat sheets."
           ]
         },
         {
@@ -127,7 +127,7 @@ const BLOG_POSTS: BlogPost[] = [
           body: [
             "Once you finish a chapter, testing yourself immediately cements the neural pathways. Modern tools let you generate a 5-question multiple-choice quiz directly from the YouTube audio stream."
           ],
-          keyPoint: "Tip: Watch the lecture at 1.5x speed, then review the YouLearn AI generated chapter summary to solidify your recall."
+          keyPoint: "Tip: Watch the lecture at 1.5x speed, then review the LearnNova AI generated chapter summary to solidify your recall."
         }
       ],
       conclusion: "Never re-watch an entire lecture to find a single definition again. Use intelligent video summarizers to extract high-yield insights in seconds."
@@ -148,7 +148,7 @@ const BLOG_POSTS: BlogPost[] = [
           heading: "Step 1: The Multi-Format Ingestion Strategy",
           body: [
             "Combine your slides with the audio transcript. Slides alone lack verbal context, and transcripts alone lack visual charts and diagrams.",
-            "YouLearn allows simultaneous upload of both media formats, automatically linking spoken explanations to their corresponding slide numbers."
+            "LearnNova allows simultaneous upload of both media formats, automatically linking spoken explanations to their corresponding slide numbers."
           ]
         },
         {
@@ -199,7 +199,7 @@ const BLOG_POSTS: BlogPost[] = [
     imageUrl: "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=600&q=80",
     excerpt: "Transform dry textbook chapters into engaging conversational audio dialogues you can listen to while walking, commuting, or at the gym.",
     content: {
-      intro: "Auditory learners and busy students with long commutes often struggle to find time for stationary desk studying. YouLearn's AI Podcast feature turns any study document into a two-host dialogue.",
+      intro: "Auditory learners and busy students with long commutes often struggle to find time for stationary desk studying. LearnNova's AI Podcast feature turns any study document into a two-host dialogue.",
       sections: [
         {
           heading: "The Science of Audio Priming",
@@ -209,9 +209,9 @@ const BLOG_POSTS: BlogPost[] = [
           ]
         },
         {
-          heading: "How YouLearn Generates Study Audio",
+          heading: "How LearnNova Generates Study Audio",
           body: [
-            "Select any ingested lecture or document in YouLearn, switch to 'AI Podcast' mode, and listen to a tailored 5-15 minute breakdown with interactive transcript synchronization."
+            "Select any ingested lecture or document in LearnNova, switch to 'AI Podcast' mode, and listen to a tailored 5-15 minute breakdown with interactive transcript synchronization."
           ]
         }
       ],
@@ -239,7 +239,7 @@ const BLOG_POSTS: BlogPost[] = [
         {
           heading: "Vetting for Accuracy and Citations",
           body: [
-            "Hallucinations in medicine are unacceptable. YouLearn's document-grounded model ensures that every diagnostic criterion links directly to verified medical texts and lecture syllabi."
+            "Hallucinations in medicine are unacceptable. LearnNova's document-grounded model ensures that every diagnostic criterion links directly to verified medical texts and lecture syllabi."
           ]
         }
       ],
@@ -247,8 +247,8 @@ const BLOG_POSTS: BlogPost[] = [
     }
   },
   {
-    id: "youlearn-vs-chatgpt-for-studying",
-    title: "YouLearn vs ChatGPT for Studying: Which Is Better for Exam Prep?",
+    id: "learnnova-vs-chatgpt-for-studying",
+    title: "LearnNova vs ChatGPT for Studying: Which Is Better for Exam Prep?",
     date: "Mar 30, 2026",
     readTime: "5 min read",
     category: "AI Tools",
@@ -258,21 +258,21 @@ const BLOG_POSTS: BlogPost[] = [
       intro: "Almost every student has used ChatGPT to answer a homework question. But when finals arrive, is a generic chat interface the best tool to prepare you for a 3-hour exam?",
       sections: [
         {
-          heading: "Feature Breakdown: General LLM vs YouLearn",
+          heading: "Feature Breakdown: General LLM vs LearnNova",
           body: [
             "ChatGPT operates in a vacuum: you copy-paste text chunks, and its memory resets between long sessions.",
-            "YouLearn is built around full course spaces: it maintains your notes, generated flashcards, practice exam history, and audio podcasts in one unified dashboard."
+            "LearnNova is built around full course spaces: it maintains your notes, generated flashcards, practice exam history, and audio podcasts in one unified dashboard."
           ],
-          keyPoint: "YouLearn acts as an educational operating system, whereas generic chatbots are single-turn chat windows."
+          keyPoint: "LearnNova acts as an educational operating system, whereas generic chatbots are single-turn chat windows."
         },
         {
           heading: "Grounded Citations vs Hallucinations",
           body: [
-            "YouLearn's AI tutor points you directly to page numbers and exact video timestamps, eliminating the guesswork of whether an answer was hallucinated."
+            "LearnNova's AI tutor points you directly to page numbers and exact video timestamps, eliminating the guesswork of whether an answer was hallucinated."
           ]
         }
       ],
-      conclusion: "While ChatGPT is great for casual queries, serious academic excellence demands a dedicated learning environment like YouLearn."
+      conclusion: "While ChatGPT is great for casual queries, serious academic excellence demands a dedicated learning environment like LearnNova."
     }
   },
   {
@@ -476,7 +476,7 @@ export default function BlogsPage() {
           </div>
         </section>
 
-        {/* Blog Post List matching exact YouLearn layout */}
+        {/* Blog Post List matching exact LearnNova layout */}
         <section className="max-w-[760px] mx-auto px-6">
           {filteredPosts.length === 0 ? (
             <div className="text-center py-16 bg-neutral-50 rounded-2xl border border-neutral-200/60 p-8">
@@ -557,14 +557,14 @@ export default function BlogsPage() {
                 Study your own material with AI
               </h2>
               <p className="text-neutral-300 text-sm sm:text-base max-w-[500px] mb-6">
-                Upload your lecture videos, syllabus slides, and notes into YouLearn. Chat with an AI tutor trained on your exact classes.
+                Upload your lecture videos, syllabus slides, and notes into LearnNova. Chat with an AI tutor trained on your exact classes.
               </p>
               <div className="flex flex-col sm:flex-row items-center gap-3">
                 <Link
                   href="/signin"
                   className="w-full sm:w-auto px-6 py-3 bg-white text-neutral-950 hover:bg-neutral-100 rounded-full font-semibold text-sm transition-all text-center shadow-md active:scale-95"
                 >
-                  Try YouLearn Free
+                  Try LearnNova Free
                 </Link>
                 <Link
                   href="/pricing"
@@ -692,7 +692,7 @@ export default function BlogsPage() {
               <div className="bg-neutral-50 rounded-2xl p-6 border border-neutral-200 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div>
                   <h4 className="font-bold text-neutral-900 text-base">
-                    Put this into practice with YouLearn
+                    Put this into practice with LearnNova
                   </h4>
                   <p className="text-sm text-neutral-500 mt-0.5">
                     Upload your class documents and let your personal AI tutor quiz you right now.

@@ -36,7 +36,7 @@ const OPEN_ROLES: JobRole[] = [
     department: "Engineering",
     location: "San Francisco, CA",
     type: "Full-time",
-    description: "As a Founding Engineer at YouLearn, you will architect core real-time tutoring inference engines, multimodal document processing pipelines, and high-frequency student interactions scaled across 1.5M+ active users.",
+    description: "As a Founding Engineer at LearnNova, you will architect core real-time tutoring inference engines, multimodal document processing pipelines, and high-frequency student interactions scaled across 1.5M+ active users.",
     responsibilities: [
       "Design and deploy ultra-low-latency multimodal pipelines that parse audio, video, slides, and math equations.",
       "Work directly with the founders to build novel active-recall pedagogical workflows, spaced repetition engines, and automated quiz evaluation systems.",
@@ -62,7 +62,7 @@ const OPEN_ROLES: JobRole[] = [
     department: "Marketing",
     location: "Remote",
     type: "Full-time",
-    description: "YouLearn is looking for a creative, relatable content creator to spearhead our TikTok, Instagram Reels, and YouTube Shorts presence. You will produce engaging student-first content that showcases how YouLearn transforms studying.",
+    description: "LearnNova is looking for a creative, relatable content creator to spearhead our TikTok, Instagram Reels, and YouTube Shorts presence. You will produce engaging student-first content that showcases how LearnNova transforms studying.",
     responsibilities: [
       "Ideate, script, film, and edit 4-6 high-performing short-form videos per week.",
       "Test viral hooks, study hacks, university exam reactions, and AI feature demonstrations.",
@@ -113,7 +113,7 @@ const OPEN_ROLES: JobRole[] = [
     department: "Engineering",
     location: "Remote",
     type: "Full-time",
-    description: "Lead the development of YouLearn's mobile applications on iOS and Android, bringing the power of an AI tutor directly into students' pockets.",
+    description: "Lead the development of LearnNova's mobile applications on iOS and Android, bringing the power of an AI tutor directly into students' pockets.",
     responsibilities: [
       "Architect and build our high-performance React Native / native iOS application.",
       "Implement offline flashcard caching, lock-screen widgets, and seamless background audio for AI podcasts.",
@@ -156,7 +156,7 @@ export default function CareersPage() {
       {/* Top Navbar */}
       <Navbar onOpenDemo={() => {}} />
 
-      {/* Main Content matching exact YouLearn Careers layout */}
+      {/* Main Content matching exact LearnNova Careers layout */}
       <main className="flex-1 pb-24">
         <div className="max-w-[760px] mx-auto px-6 pt-16 sm:pt-20">
           {/* Main Title */}
@@ -167,10 +167,10 @@ export default function CareersPage() {
           {/* Mission Copy from original screenshot */}
           <div className="space-y-6 text-neutral-600 text-base sm:text-[17px] leading-relaxed font-normal">
             <p>
-              YouLearn is an AI tutor personalized to each student.
+              LearnNova is an AI tutor personalized to each student.
             </p>
             <p>
-              So far, we&apos;ve grown YouLearn to over 1.5 million users, turning learning materials into concise notes, an AI tutor you can talk to, and personalized tests.
+              So far, we&apos;ve grown LearnNova to over 1.5 million users, turning learning materials into concise notes, an AI tutor you can talk to, and personalized tests.
             </p>
             <p>
               But that&apos;s just the beginning. Our ultimate goal is to build a personalized AI tutor for everyone. Think of it as your personal &ldquo;Aristotle,&rdquo; a lifelong tutor that grows with you.
@@ -250,7 +250,7 @@ export default function CareersPage() {
               </div>
               <h3 className="text-base font-bold text-neutral-900">Global Reach</h3>
               <p className="text-xs text-neutral-500 leading-relaxed">
-                Over 1.5M students across 140+ countries rely on YouLearn to understand their coursework.
+                Over 1.5M students across 140+ countries rely on LearnNova to understand their coursework.
               </p>
             </div>
           </div>
@@ -419,7 +419,7 @@ export default function CareersPage() {
 
                       <div>
                         <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                          Why are you excited to build YouLearn?
+                          Why are you excited to build LearnNova?
                         </label>
                         <textarea
                           rows={3}
