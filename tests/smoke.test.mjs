@@ -68,7 +68,6 @@ describe("LearnNova Production Route & Asset Validation", () => {
     assert.ok(appLayout.includes("AuthGuard"), "The workspace must be wrapped in AuthGuard");
     assert.ok(envExample.includes("NEXT_PUBLIC_FIREBASE_API_KEY"), "Firebase API key variable is undocumented");
   });
-<<<<<<< HEAD
 
   it("should persist each authenticated user's workspace with owner-only Firestore rules", () => {
     const workspacePath = path.join(rootDir, "src/lib/firebase/workspace.ts");
@@ -83,6 +82,4 @@ describe("LearnNova Production Route & Asset Validation", () => {
     assert.ok(workspace.includes("subscribeToDocuments"), "Realtime document persistence is missing");
     assert.ok(rules.includes("request.auth.uid == userId"), "Firestore data must be restricted by user UID");
   });
-=======
->>>>>>> 5d66da33deeec2530ed911f657e3f8b838d87124
 });

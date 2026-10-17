@@ -1,9 +1,6 @@
 import { getApp, getApps, initializeApp, type FirebaseOptions } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
-<<<<<<< HEAD
 import { getFirestore, type Firestore } from "firebase/firestore";
-=======
->>>>>>> 5d66da33deeec2530ed911f657e3f8b838d87124
 
 const firebaseConfig: FirebaseOptions = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -24,14 +21,11 @@ const requiredConfig = [
 export const isFirebaseConfigured = requiredConfig.every(Boolean);
 
 let authInstance: Auth | undefined;
-<<<<<<< HEAD
 let firestoreInstance: Firestore | undefined;
 
 function getFirebaseApp() {
   return getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 }
-=======
->>>>>>> 5d66da33deeec2530ed911f657e3f8b838d87124
 
 export function getFirebaseAuth(): Auth {
   if (!isFirebaseConfigured) {
@@ -41,17 +35,11 @@ export function getFirebaseAuth(): Auth {
   }
 
   if (!authInstance) {
-<<<<<<< HEAD
     authInstance = getAuth(getFirebaseApp());
-=======
-    const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-    authInstance = getAuth(app);
->>>>>>> 5d66da33deeec2530ed911f657e3f8b838d87124
   }
 
   return authInstance;
 }
-<<<<<<< HEAD
 
 export function getFirebaseDb(): Firestore {
   if (!isFirebaseConfigured) {
@@ -66,5 +54,3 @@ export function getFirebaseDb(): Firestore {
 
   return firestoreInstance;
 }
-=======
->>>>>>> 5d66da33deeec2530ed911f657e3f8b838d87124

@@ -28,7 +28,6 @@ import {
 } from "lucide-react";
 import { LearnNovaLogo } from "@/components/Icons";
 import { getFirebaseAuth } from "@/lib/firebase/client";
-<<<<<<< HEAD
 import {
   createDocument,
   createSpace,
@@ -39,26 +38,7 @@ import {
   type DocumentItem,
   type SpaceItem,
 } from "@/lib/firebase/workspace";
-=======
 
-interface SpaceItem {
-  id: string;
-  title: string;
-  count: number;
-  bgGradient: string;
-  description: string;
-}
-
-interface DocumentItem {
-  id: string;
-  title: string;
-  type: "pdf" | "youtube" | "recording";
-  space: string;
-  date: string;
-  pagesOrDuration: string;
-  summaryText: string;
-}
->>>>>>> 5d66da33deeec2530ed911f657e3f8b838d87124
 
 interface Flashcard {
   id: number;
@@ -288,11 +268,6 @@ export default function AppWorkspacePage() {
     } catch {
       setWorkspaceError("The space could not be created. Check your Firestore configuration and try again.");
     }
-  };
-
-  const handleSignOut = async () => {
-    await signOut(getFirebaseAuth());
-    router.replace("/signin");
   };
 
   const handleSignOut = async () => {
