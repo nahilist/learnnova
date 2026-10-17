@@ -24,12 +24,16 @@ export function Navbar({ onOpenDemo }: NavbarProps) {
 
   return (
     <header
-      className={`sticky top-0 z-40 w-full transition-all duration-200 ${
+      className={`sticky top-0 z-40 w-full border-b backdrop-blur-[22px] backdrop-saturate-150 transition-all duration-300 ${
         scrolled
-          ? "bg-white/95 backdrop-blur-md shadow-xs border-b border-neutral-100"
-          : "bg-white"
+          ? "border-white/65 bg-white/[0.46] shadow-[0_8px_30px_rgba(15,23,42,0.07)]"
+          : "border-white/45 bg-white/[0.28] shadow-[0_1px_0_rgba(15,23,42,0.03)]"
       }`}
     >
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white to-transparent opacity-90"
+      />
       <div className="max-w-[1280px] mx-auto px-6 h-20 flex items-center justify-between">
         {/* Left: Logo */}
         <Link href="/" className="transition-opacity hover:opacity-85 focus:outline-none">
@@ -60,7 +64,7 @@ export function Navbar({ onOpenDemo }: NavbarProps) {
             {/* Dropdown Menu */}
             {featuresOpen && (
               <div className="absolute top-full -left-4 w-56 pt-2 z-50">
-                <div className="bg-white rounded-2xl shadow-xl border border-neutral-100 p-2 py-2.5 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="rounded-2xl border border-white/70 bg-white/80 p-2 py-2.5 shadow-[0_18px_50px_rgba(15,23,42,0.14)] backdrop-blur-2xl animate-in fade-in slide-in-from-top-2 duration-150">
                   <button
                     onClick={() => {
                       setFeaturesOpen(false);
@@ -135,7 +139,7 @@ export function Navbar({ onOpenDemo }: NavbarProps) {
 
       {/* Mobile Menu Dropdown Overlay */}
       {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-x-0 top-20 bg-white/98 backdrop-blur-xl border-b border-neutral-200 px-6 py-8 shadow-2xl flex flex-col items-center text-center space-y-6 z-50 animate-in fade-in slide-in-from-top-4 duration-200">
+        <div className="md:hidden fixed inset-x-0 top-20 border-b border-white/70 bg-white/70 px-6 py-8 shadow-[0_22px_50px_rgba(15,23,42,0.14)] backdrop-blur-2xl backdrop-saturate-150 flex flex-col items-center text-center space-y-6 z-50 animate-in fade-in slide-in-from-top-4 duration-200">
           <div className="w-full flex flex-col items-center space-y-5 text-[17px] font-medium text-neutral-800">
             {/* Features accordion */}
             <div className="w-full flex flex-col items-center">
