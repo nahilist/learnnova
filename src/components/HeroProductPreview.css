@@ -1,9 +1,17 @@
 .yl-demo-stage {
   position: relative;
-  width: min(calc(100% - 32px), 1080px);
-  height: clamp(560px, 58vw, 720px);
+  width: 100%;
+  height: clamp(920px, 130vh, 1120px);
   margin: 0 auto;
-  padding-top: 42px;
+}
+
+.yl-demo-sticky {
+  position: sticky;
+  top: 80px;
+  width: min(calc(100% - 32px), 1160px);
+  height: clamp(620px, 59vw, 760px);
+  margin: 0 auto;
+  padding-top: 24px;
   perspective: 1700px;
   overflow: visible;
   isolation: isolate;
@@ -27,8 +35,8 @@
   width: 100%;
   aspect-ratio: 1.78;
   overflow: hidden;
-  border: 1px solid rgba(21, 24, 22, 0.2);
-  border-radius: 27px;
+  border: 1px solid #050505;
+  border-radius: 36px 36px 14px 14px;
   background: #fff;
   box-shadow:
     0 2px 5px rgba(19, 23, 21, 0.08),
@@ -52,54 +60,13 @@
   will-change: transform, opacity;
 }
 
-.yl-demo-browser {
-  position: relative;
-  z-index: 2;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  height: 35px;
-  align-items: center;
-  padding: 0 14px;
-  border-bottom: 1px solid #eceeeb;
-  background: rgba(255, 255, 255, 0.97);
-  color: #7f827f;
-  font-size: 8px;
-}
-
-.yl-demo-dots {
-  display: flex;
-  gap: 5px;
-}
-
-.yl-demo-dots i {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #d9dbd8;
-}
-
-.yl-demo-dots i:first-child {
-  background: #79dbb8;
-}
-
-.yl-demo-browser-actions {
-  display: flex;
-  align-items: center;
-  justify-self: end;
-  gap: 10px;
-}
-
-.yl-demo-browser-actions svg {
-  width: 12px;
-  height: 12px;
-}
-
 .yl-demo-viewport {
   position: relative;
-  height: calc(100% - 35px);
+  width: 100%;
+  height: 100%;
   overflow: hidden;
+  border-radius: inherit;
   background: #fff;
-  will-change: clip-path;
 }
 
 .yl-demo-video {
@@ -107,7 +74,7 @@
   width: 100%;
   height: 100%;
   background: #fff;
-  object-fit: contain;
+  object-fit: cover;
   transform-origin: 50% 48%;
   backface-visibility: hidden;
   will-change: transform;
@@ -128,6 +95,13 @@
 
 @media (max-width: 767px) {
   .yl-demo-stage {
+    width: 100%;
+    height: clamp(320px, 86vw, 450px);
+  }
+
+  .yl-demo-sticky {
+    position: relative;
+    top: auto;
     width: calc(100% - 20px);
     height: clamp(320px, 86vw, 450px);
     padding-top: 20px;
@@ -137,37 +111,7 @@
 
   .yl-demo-frame {
     aspect-ratio: 1.48;
-    border-radius: 15px;
+    border-radius: 24px 24px 10px 10px;
   }
 
-  .yl-demo-browser {
-    height: 27px;
-    padding: 0 9px;
-    font-size: 6px;
-  }
-
-  .yl-demo-viewport {
-    height: calc(100% - 27px);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .yl-demo-frame {
-    transform: none !important;
-    border-radius: 14px;
-  }
-
-  .yl-demo-viewport {
-    clip-path: none !important;
-  }
-
-  .yl-demo-video,
-  .yl-demo-glow {
-    transform: none !important;
-  }
-
-  .yl-demo-shadow {
-    opacity: 0.14;
-    transform: none !important;
-  }
 }
