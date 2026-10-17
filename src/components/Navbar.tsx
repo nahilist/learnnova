@@ -22,6 +22,17 @@ export function Navbar({ onOpenDemo }: NavbarProps) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mobileMenuOpen]);
+
   return (
     <header
       className={`sticky top-0 z-40 w-full border-b backdrop-blur-[22px] backdrop-saturate-150 transition-all duration-300 ${
@@ -132,6 +143,8 @@ export function Navbar({ onOpenDemo }: NavbarProps) {
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className="md:hidden p-2 text-neutral-800 hover:text-black focus:outline-none"
           aria-label="Toggle navigation menu"
+          aria-controls="mobile-navigation"
+          aria-expanded={mobileMenuOpen}
         >
           {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
@@ -139,7 +152,7 @@ export function Navbar({ onOpenDemo }: NavbarProps) {
 
       {/* Mobile Menu Dropdown Overlay */}
       {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-x-0 top-20 border-b border-white/70 bg-white/70 px-6 py-8 shadow-[0_22px_50px_rgba(15,23,42,0.14)] backdrop-blur-2xl backdrop-saturate-150 flex flex-col items-center text-center space-y-6 z-50 animate-in fade-in slide-in-from-top-4 duration-200">
+        <div id="mobile-navigation" className="md:hidden absolute inset-x-0 top-full min-h-[calc(100dvh-5rem)] max-h-[calc(100dvh-5rem)] overflow-y-auto border-t border-neutral-100 bg-white px-6 py-8 shadow-[0_22px_50px_rgba(15,23,42,0.12)] flex flex-col items-center text-center space-y-6 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="w-full flex flex-col items-center space-y-5 text-[17px] font-medium text-neutral-800">
             {/* Features accordion */}
             <div className="w-full flex flex-col items-center">
