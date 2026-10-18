@@ -18,8 +18,10 @@ import {
   BookOpen, 
   MessageSquare, 
   Copy, 
-  Check 
+  Check,
+  AlertCircle 
 } from "lucide-react";
+import { summarizeYouTubeVideo } from "@/lib/api";
 
 interface SampleVideo {
   id: string;
@@ -259,6 +261,7 @@ export default function YouTubeSummarizerPage() {
   const [cardFlipped, setCardFlipped] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleSelectSample = (video: SampleVideo) => {
     setSelectedVideo(video);
@@ -267,80 +270,71 @@ export default function YouTubeSummarizerPage() {
     setQuizAnswers({});
     setActiveCardIndex(0);
     setCardFlipped(false);
+    setErrorMessage("");
   };
 
-  const handleSummarizeCustom = (e: React.FormEvent) => {
+  const handleSummarizeCustom = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputUrl.trim()) return;
+    const cleanUrl = inputUrl.trim();
+    if (!cleanUrl) return;
 
     setIsProcessing(true);
-    setTimeout(() => {
-      // Find if matches sample or create dynamic mock
-      const matched = SAMPLE_VIDEOS.find(
-        (v) => v.url.toLowerCase() === inputUrl.toLowerCase() || inputUrl.includes(v.youtubeId)
-      );
+    setErrorMessage("");
 
-      if (matched) {
-        setSelectedVideo(matched);
-      } else {
-        // Build simulated custom video summary
-        setSelectedVideo({
-          id: "custom-" + Date.now(),
-          youtubeId: "custom",
-          title: "Custom YouTube Lecture Summary",
-          channel: "Educational Stream • LearnNova AI Processor",
-          duration: "32:15",
-          url: inputUrl,
-          summary: "LearnNova processed this video stream, extracted speech transcripts, and synthesized conceptual frameworks and review materials.",
-          keyTakeaways: [
-            "Core conceptual framework explained with clear step-by-step methodologies.",
-            "Key definitions and operational constraints highlighted for exam preparation.",
-            "Actionable takeaways mapped to active recall study flashcards."
-          ],
-          chapters: [
-            {
-              time: "00:00",
-              title: "Introduction & Theoretical Background",
-              summary: "Overview of initial assumptions, definitions, and problem space."
-            },
-            {
-              time: "08:15",
-              title: "Detailed Case Analysis & Evidence",
-              summary: "Deductive walkthrough of practical applications and counter-arguments."
-            },
-            {
-              time: "21:30",
-              title: "Synthesis & Exam Recommendations",
-              summary: "High-yield takeaways and frequently tested examination patterns."
-            }
-          ],
-          quizQuestions: [
-            {
-              question: "What is the primary thesis established in this lecture?",
-              options: [
-                "Systematic active application outperforms passive observation.",
-                "Theoretical definitions can be ignored in practical execution.",
-                "Historical models are no longer valid under modern metrics.",
-                "Only computational solutions should be prioritized."
-              ],
-              correctIndex: 0,
-              explanation: "The lecture repeatedly emphasizes active engagement and empirical testing over passive review."
-            }
-          ],
-          flashcards: [
-            {
-              front: "Primary Lecture Thesis",
-              back: "Active recall and iterative application establish robust neural retention."
-            }
-          ]
-        });
-      }
+    try {
+      // Connect to real FastAPI backend /api/youtube/summarize
+      const result = await summarizeYouTubeVideo(cleanUrl);
 
-      setIsProcessing(false);
+      setSelectedVideo({
+        id: result.id,
+        youtubeId: result.youtubeId,
+        title: result.title,
+        channel: result.channel,
+        duration: result.duration,
+        url: result.url,
+        summary: result.summary,
+        keyTakeaways: result.keyTakeaways && result.keyTakeaways.length > 0
+          ? result.keyTakeaways
+          : ["Key takeaways synthesized by LearnNova AI."],
+        chapters: result.chapters && result.chapters.length > 0
+          ? result.chapters
+          : [
+              {
+                time: "00:00",
+                title: "Introduction",
+                summary: "Core premise and lecture introduction.",
+              },
+            ],
+        quizQuestions: result.quizQuestions && result.quizQuestions.length > 0
+          ? result.quizQuestions
+          : [
+              {
+                question: `What is the primary topic of "${result.title}"?`,
+                options: [result.title, "Unrelated material", "No summary provided", "None of the above"],
+                correctIndex: 0,
+                explanation: "Derived from the lecture transcript.",
+              },
+            ],
+        flashcards: result.flashcards && result.flashcards.length > 0
+          ? result.flashcards
+          : [
+              {
+                front: result.title,
+                back: `Presented by ${result.channel}. Processed by LearnNova AI.`,
+              },
+            ],
+      });
+
       setSelectedChapterIndex(0);
       setQuizAnswers({});
       setActiveCardIndex(0);
-    }, 800);
+      setCardFlipped(false);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to process YouTube lecture.";
+      setErrorMessage(msg);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleAnswerQuiz = (questionIdx: number, optionIdx: number) => {
@@ -410,6 +404,17 @@ export default function YouTubeSummarizerPage() {
                 )}
               </button>
             </div>
+
+            {/* Error Message */}
+            {errorMessage && (
+              <div
+                role="alert"
+                className="mt-4 flex items-center justify-center gap-2 p-3 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium animate-in fade-in"
+              >
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+                <span>{errorMessage}</span>
+              </div>
+            )}
 
             {/* Quick Sample Chips */}
             <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs">

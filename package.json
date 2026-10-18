@@ -9,7 +9,9 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "type-check": "tsc --noEmit",
-    "test": "node --test"
+    "test": "node --test",
+    "backend:dev": "uv run --directory backend uvicorn app.main:app --reload --port 8000",
+    "backend:test": "uv run --directory backend pytest"
   },
   "dependencies": {
     "firebase": "12.10.0",

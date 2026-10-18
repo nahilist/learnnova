@@ -38,6 +38,13 @@ import {
   type DocumentItem,
   type SpaceItem,
 } from "@/lib/firebase/workspace";
+import {
+  askChatTutor,
+  generateStudyFlashcards,
+  generateStudyQuiz,
+  summarizeYouTubeVideo,
+  processPdfDocument,
+} from "@/lib/api";
 
 
 interface Flashcard {
@@ -78,60 +85,36 @@ export default function AppWorkspacePage() {
   const [workspaceError, setWorkspaceError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Flashcards State
+  // Dynamic Flashcards State
   const [flashcards, setFlashcards] = useState<Flashcard[]>([
     {
       id: 1,
-      front: "What is the primary role of transfer RNA (tRNA) in translation?",
-      back: "tRNAs act as physical adaptors between mRNA codons and nascent amino acid chains, carrying cognate amino acids to the ribosome.",
+      front: "Core Subject Overview",
+      back: DEFAULT_DOCUMENTS[0].summaryText,
       known: null,
     },
     {
       id: 2,
-      front: "What is the 'Wobble Hypothesis'?",
-      back: "Non-Watson-Crick base pairing at the 3' position of mRNA codons, allowing a single tRNA to recognize multiple synonymous codons.",
-      known: null,
-    },
-    {
-      id: 3,
-      front: "What are the three binding sites on the ribosome?",
-      back: "A (Aminoacyl site - incoming tRNA), P (Peptidyl site - peptide bond formation), and E (Exit site - uncharged tRNA release).",
-      known: null,
-    },
-    {
-      id: 4,
-      front: "What enzyme charges a tRNA with its corresponding amino acid?",
-      back: "Aminoacyl-tRNA synthetase (each specific to one amino acid).",
+      front: "Active Recall Principle",
+      back: "Testing retrieval of concepts from memory produces dramatically higher exam retention than passive reading.",
       known: null,
     },
   ]);
+  const [isFlashcardsLoading, setIsFlashcardsLoading] = useState(false);
   const [cardIndex, setCardIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
 
-  // Quiz State
-  const quizQuestions: QuizQuestion[] = [
+  // Dynamic Quiz State
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([
     {
       id: 1,
-      question: "Which ribosomal site binds the incoming aminoacyl-tRNA during elongation?",
-      options: ["A site", "P site", "E site", "T site"],
+      question: `Which curriculum domain covers "${DEFAULT_DOCUMENTS[0].title}"?`,
+      options: [DEFAULT_DOCUMENTS[0].space, "Organic Chemistry", "Macroeconomics", "World History"],
       correctIndex: 0,
-      explanation: "Incoming charged tRNAs enter the Aminoacyl (A) site facilitated by elongation factor EF-Tu.",
+      explanation: `This document is categorized under the ${DEFAULT_DOCUMENTS[0].space} space.`,
     },
-    {
-      id: 2,
-      question: "Wobble pairing occurs at which nucleotide position of the mRNA codon?",
-      options: ["First (5')", "Second", "Third (3')", "None of the above"],
-      correctIndex: 2,
-      explanation: "Wobble occurs at the 3' position of the mRNA codon, where spatial constraints are relaxed.",
-    },
-    {
-      id: 3,
-      question: "What is the start codon in eukaryotic mRNA translation?",
-      options: ["UAG", "AUG", "UGA", "UAA"],
-      correctIndex: 1,
-      explanation: "AUG codes for Methionine and marks the universal start site for ribosomal initiation.",
-    },
-  ];
+  ]);
+  const [isQuizLoading, setIsQuizLoading] = useState(false);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
 
@@ -196,6 +179,54 @@ export default function AppWorkspacePage() {
     };
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  const handleGenerateFlashcards = async (docToUse?: DocumentItem) => {
+    const doc = docToUse || selectedDoc;
+    setIsFlashcardsLoading(true);
+    try {
+      const res = await generateStudyFlashcards({
+        content: doc.summaryText ? `${doc.title}: ${doc.summaryText}` : doc.title,
+        count: 5,
+      });
+      if (res.flashcards && res.flashcards.length > 0) {
+        setFlashcards(res.flashcards.map((f) => ({ ...f, known: null })));
+        setCardIndex(0);
+        setIsFlipped(false);
+      }
+    } catch (err: unknown) {
+      console.error("Failed to generate flashcards from backend:", err);
+    } finally {
+      setIsFlashcardsLoading(false);
+    }
+  };
+
+  const handleGenerateQuiz = async (docToUse?: DocumentItem) => {
+    const doc = docToUse || selectedDoc;
+    setIsQuizLoading(true);
+    try {
+      const res = await generateStudyQuiz({
+        content: doc.summaryText ? `${doc.title}: ${doc.summaryText}` : doc.title,
+        count: 4,
+      });
+      if (res.questions && res.questions.length > 0) {
+        setQuizQuestions(res.questions);
+        setSelectedAnswers({});
+        setQuizSubmitted(false);
+      }
+    } catch (err: unknown) {
+      console.error("Failed to generate quiz from backend:", err);
+    } finally {
+      setIsQuizLoading(false);
+    }
+  };
+
   const handleOpenDoc = (doc: DocumentItem) => {
     setSelectedDoc(doc);
     setActiveTab("study");
@@ -206,6 +237,8 @@ export default function AppWorkspacePage() {
         text: `Loaded "${doc.title}". I'm ready to quiz you, summarize key insights, or break down difficult concepts step by step!`,
       },
     ]);
+    handleGenerateFlashcards(doc);
+    handleGenerateQuiz(doc);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -222,28 +255,101 @@ export default function AppWorkspacePage() {
       return;
     }
 
-    const title = uploadedFileName || (pasteUrl ? "YouTube Video Lecture" : "New Classroom Audio Recording");
-    const newDoc: DocumentItem = {
-      id: `doc-${Date.now()}`,
-      title,
-      type: uploadType === "paste" ? "youtube" : uploadType === "record" ? "recording" : "pdf",
-      space: "General Workspace",
-      date: "Just now",
-      pagesOrDuration: "12 pages",
-      summaryText: "AI generated study notes and practice flashcards are ready for review.",
-    };
+    setIsSavingContent(true);
+    setWorkspaceError("");
 
     try {
-      setIsSavingContent(true);
-      setWorkspaceError("");
+      let title = uploadedFileName || (pasteUrl ? "YouTube Video Lecture" : "New Classroom Audio Recording");
+      let summaryText = "AI generated study notes and practice flashcards are ready for review.";
+      let pagesOrDuration = "1 page";
+      let docType: "pdf" | "youtube" | "recording" = "pdf";
+      let pregeneratedCards: Flashcard[] = [];
+      let pregeneratedQuestions: QuizQuestion[] = [];
+
+      if (uploadType === "file" && fileInputRef.current?.files?.[0]) {
+        const file = fileInputRef.current.files[0];
+        docType = "pdf";
+        if (file.name.toLowerCase().endsWith(".pdf")) {
+          const pdfData = await processPdfDocument(file);
+          title = pdfData.title || file.name;
+          pagesOrDuration = `${pdfData.pageCount} pages`;
+          summaryText = pdfData.summary;
+          if (pdfData.flashcards?.length) {
+            pregeneratedCards = pdfData.flashcards.map((f) => ({ ...f, known: null }));
+          }
+          if (pdfData.quizQuestions?.length) {
+            pregeneratedQuestions = pdfData.quizQuestions;
+          }
+        } else {
+          title = file.name;
+          summaryText = `Uploaded document: ${file.name}.`;
+        }
+      } else if (uploadType === "paste" && pasteUrl.trim()) {
+        const url = pasteUrl.trim();
+        if (url.includes("youtube.com") || url.includes("youtu.be")) {
+          docType = "youtube";
+          const ytData = await summarizeYouTubeVideo(url);
+          title = ytData.title;
+          pagesOrDuration = ytData.duration || "Video";
+          summaryText = ytData.summary;
+          if (ytData.flashcards?.length) {
+            pregeneratedCards = ytData.flashcards.map((f) => ({ ...f, known: null }));
+          }
+          if (ytData.quizQuestions?.length) {
+            pregeneratedQuestions = ytData.quizQuestions;
+          }
+        } else {
+          docType = "youtube";
+          title = "Web Resource";
+          summaryText = `Content processed from ${url}.`;
+        }
+      } else if (uploadType === "record") {
+        docType = "recording";
+        title = "Live Classroom Recording";
+        pagesOrDuration = "18 mins";
+        summaryText = "Audio lecture transcription parsed into active study notes.";
+      }
+
+      const newDoc: DocumentItem = {
+        id: `doc-${Date.now()}`,
+        title,
+        type: docType,
+        space: "General Workspace",
+        date: "Just now",
+        pagesOrDuration,
+        summaryText,
+      };
+
       await createDocument(user.uid, newDoc);
       setSelectedDoc(newDoc);
+      if (pregeneratedCards.length > 0) {
+        setFlashcards(pregeneratedCards);
+        setCardIndex(0);
+        setIsFlipped(false);
+      } else {
+        handleGenerateFlashcards(newDoc);
+      }
+      if (pregeneratedQuestions.length > 0) {
+        setQuizQuestions(pregeneratedQuestions);
+        setSelectedAnswers({});
+        setQuizSubmitted(false);
+      } else {
+        handleGenerateQuiz(newDoc);
+      }
+
+      setChatMessages([
+        {
+          sender: "ai",
+          text: `🎉 Loaded "${newDoc.title}". I've extracted the core concepts, generated flashcards and practice questions. What would you like to review first?`,
+        },
+      ]);
       setUploadModalOpen(false);
       setActiveTab("study");
       setUploadedFileName("");
       setPasteUrl("");
-    } catch {
-      setWorkspaceError("The material could not be saved. Check your Firestore configuration and try again.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to process upload.";
+      setWorkspaceError(`Processing failed: ${msg}`);
     } finally {
       setIsSavingContent(false);
     }
@@ -275,32 +381,61 @@ export default function AppWorkspacePage() {
     router.replace("/signin");
   };
 
-  const handleSendMessage = (e?: React.FormEvent) => {
+  const handleSendMessage = async (e?: React.FormEvent, customPrompt?: string) => {
     if (e) e.preventDefault();
-    if (!inputMessage.trim()) return;
+    const userText = (customPrompt || inputMessage).trim();
+    if (!userText) return;
 
-    const userText = inputMessage;
     setChatMessages((prev) => [...prev, { sender: "user", text: userText }]);
     setInputMessage("");
     setIsAiThinking(true);
 
-    setTimeout(() => {
-      let aiReply = "Here is what your study materials state:";
-      const lower = userText.toLowerCase();
+    try {
+      const res = await askChatTutor({
+        message: userText,
+        context: selectedDoc.summaryText
+          ? `Document Title: "${selectedDoc.title}" (${selectedDoc.space})\nSummary & Content: ${selectedDoc.summaryText}`
+          : selectedDoc.title,
+        history: chatMessages.slice(-6),
+      });
 
-      if (lower.includes("quiz") || lower.includes("test")) {
-        aiReply = "📝 Practice Question: What is the biological function of tRNA in protein translation?\n\nA) Translates mRNA codons into amino acids\nB) Replicates genomic DNA\nC) Synthesizes ribosomal subunits\n\n(Correct answer is A — tRNAs act as physical adaptor molecules!)";
-      } else if (lower.includes("wobble")) {
-        aiReply = "✨ Wobble Hypothesis in simple terms:\nThe genetic code has 61 amino acid codons, but cells have fewer tRNAs. This is possible because base pairing at the 3rd position of the codon is flexible ('wobbles'), allowing one tRNA to match several synonymous codons!";
-      } else if (lower.includes("summary") || lower.includes("summarize")) {
-        aiReply = "📌 High-Yield Takeaways:\n1. Translation occurs on ribosomes in three steps: Initiation, Elongation, Termination.\n2. Three active ribosome sites: A (Aminoacyl), P (Peptidyl), E (Exit).\n3. Aminoacyl-tRNA synthetases ensure fidelity by pairing the right amino acid to each tRNA.";
-      } else {
-        aiReply = `Great question regarding ${selectedDoc.title}! The key insight here is how molecular structure directs biological function. Would you like me to generate 3 flashcards or a quiz on this topic?`;
-      }
-
-      setChatMessages((prev) => [...prev, { sender: "ai", text: aiReply }]);
+      setChatMessages((prev) => [
+        ...prev,
+        { sender: "ai", text: res.reply || "Analyzed your question based on the study material." },
+      ]);
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : "Could not connect to AI service.";
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          sender: "ai",
+          text: `⚠️ AI Tutor notice: ${errorMsg}\nPlease ensure the FastAPI backend is running on port 8000.`,
+        },
+      ]);
+    } finally {
       setIsAiThinking(false);
-    }, 700);
+    }
+  };
+
+  const togglePodcastAudio = () => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      setIsAudioPlaying(!isAudioPlaying);
+      return;
+    }
+
+    if (isAudioPlaying) {
+      window.speechSynthesis.cancel();
+      setIsAudioPlaying(false);
+    } else {
+      window.speechSynthesis.cancel();
+      const narrationText = `Welcome to LearnNova Audio Review. Today we are breaking down: ${selectedDoc.title}. Summary: ${selectedDoc.summaryText}. Pay special attention to these core takeaways for upcoming examinations.`;
+      const utterance = new SpeechSynthesisUtterance(narrationText);
+      utterance.rate = audioSpeed === "2x" ? 1.6 : audioSpeed === "1.5x" ? 1.3 : 1.0;
+      utterance.onend = () => setIsAudioPlaying(false);
+      utterance.onerror = () => setIsAudioPlaying(false);
+      window.speechSynthesis.speak(utterance);
+      setIsAudioPlaying(true);
+    }
   };
 
   return (
@@ -677,49 +812,55 @@ export default function AppWorkspacePage() {
                   <div className="max-w-2xl mx-auto space-y-5 animate-in fade-in duration-200">
                     <div className="flex items-center justify-between text-xs text-neutral-500 font-mono">
                       <span className="inline-block text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                        Active Study Document
+                        Active Study Material • {selectedDoc.space}
                       </span>
                       <span>{selectedDoc.pagesOrDuration}</span>
                     </div>
 
-                    <h2 className="text-2xl sm:text-3xl font-serif font-bold text-neutral-900">
+                    <h2 className="text-2xl sm:text-3xl font-serif font-bold text-neutral-900 leading-tight">
                       {selectedDoc.title}
                     </h2>
 
-                    <p className="text-sm sm:text-[15px] text-neutral-700 leading-relaxed font-sans">
-                      How are the 61 codons that specify amino acids deciphered such that each directs the incorporation of the appropriate cognate amino acid? Transfer RNAs (tRNAs) act as physical adaptors between codons and peptides.
-                    </p>
-
-                    <div className="p-4 sm:p-5 bg-emerald-50/90 border-l-4 border-emerald-500 rounded-r-2xl text-xs sm:text-sm text-emerald-950 font-medium my-4 space-y-1">
-                      <div className="font-bold text-emerald-900">Wobble Hypothesis (Francis Crick, 1966):</div>
-                      <p>
-                        Some tRNAs recognize more than one synonymous codon due to relaxed non-Watson-Crick base pairing at the third position of the codon. For example, Inosine in the anticodon can pair with U, C, or A.
-                      </p>
+                    <div className="text-sm sm:text-[15px] text-neutral-700 leading-relaxed font-sans space-y-3">
+                      <p className="whitespace-pre-line">{selectedDoc.summaryText}</p>
                     </div>
 
-                    <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed">
-                      The ribosome maintains three primary active sites: the Aminoacyl (A) site, the Peptidyl (P) site, and the Exit (E) site, coordinating translocation and elongation factors.
-                    </p>
+                    <div className="p-4 sm:p-5 bg-emerald-50/90 border-l-4 border-emerald-500 rounded-r-2xl text-xs sm:text-sm text-emerald-950 font-medium my-4 space-y-1.5">
+                      <div className="font-bold text-emerald-900 flex items-center gap-1.5">
+                        <Sparkles className="w-4 h-4 text-emerald-700" />
+                        <span>High-Yield Study Focus:</span>
+                      </div>
+                      <p className="leading-relaxed">
+                        LearnNova AI has processed this material into active recall cards and practice exam questions. Test yourself frequently to reinforce conceptual memory.
+                      </p>
+                    </div>
 
                     {/* Quick prompts */}
                     <div className="pt-6 border-t border-neutral-100 flex flex-wrap gap-2 text-xs">
                       <button
                         onClick={() => {
-                          setInputMessage("Generate 3 practice questions on the Wobble hypothesis");
-                          setTimeout(() => handleSendMessage(), 100);
+                          handleSendMessage(undefined, `Generate 3 practice exam questions based on "${selectedDoc.title}"`);
                         }}
-                        className="px-3.5 py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-medium cursor-pointer"
+                        className="px-3.5 py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-medium cursor-pointer flex items-center gap-1.5"
                       >
                         💡 Generate 3-question quiz
                       </button>
                       <button
                         onClick={() => {
-                          setInputMessage("Summarize the key points of this section");
-                          setTimeout(() => handleSendMessage(), 100);
+                          handleSendMessage(undefined, `Summarize the core concepts and exam formulas for "${selectedDoc.title}"`);
                         }}
-                        className="px-3.5 py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-medium cursor-pointer"
+                        className="px-3.5 py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-medium cursor-pointer flex items-center gap-1.5"
                       >
-                        📝 Summarize key points
+                        📝 Summarize key takeaways
+                      </button>
+                      <button
+                        onClick={() => {
+                          setStudyTool("flashcards");
+                          handleGenerateFlashcards();
+                        }}
+                        className="px-3.5 py-2 rounded-xl bg-neutral-900 hover:bg-black text-white font-medium cursor-pointer flex items-center gap-1.5"
+                      >
+                        🗂 Generate Fresh Flashcards
                       </button>
                     </div>
                   </div>
@@ -728,144 +869,196 @@ export default function AppWorkspacePage() {
                 {/* Mode 2: Flashcards View */}
                 {studyTool === "flashcards" && (
                   <div className="max-w-xl mx-auto py-4 animate-in fade-in duration-200">
-                    <div className="flex items-center justify-between text-xs text-neutral-500 mb-4 font-mono">
-                      <span>Card {cardIndex + 1} of {flashcards.length}</span>
-                      <span className="text-emerald-600 font-semibold">
-                        Mastery: {Math.round((flashcards.filter((f) => f.known === true).length / flashcards.length) * 100)}%
-                      </span>
-                    </div>
-
-                    {/* 3D Flip Card */}
-                    <div
-                      onClick={() => setIsFlipped(!isFlipped)}
-                      className="w-full h-64 sm:h-72 bg-neutral-50 hover:bg-neutral-100/70 rounded-3xl border border-neutral-200 p-8 flex flex-col justify-between text-center shadow-xs cursor-pointer select-none transition-all duration-200 relative"
-                    >
-                      <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
-                        {isFlipped ? "Answer" : "Question (Click to flip)"}
-                      </span>
-
-                      <div className="text-base sm:text-lg font-medium text-neutral-900 leading-snug px-4">
-                        {isFlipped ? flashcards[cardIndex].back : flashcards[cardIndex].front}
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-neutral-500 mb-4 font-mono">
+                      <span>Card {flashcards.length > 0 ? cardIndex + 1 : 0} of {flashcards.length}</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-emerald-600 font-semibold">
+                          Mastery: {flashcards.length > 0 ? Math.round((flashcards.filter((f) => f.known === true).length / flashcards.length) * 100) : 0}%
+                        </span>
+                        <button
+                          onClick={() => handleGenerateFlashcards()}
+                          disabled={isFlashcardsLoading}
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-[11px] font-sans font-medium text-neutral-800 cursor-pointer disabled:opacity-50"
+                        >
+                          <Sparkles className={`w-3 h-3 text-amber-500 ${isFlashcardsLoading ? "animate-spin" : ""}`} />
+                          <span>{isFlashcardsLoading ? "Generating..." : "Generate Cards"}</span>
+                        </button>
                       </div>
-
-                      <span className="text-[11px] text-neutral-400">
-                        {isFlipped ? "Click to return to question" : "Click anywhere to reveal answer"}
-                      </span>
                     </div>
 
-                    {/* Action buttons: Don't know / Got it */}
-                    <div className="flex items-center justify-center gap-4 mt-6">
-                      <button
-                        onClick={() => {
-                          const updated = [...flashcards];
-                          updated[cardIndex].known = false;
-                          setFlashcards(updated);
-                          setIsFlipped(false);
-                          if (cardIndex < flashcards.length - 1) setCardIndex(cardIndex + 1);
-                        }}
-                        className="px-6 py-2.5 rounded-full border border-neutral-300 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 cursor-pointer"
-                      >
-                        Still Learning
-                      </button>
-                      <button
-                        onClick={() => {
-                          const updated = [...flashcards];
-                          updated[cardIndex].known = true;
-                          setFlashcards(updated);
-                          setIsFlipped(false);
-                          if (cardIndex < flashcards.length - 1) setCardIndex(cardIndex + 1);
-                        }}
-                        className="px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs cursor-pointer flex items-center gap-1.5"
-                      >
-                        <Check className="w-3.5 h-3.5" />
-                        <span>Got It!</span>
-                      </button>
-                    </div>
+                    {isFlashcardsLoading ? (
+                      <div className="w-full h-64 rounded-3xl border border-neutral-200 bg-neutral-50 flex flex-col items-center justify-center p-8 text-neutral-500">
+                        <div className="w-6 h-6 border-2 border-neutral-300 border-t-neutral-900 rounded-full animate-spin mb-3" />
+                        <p className="text-xs font-medium">Generating AI flashcards for {selectedDoc.title}...</p>
+                      </div>
+                    ) : flashcards.length > 0 && flashcards[cardIndex] ? (
+                      <>
+                        {/* 3D Flip Card */}
+                        <div
+                          onClick={() => setIsFlipped(!isFlipped)}
+                          className="w-full h-64 sm:h-72 bg-neutral-50 hover:bg-neutral-100/70 rounded-3xl border border-neutral-200 p-8 flex flex-col justify-between text-center shadow-xs cursor-pointer select-none transition-all duration-200 relative"
+                        >
+                          <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
+                            {isFlipped ? "Answer" : "Question (Click to flip)"}
+                          </span>
+
+                          <div className="text-base sm:text-lg font-medium text-neutral-900 leading-snug px-4">
+                            {isFlipped ? flashcards[cardIndex].back : flashcards[cardIndex].front}
+                          </div>
+
+                          <span className="text-[11px] text-neutral-400">
+                            {isFlipped ? "Click to return to question" : "Click anywhere to reveal answer"}
+                          </span>
+                        </div>
+
+                        {/* Action buttons: Don't know / Got it */}
+                        <div className="flex items-center justify-center gap-4 mt-6">
+                          <button
+                            onClick={() => {
+                              const updated = [...flashcards];
+                              updated[cardIndex].known = false;
+                              setFlashcards(updated);
+                              setIsFlipped(false);
+                              if (cardIndex < flashcards.length - 1) setCardIndex(cardIndex + 1);
+                            }}
+                            className="px-6 py-2.5 rounded-full border border-neutral-300 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 cursor-pointer"
+                          >
+                            Still Learning
+                          </button>
+                          <button
+                            onClick={() => {
+                              const updated = [...flashcards];
+                              updated[cardIndex].known = true;
+                              setFlashcards(updated);
+                              setIsFlipped(false);
+                              if (cardIndex < flashcards.length - 1) setCardIndex(cardIndex + 1);
+                            }}
+                            className="px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs cursor-pointer flex items-center gap-1.5"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                            <span>Got It!</span>
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="w-full h-64 rounded-3xl border border-dashed border-neutral-300 bg-neutral-50 flex flex-col items-center justify-center p-8 text-neutral-500">
+                        <p className="text-xs mb-3">No flashcards yet for this document.</p>
+                        <button
+                          onClick={() => handleGenerateFlashcards()}
+                          className="px-4 py-2 rounded-xl bg-neutral-900 text-white text-xs font-semibold hover:bg-black cursor-pointer"
+                        >
+                          Generate AI Flashcards
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
 
                 {/* Mode 3: Practice Exam Quiz View */}
                 {studyTool === "quiz" && (
                   <div className="max-w-2xl mx-auto space-y-6 py-2 animate-in fade-in duration-200">
-                    <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
-                      <h3 className="font-semibold text-lg text-neutral-900">
-                        Timed Practice Exam (3 Questions)
-                      </h3>
-                      <span className="text-xs font-mono text-neutral-400">Pass Mark: 70%</span>
-                    </div>
-
-                    {quizQuestions.map((q, qIdx) => (
-                      <div key={q.id} className="p-5 rounded-2xl bg-neutral-50 border border-neutral-200/80 space-y-3">
-                        <p className="text-sm font-semibold text-neutral-900">
-                          {qIdx + 1}. {q.question}
-                        </p>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {q.options.map((opt, optIdx) => {
-                            const isSelected = selectedAnswers[q.id] === optIdx;
-                            const isCorrect = q.correctIndex === optIdx;
-                            let btnStyle = "bg-white text-neutral-800 border-neutral-200 hover:bg-neutral-100";
-
-                            if (quizSubmitted) {
-                              if (isCorrect) btnStyle = "bg-emerald-100 text-emerald-950 border-emerald-400 font-bold";
-                              else if (isSelected && !isCorrect) btnStyle = "bg-red-100 text-red-950 border-red-300";
-                            } else if (isSelected) {
-                              btnStyle = "bg-neutral-900 text-white border-black font-semibold";
-                            }
-
-                            return (
-                              <button
-                                key={optIdx}
-                                onClick={() => {
-                                  if (!quizSubmitted) {
-                                    setSelectedAnswers((prev) => ({ ...prev, [q.id]: optIdx }));
-                                  }
-                                }}
-                                className={`p-3 rounded-xl border text-xs text-left transition-all cursor-pointer ${btnStyle}`}
-                              >
-                                {opt}
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                        {quizSubmitted && (
-                          <div className="pt-2 text-xs text-neutral-600 border-t border-neutral-200/60">
-                            <strong>Rationale:</strong> {q.explanation}
-                          </div>
-                        )}
+                    <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-neutral-100">
+                      <div>
+                        <h3 className="font-semibold text-lg text-neutral-900">
+                          Adaptive Practice Exam ({quizQuestions.length} Questions)
+                        </h3>
+                        <p className="text-xs text-neutral-400">Targeted on {selectedDoc.title}</p>
                       </div>
-                    ))}
-
-                    <div className="pt-4 flex items-center justify-between">
-                      {!quizSubmitted ? (
-                        <button
-                          onClick={() => setQuizSubmitted(true)}
-                          className="px-6 py-3 rounded-full bg-neutral-900 hover:bg-black text-white text-xs font-semibold shadow-xs cursor-pointer"
-                        >
-                          Submit Exam &amp; Check Answers
-                        </button>
-                      ) : (
-                        <div className="flex items-center gap-3">
-                          <button
-                            onClick={() => {
-                              setSelectedAnswers({});
-                              setQuizSubmitted(false);
-                            }}
-                            className="px-5 py-2.5 rounded-full border border-neutral-300 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 cursor-pointer"
-                          >
-                            Retake Exam
-                          </button>
-                          <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
-                            <Award className="w-4 h-4" /> Score:{" "}
-                            {Object.entries(selectedAnswers).filter(
-                              ([id, ans]) => quizQuestions.find((q) => q.id === Number(id))?.correctIndex === ans
-                            ).length}{" "}
-                            / {quizQuestions.length} Correct
-                          </span>
-                        </div>
-                      )}
+                      <button
+                        onClick={() => handleGenerateQuiz()}
+                        disabled={isQuizLoading}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-xs font-medium text-neutral-800 cursor-pointer disabled:opacity-50"
+                      >
+                        <Sparkles className={`w-3.5 h-3.5 text-amber-500 ${isQuizLoading ? "animate-spin" : ""}`} />
+                        <span>{isQuizLoading ? "Generating..." : "Generate New Questions"}</span>
+                      </button>
                     </div>
+
+                    {isQuizLoading ? (
+                      <div className="p-12 text-center rounded-2xl bg-neutral-50 border border-neutral-200 text-neutral-500">
+                        <div className="w-6 h-6 border-2 border-neutral-300 border-t-neutral-900 rounded-full animate-spin mx-auto mb-3" />
+                        <p className="text-xs font-medium">Generating rigorous exam questions with rationale...</p>
+                      </div>
+                    ) : quizQuestions.length > 0 ? (
+                      <>
+                        {quizQuestions.map((q, qIdx) => (
+                          <div key={q.id} className="p-5 rounded-2xl bg-neutral-50 border border-neutral-200/80 space-y-3">
+                            <p className="text-sm font-semibold text-neutral-900">
+                              {qIdx + 1}. {q.question}
+                            </p>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              {q.options.map((opt, optIdx) => {
+                                const isSelected = selectedAnswers[q.id] === optIdx;
+                                const isCorrect = q.correctIndex === optIdx;
+                                let btnStyle = "bg-white text-neutral-800 border-neutral-200 hover:bg-neutral-100";
+
+                                if (quizSubmitted) {
+                                  if (isCorrect) btnStyle = "bg-emerald-100 text-emerald-950 border-emerald-400 font-bold";
+                                  else if (isSelected && !isCorrect) btnStyle = "bg-red-100 text-red-950 border-red-300";
+                                } else if (isSelected) {
+                                  btnStyle = "bg-neutral-900 text-white border-black font-semibold";
+                                }
+
+                                return (
+                                  <button
+                                    key={optIdx}
+                                    onClick={() => {
+                                      if (!quizSubmitted) {
+                                        setSelectedAnswers((prev) => ({ ...prev, [q.id]: optIdx }));
+                                      }
+                                    }}
+                                    className={`p-3 rounded-xl border text-xs text-left transition-all cursor-pointer ${btnStyle}`}
+                                  >
+                                    {opt}
+                                  </button>
+                                );
+                              })}
+                            </div>
+
+                            {quizSubmitted && (
+                              <div className="pt-2 text-xs text-neutral-600 border-t border-neutral-200/60">
+                                <strong>Rationale:</strong> {q.explanation}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+
+                        <div className="pt-4 flex items-center justify-between">
+                          {!quizSubmitted ? (
+                            <button
+                              onClick={() => setQuizSubmitted(true)}
+                              className="px-6 py-3 rounded-full bg-neutral-900 hover:bg-black text-white text-xs font-semibold shadow-xs cursor-pointer"
+                            >
+                              Submit Exam &amp; Check Answers
+                            </button>
+                          ) : (
+                            <div className="flex items-center gap-3">
+                              <button
+                                onClick={() => {
+                                  setSelectedAnswers({});
+                                  setQuizSubmitted(false);
+                                }}
+                                className="px-5 py-2.5 rounded-full border border-neutral-300 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 cursor-pointer"
+                              >
+                                Retake Exam
+                              </button>
+                              <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
+                                <Award className="w-4 h-4" /> Score:{" "}
+                                {Object.entries(selectedAnswers).filter(
+                                  ([id, ans]) => quizQuestions.find((q) => q.id === Number(id))?.correctIndex === ans
+                                ).length}{" "}
+                                / {quizQuestions.length} Correct
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="p-8 text-center text-xs text-neutral-500 rounded-2xl bg-neutral-50 border border-neutral-200">
+                        Click &quot;Generate New Questions&quot; to synthesize an exam for this material.
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -877,10 +1070,10 @@ export default function AppWorkspacePage() {
                     </div>
 
                     <h3 className="text-xl font-bold text-neutral-900 mb-1">
-                      Episode 14: Deep Dive into Translation
+                      AI Audio Study Guide: {selectedDoc.title}
                     </h3>
                     <p className="text-xs text-neutral-500 mb-6">
-                      AI Co-hosts Alex &amp; Sarah discuss {selectedDoc.title}
+                      AI Co-hosts Alex &amp; Sarah analyze {selectedDoc.space}
                     </p>
 
                     {/* Animated waveform bars */}
@@ -890,7 +1083,7 @@ export default function AppWorkspacePage() {
                           key={i}
                           style={{ height: isAudioPlaying ? `${h}px` : "8px" }}
                           className={`w-1.5 rounded-full transition-all duration-300 ${
-                            isAudioPlaying ? "bg-purple-600" : "bg-neutral-300"
+                            isAudioPlaying ? "bg-purple-600 animate-pulse" : "bg-neutral-300"
                           }`}
                         />
                       ))}
@@ -910,27 +1103,25 @@ export default function AppWorkspacePage() {
                       </button>
 
                       <button
-                        onClick={() => setIsAudioPlaying(!isAudioPlaying)}
+                        onClick={togglePodcastAudio}
                         className="w-14 h-14 rounded-full bg-neutral-900 hover:bg-black text-white flex items-center justify-center shadow-md active:scale-95 transition-all cursor-pointer"
+                        title={isAudioPlaying ? "Pause Audio" : "Play Audio with Web Speech"}
                       >
                         {isAudioPlaying ? <Pause className="w-6 h-6 fill-white" /> : <Play className="w-6 h-6 fill-white ml-0.5" />}
                       </button>
 
-                      <button
-                        onClick={() => alert("Podcast downloaded for offline listening.")}
-                        className="text-xs text-neutral-500 hover:text-black font-medium"
-                      >
-                        Download MP3
-                      </button>
+                      <span className="text-xs text-neutral-500 font-medium">
+                        {isAudioPlaying ? "Playing aloud..." : "Click to Listen"}
+                      </span>
                     </div>
 
                     {/* Transcript dialogue box */}
                     <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-200 text-left text-xs space-y-2 text-neutral-700">
                       <div>
-                        <strong className="text-purple-700">Sarah:</strong> &quot;Welcome back! Today we are looking at how our cells translate nucleotide code into functioning proteins...&quot;
+                        <strong className="text-purple-700">Sarah:</strong> &quot;Welcome back! Today we are breaking down {selectedDoc.title}. Here is the core premise: {selectedDoc.summaryText}&quot;
                       </div>
                       <div>
-                        <strong className="text-indigo-700">Alex:</strong> &quot;And the fascinating part is the wobble base hypothesis. It shows how elegant nature is at saving cellular resources!&quot;
+                        <strong className="text-indigo-700">Alex:</strong> &quot;Exactly. What matters most for exams is being able to connect these concepts to practice questions. Make sure to review your flashcards and take the practice exam!&quot;
                       </div>
                     </div>
                   </div>
@@ -945,10 +1136,10 @@ export default function AppWorkspacePage() {
               {/* Header */}
               <div className="pb-3 border-b border-neutral-200 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
                   <span className="font-semibold text-xs text-neutral-900">LearnNova AI Tutor</span>
                 </div>
-                <span className="text-[11px] text-neutral-400 font-mono">GPT-5 Learn+</span>
+                <span className="text-[11px] text-neutral-500 font-mono">Groq AI Engine</span>
               </div>
 
               {/* Chat Message Thread */}
