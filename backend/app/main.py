@@ -19,13 +19,15 @@ app = FastAPI(
 
 # Configure CORS
 origins = settings.cors_origins_list
-if "*" not in origins:
-    origins.append("http://localhost:3000")
-    origins.append("http://127.0.0.1:3000")
+default_origins = ["http://localhost:3000", "http://127.0.0.1:3000", "https://youlearn-ai.vercel.app"]
+for default_origin in default_origins:
+    if default_origin not in origins and "*" not in origins:
+        origins.append(default_origin)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"] if settings.ENVIRONMENT == "development" else origins,
+    allow_origin_regex=r"^https:\/\/.*\.vercel\.app$" if settings.ENVIRONMENT == "production" else None,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
