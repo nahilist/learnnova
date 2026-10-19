@@ -77,7 +77,12 @@ export default function SignInPage() {
           password,
         });
         if (error) {
-          setErrorMessage(error.message || "Invalid email or password.");
+          const errText = error.message || "";
+          if (errText.includes("403") || errText.includes("credentials") || errText.includes("not found")) {
+            setErrorMessage("Account not found or invalid password. Please click 'Sign up' below to create a new account.");
+          } else {
+            setErrorMessage(errText || "Invalid email or password. If you don't have an account, click 'Sign up' below.");
+          }
           setIsLoading(false);
           return;
         }
