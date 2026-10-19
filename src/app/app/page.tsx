@@ -80,7 +80,7 @@ export default function AppWorkspacePage() {
   const [uploadType, setUploadType] = useState<"file" | "paste" | "record">("file");
   const [pasteUrl, setPasteUrl] = useState("");
   const [uploadedFileName, setUploadedFileName] = useState("");
-  const [isWorkspaceLoading, setIsWorkspaceLoading] = useState(true);
+  const [isWorkspaceLoading, setIsWorkspaceLoading] = useState(false);
   const [isSavingContent, setIsSavingContent] = useState(false);
   const [workspaceError, setWorkspaceError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -128,7 +128,6 @@ export default function AppWorkspacePage() {
   useEffect(() => {
     let isActive = true;
     if (!user) {
-      setIsWorkspaceLoading(false);
       return;
     }
 

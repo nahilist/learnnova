@@ -50,6 +50,9 @@ export async function GET(request: NextRequest) {
       documents: finalDocs,
     });
   } catch (error) {
+    if ((error as { digest?: string })?.digest?.startsWith?.("NEXT_")) {
+      throw error;
+    }
     console.error("Workspace GET error:", error);
     return NextResponse.json({ error: "Failed to load workspace data" }, { status: 500 });
   }

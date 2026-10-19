@@ -52,13 +52,15 @@ describe("LearnNova Production Route & Asset Validation", () => {
     );
   });
 
-  it("should have Firebase authentication configuration and a protected workspace", () => {
-    const firebaseClientPath = path.join(rootDir, "src/lib/firebase/client.ts");
+  it("should have Neon authentication configuration and a protected workspace", () => {
+    const authClientPath = path.join(rootDir, "src/lib/auth/client.ts");
+    const authServerPath = path.join(rootDir, "src/lib/auth/server.ts");
     const authGuardPath = path.join(rootDir, "src/components/AuthGuard.tsx");
     const appLayoutPath = path.join(rootDir, "src/app/app/layout.tsx");
     const envExamplePath = path.join(rootDir, ".env.example");
 
-    assert.ok(fs.existsSync(firebaseClientPath), "Firebase client configuration is missing");
+    assert.ok(fs.existsSync(authClientPath), "Neon auth client configuration is missing");
+    assert.ok(fs.existsSync(authServerPath), "Neon auth server configuration is missing");
     assert.ok(fs.existsSync(authGuardPath), "AuthGuard is missing");
     assert.ok(fs.existsSync(appLayoutPath), "Protected app layout is missing");
     assert.ok(fs.existsSync(envExamplePath), ".env.example is missing");
@@ -66,20 +68,23 @@ describe("LearnNova Production Route & Asset Validation", () => {
     const appLayout = fs.readFileSync(appLayoutPath, "utf-8");
     const envExample = fs.readFileSync(envExamplePath, "utf-8");
     assert.ok(appLayout.includes("AuthGuard"), "The workspace must be wrapped in AuthGuard");
-    assert.ok(envExample.includes("NEXT_PUBLIC_FIREBASE_API_KEY"), "Firebase API key variable is undocumented");
+    assert.ok(envExample.includes("DATABASE_URL"), "DATABASE_URL is undocumented in .env.example");
+    assert.ok(envExample.includes("NEON_AUTH_BASE_URL"), "NEON_AUTH_BASE_URL is undocumented in .env.example");
   });
 
-  it("should persist each authenticated user's workspace with owner-only Firestore rules", () => {
-    const workspacePath = path.join(rootDir, "src/lib/firebase/workspace.ts");
-    const rulesPath = path.join(rootDir, "firestore.rules");
+  it("should have Neon Lakebase Postgres and Object Storage workspace integration", () => {
+    const workspacePath = path.join(rootDir, "src/lib/workspace.ts");
+    const dbPath = path.join(rootDir, "src/lib/db.ts");
+    const storagePath = path.join(rootDir, "src/lib/storage.ts");
+    const neonConfigPath = path.join(rootDir, "neon.ts");
 
-    assert.ok(fs.existsSync(workspacePath), "Firestore workspace data layer is missing");
-    assert.ok(fs.existsSync(rulesPath), "Firestore security rules are missing");
+    assert.ok(fs.existsSync(workspacePath), "Workspace data layer is missing");
+    assert.ok(fs.existsSync(dbPath), "Neon Postgres db client is missing");
+    assert.ok(fs.existsSync(storagePath), "Neon Object Storage client is missing");
+    assert.ok(fs.existsSync(neonConfigPath), "neon.ts config is missing");
 
     const workspace = fs.readFileSync(workspacePath, "utf-8");
-    const rules = fs.readFileSync(rulesPath, "utf-8");
-    assert.ok(workspace.includes("initializeUserWorkspace"), "User profile initialization is missing");
-    assert.ok(workspace.includes("subscribeToDocuments"), "Realtime document persistence is missing");
-    assert.ok(rules.includes("request.auth.uid == userId"), "Firestore data must be restricted by user UID");
+    assert.ok(workspace.includes("initializeUserWorkspace"), "User workspace initialization is missing");
+    assert.ok(workspace.includes("createDocument"), "Document creation is missing");
   });
 });

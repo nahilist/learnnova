@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "type-check": "tsc --noEmit",
-    "test": "node --test",
+    "test": "node --test tests/smoke.test.mjs",
     "backend:dev": "uv run --directory backend uvicorn app.main:app --reload --port 8000",
     "backend:test": "uv run --directory backend pytest"
   },

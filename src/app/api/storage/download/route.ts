@@ -25,6 +25,9 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
+    if ((error as { digest?: string })?.digest?.startsWith?.("NEXT_")) {
+      throw error;
+    }
     console.error("Storage download error:", error);
     return NextResponse.json({ error: "Failed to download file from Neon Object Storage" }, { status: 500 });
   }

@@ -1,6 +1,3 @@
-import fs from "fs";
-import path from "path";
-
 const BASE_URL = "http://127.0.0.1:3000";
 
 async function runTests() {

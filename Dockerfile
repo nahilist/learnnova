@@ -13,8 +13,8 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # -------------------------------------------------------------------
 FROM base AS deps
 WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
+COPY package.json package-lock.json .npmrc* ./
+RUN npm ci --legacy-peer-deps
 
 # -------------------------------------------------------------------
 # Stage 3: Source Builder

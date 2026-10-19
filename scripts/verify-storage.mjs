@@ -22,6 +22,10 @@ if (fs.existsSync(envPath)) {
 }
 
 async function testStorage() {
+  if (!process.env.AWS_ENDPOINT_URL_S3) {
+    console.log("Skipping storage live test: AWS_ENDPOINT_URL_S3 not set (CI environment without live credentials).");
+    return;
+  }
   console.log("Testing Neon Object Storage...");
   console.log("Endpoint:", process.env.AWS_ENDPOINT_URL_S3);
   console.log("Region:", process.env.AWS_REGION);
