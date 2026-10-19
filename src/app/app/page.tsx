@@ -3,7 +3,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { signOut } from "firebase/auth";
 import { 
   Upload, 
   Link as LinkIcon, 
@@ -27,17 +26,16 @@ import {
   LogOut,
 } from "lucide-react";
 import { LearnNovaLogo } from "@/components/Icons";
-import { getFirebaseAuth } from "@/lib/firebase/client";
+import { authClient } from "@/lib/auth/client";
 import {
   createDocument,
   createSpace,
   DEFAULT_DOCUMENTS,
   initializeUserWorkspace,
-  subscribeToDocuments,
-  subscribeToSpaces,
+  uploadToStorage,
   type DocumentItem,
   type SpaceItem,
-} from "@/lib/firebase/workspace";
+} from "@/lib/workspace";
 import {
   askChatTutor,
   generateStudyFlashcards,
@@ -64,6 +62,8 @@ interface QuizQuestion {
 
 export default function AppWorkspacePage() {
   const router = useRouter();
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
   const [activeTab, setActiveTab] = useState<"dashboard" | "study">("dashboard");
   const [studyTool, setStudyTool] = useState<"reader" | "flashcards" | "quiz" | "podcast">("reader");
   const [selectedDoc, setSelectedDoc] = useState<DocumentItem>(DEFAULT_DOCUMENTS[0]);
@@ -127,57 +127,39 @@ export default function AppWorkspacePage() {
 
   useEffect(() => {
     let isActive = true;
-    let unsubscribeSpaces: (() => void) | undefined;
-    let unsubscribeDocuments: (() => void) | undefined;
-    const user = getFirebaseAuth().currentUser;
-
     if (!user) {
+      setIsWorkspaceLoading(false);
       return;
     }
 
-    const handleDataError = (error: Error) => {
-      if (!isActive) return;
-      const message = error.message.toLowerCase().includes("permission")
-        ? "Firestore access was denied. Publish the included firestore.rules in Firebase Console."
-        : "Your workspace could not be loaded. Confirm that Cloud Firestore is enabled in Firebase Console.";
-      setWorkspaceError(message);
-      setIsWorkspaceLoading(false);
+    const loadData = async () => {
+      setIsWorkspaceLoading(true);
+      try {
+        const data = await initializeUserWorkspace({
+          id: user.id,
+          email: user.email,
+          name: user.name,
+        });
+        if (!isActive) return;
+        setSpaces(data.spaces);
+        setRecentDocs(data.documents);
+        if (data.documents.length > 0) {
+          setSelectedDoc(data.documents[0]);
+        }
+        setIsWorkspaceLoading(false);
+      } catch (err: unknown) {
+        if (!isActive) return;
+        const msg = err instanceof Error ? err.message : "Failed to load workspace";
+        setWorkspaceError(`Workspace error: ${msg}`);
+        setIsWorkspaceLoading(false);
+      }
     };
 
-    initializeUserWorkspace(user)
-      .then(() => {
-        if (!isActive) return;
-
-        unsubscribeSpaces = subscribeToSpaces(
-          user.uid,
-          (nextSpaces) => {
-            setSpaces(nextSpaces);
-            setIsWorkspaceLoading(false);
-          },
-          handleDataError,
-        );
-        unsubscribeDocuments = subscribeToDocuments(
-          user.uid,
-          (nextDocuments) => {
-            setRecentDocs(nextDocuments);
-            setSelectedDoc((current) =>
-              nextDocuments.find((documentItem) => documentItem.id === current.id) ??
-              nextDocuments[0] ??
-              current,
-            );
-            setIsWorkspaceLoading(false);
-          },
-          handleDataError,
-        );
-      })
-      .catch(handleDataError);
-
+    loadData();
     return () => {
       isActive = false;
-      unsubscribeSpaces?.();
-      unsubscribeDocuments?.();
     };
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     return () => {
@@ -249,7 +231,6 @@ export default function AppWorkspacePage() {
   };
 
   const handleProcessUpload = async () => {
-    const user = getFirebaseAuth().currentUser;
     if (!user) {
       setWorkspaceError("Your session expired. Please sign in again.");
       return;
@@ -265,10 +246,17 @@ export default function AppWorkspacePage() {
       let docType: "pdf" | "youtube" | "recording" = "pdf";
       let pregeneratedCards: Flashcard[] = [];
       let pregeneratedQuestions: QuizQuestion[] = [];
+      let fileUrl: string | undefined = undefined;
 
       if (uploadType === "file" && fileInputRef.current?.files?.[0]) {
         const file = fileInputRef.current.files[0];
         docType = "pdf";
+        try {
+          const uploadRes = await uploadToStorage(file);
+          fileUrl = uploadRes.url;
+        } catch (uploadErr) {
+          console.warn("Neon storage upload skipped:", uploadErr);
+        }
         if (file.name.toLowerCase().endsWith(".pdf")) {
           const pdfData = await processPdfDocument(file);
           title = pdfData.title || file.name;
@@ -314,13 +302,15 @@ export default function AppWorkspacePage() {
         id: `doc-${Date.now()}`,
         title,
         type: docType,
-        space: "General Workspace",
+        space: spaces[0]?.title || "Machine Learning & AI",
         date: "Just now",
         pagesOrDuration,
         summaryText,
+        fileUrl,
       };
 
-      await createDocument(user.uid, newDoc);
+      await createDocument(user.id, newDoc);
+      setRecentDocs((prev) => [newDoc, ...prev.filter((d) => d.id !== newDoc.id)]);
       setSelectedDoc(newDoc);
       if (pregeneratedCards.length > 0) {
         setFlashcards(pregeneratedCards);
@@ -356,7 +346,6 @@ export default function AppWorkspacePage() {
   };
 
   const handleCreateSpace = async () => {
-    const user = getFirebaseAuth().currentUser;
     const newName = prompt("Enter new space name (e.g. Organic Chemistry):")?.trim();
     if (!user || !newName) return;
 
@@ -370,14 +359,15 @@ export default function AppWorkspacePage() {
 
     try {
       setWorkspaceError("");
-      await createSpace(user.uid, newSpace);
+      await createSpace(user.id, newSpace);
+      setSpaces((prev) => [...prev, newSpace]);
     } catch {
-      setWorkspaceError("The space could not be created. Check your Firestore configuration and try again.");
+      setWorkspaceError("The space could not be created. Please try again.");
     }
   };
 
   const handleSignOut = async () => {
-    await signOut(getFirebaseAuth());
+    await authClient.signOut();
     router.replace("/signin");
   };
 

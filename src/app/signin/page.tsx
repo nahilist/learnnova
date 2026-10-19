@@ -3,19 +3,9 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  createUserWithEmailAndPassword,
-  GoogleAuthProvider,
-  OAuthProvider,
-  onAuthStateChanged,
-  sendPasswordResetEmail,
-  signInWithEmailAndPassword,
-  signInWithPopup,
-} from "firebase/auth";
 import { LearnNovaLogo, AppleIcon } from "@/components/Icons";
 import { Eye, EyeOff, ArrowRight } from "lucide-react";
-import { getAuthErrorMessage } from "@/lib/firebase/auth-errors";
-import { getFirebaseAuth, isFirebaseConfigured } from "@/lib/firebase/client";
+import { authClient } from "@/lib/auth/client";
 
 export function GoogleLogo({ className = "w-5 h-5" }: { className?: string }) {
   return (
@@ -42,7 +32,9 @@ export function GoogleLogo({ className = "w-5 h-5" }: { className?: string }) {
 
 export default function SignInPage() {
   const router = useRouter();
+  const { data: session, isPending } = authClient.useSession();
   const [isSignUp, setIsSignUp] = useState(false);
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -51,12 +43,10 @@ export default function SignInPage() {
   const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
-    if (!isFirebaseConfigured) return;
-
-    return onAuthStateChanged(getFirebaseAuth(), (user) => {
-      if (user) router.replace("/app");
-    });
-  }, [router]);
+    if (!isPending && session?.user) {
+      router.replace("/app");
+    }
+  }, [session, isPending, router]);
 
   const finishAuthentication = () => {
     const nextPath = new URLSearchParams(window.location.search).get("next");
@@ -70,39 +60,50 @@ export default function SignInPage() {
     setIsLoading(true);
 
     try {
-      const auth = getFirebaseAuth();
       if (isSignUp) {
-        await createUserWithEmailAndPassword(auth, email.trim(), password);
+        const { error } = await authClient.signUp.email({
+          email: email.trim(),
+          password,
+          name: name.trim() || email.trim().split("@")[0],
+        });
+        if (error) {
+          setErrorMessage(error.message || "Failed to create account. Please try again.");
+          setIsLoading(false);
+          return;
+        }
       } else {
-        await signInWithEmailAndPassword(auth, email.trim(), password);
+        const { error } = await authClient.signIn.email({
+          email: email.trim(),
+          password,
+        });
+        if (error) {
+          setErrorMessage(error.message || "Invalid email or password.");
+          setIsLoading(false);
+          return;
+        }
       }
       finishAuthentication();
-    } catch (error) {
-      setErrorMessage(getAuthErrorMessage(error));
+    } catch (err: unknown) {
+      const errObj = err as { message?: string };
+      setErrorMessage(errObj?.message || "An unexpected error occurred.");
       setIsLoading(false);
     }
   };
 
-  const handleOAuth = async (providerName: "Google" | "Apple") => {
+  const handleOAuth = async (providerName: "google" | "apple") => {
     setErrorMessage("");
     setSuccessMessage("");
     setIsLoading(true);
 
     try {
-      const provider =
-        providerName === "Google"
-          ? new GoogleAuthProvider()
-          : new OAuthProvider("apple.com");
-
-      if (provider instanceof OAuthProvider) {
-        provider.addScope("email");
-        provider.addScope("name");
-      }
-
-      await signInWithPopup(getFirebaseAuth(), provider);
-      finishAuthentication();
-    } catch (error) {
-      setErrorMessage(getAuthErrorMessage(error));
+      const callbackURL = `${window.location.origin}/app`;
+      await authClient.signIn.social({
+        provider: providerName,
+        callbackURL,
+      });
+    } catch (err: unknown) {
+      const errObj = err as { message?: string };
+      setErrorMessage(errObj?.message || `Failed to sign in with ${providerName}.`);
       setIsLoading(false);
     }
   };
@@ -118,10 +119,17 @@ export default function SignInPage() {
 
     setIsLoading(true);
     try {
-      await sendPasswordResetEmail(getFirebaseAuth(), email.trim());
-      setSuccessMessage("Password reset email sent. Check your inbox.");
-    } catch (error) {
-      setErrorMessage(getAuthErrorMessage(error));
+      const { error } = await authClient.forgetPassword.emailOtp({
+        email: email.trim(),
+      });
+      if (error) {
+        setErrorMessage(error.message || "Failed to send reset instructions.");
+      } else {
+        setSuccessMessage("Password reset instructions sent. Please check your inbox.");
+      }
+    } catch (err: unknown) {
+      const errObj = err as { message?: string };
+      setErrorMessage(errObj?.message || "Failed to send reset email.");
     } finally {
       setIsLoading(false);
     }
@@ -164,15 +172,9 @@ export default function SignInPage() {
 
           <p className="text-sm text-neutral-500 mb-8 font-normal">
             {isSignUp
-              ? "Start learning smarter with your personal AI tutor."
+              ? "Start learning smarter with your personal AI tutor on Neon."
               : "Let's continue your learning journey."}
           </p>
-
-          {!isFirebaseConfigured && (
-            <div role="alert" className="mb-5 w-full rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-left text-xs leading-5 text-amber-900">
-              Firebase is not configured. Add the values from <code>.env.example</code> to <code>.env.local</code> and restart the server.
-            </div>
-          )}
 
           {errorMessage && (
             <div role="alert" className="mb-5 w-full rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-left text-xs leading-5 text-red-700">
@@ -189,8 +191,8 @@ export default function SignInPage() {
           {/* Social Logins */}
           <div className="w-full space-y-3 mb-6">
             <button
-              onClick={() => handleOAuth("Google")}
-              disabled={isLoading || !isFirebaseConfigured}
+              onClick={() => handleOAuth("google")}
+              disabled={isLoading}
               className="w-full py-3 px-4 rounded-2xl bg-white hover:bg-neutral-50 border border-neutral-200/90 text-sm font-medium text-neutral-800 shadow-2xs flex items-center justify-center gap-3 transition-all active:scale-[0.98] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
             >
               <GoogleLogo className="w-4 h-4" />
@@ -198,8 +200,8 @@ export default function SignInPage() {
             </button>
 
             <button
-              onClick={() => handleOAuth("Apple")}
-              disabled={isLoading || !isFirebaseConfigured}
+              onClick={() => handleOAuth("apple")}
+              disabled={isLoading}
               className="w-full py-3 px-4 rounded-2xl bg-white hover:bg-neutral-50 border border-neutral-200/90 text-sm font-medium text-neutral-800 shadow-2xs flex items-center justify-center gap-3 transition-all active:scale-[0.98] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
             >
               <AppleIcon className="w-4 h-4 text-black" />
@@ -218,6 +220,19 @@ export default function SignInPage() {
 
           {/* Email / Password Form */}
           <form onSubmit={handleSubmit} className="w-full space-y-3.5">
+            {isSignUp && (
+              <div>
+                <input
+                  type="text"
+                  autoComplete="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Your Name"
+                  className="w-full px-4 py-3 rounded-2xl bg-neutral-50 border border-neutral-200/80 text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:bg-white transition-all"
+                />
+              </div>
+            )}
+
             <div>
               <input
                 type="email"
@@ -255,7 +270,7 @@ export default function SignInPage() {
                 <button
                   type="button"
                   onClick={handlePasswordReset}
-                  disabled={isLoading || !isFirebaseConfigured}
+                  disabled={isLoading}
                   className="text-xs text-neutral-500 hover:text-black transition-colors"
                 >
                   Forgot password?
@@ -265,7 +280,7 @@ export default function SignInPage() {
 
             <button
               type="submit"
-              disabled={isLoading || !isFirebaseConfigured}
+              disabled={isLoading}
               className="w-full py-3.5 px-6 rounded-full bg-neutral-800 hover:bg-black text-white font-medium text-sm transition-all shadow-md active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 mt-4 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLoading ? (
@@ -300,7 +315,7 @@ export default function SignInPage() {
 
       {/* Footer info */}
       <footer className="w-full py-4 text-center text-xs text-neutral-400">
-        © 2026 LearnNova Inc. All rights reserved.
+        © 2026 LearnNova Inc. All rights reserved. Powered by Neon.
       </footer>
     </div>
   );
