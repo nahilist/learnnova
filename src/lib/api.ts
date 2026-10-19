@@ -3,8 +3,18 @@
  * Connects Next.js Frontend to FastAPI Python Backend
  */
 
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "/api/backend";
+export const API_BASE_URL = (() => {
+  // When running in the browser on an HTTPS production page (e.g. Vercel),
+  // always route through the Next.js same-origin reverse proxy (/api/backend)
+  // unless the API URL is already secure HTTPS, preventing browser Mixed Content blocking.
+  if (typeof window !== "undefined" && window.location.protocol === "https:") {
+    const publicUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!publicUrl || publicUrl.startsWith("http://")) {
+      return "/api/backend";
+    }
+  }
+  return process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "/api/backend";
+})();
 
 export interface ChatMessage {
   sender: "user" | "ai";
