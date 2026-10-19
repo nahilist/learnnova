@@ -14,7 +14,7 @@
     "backend:test": "uv run --directory backend pytest"
   },
   "dependencies": {
-    "firebase": "12.10.0",
+    "firebase": "13.0.0",
     "gsap": "^3.15.0",
     "lucide-react": "^1.58.0",
     "next": "16.4.2",
