@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Sparkles, ShieldCheck } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 interface HeroProps {
   onOpenDemo: (title: string, subtitle: string) => void;
@@ -11,7 +11,7 @@ interface HeroProps {
 
 export function Hero({ onScrollToFeatures }: HeroProps) {
   return (
-    <section className="relative pt-12 pb-14 md:pt-16 md:pb-16 flex flex-col items-center text-center px-4 max-w-[1280px] mx-auto overflow-hidden">
+    <section className="relative pt-12 pb-10 md:pt-16 md:pb-12 flex flex-col items-center text-center px-4 max-w-[1280px] mx-auto overflow-hidden">
       {/* Product Tag */}
       <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral-100 border border-neutral-200/80 text-xs font-medium text-neutral-800 mb-6 animate-in fade-in duration-300">
         <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
@@ -52,22 +52,6 @@ export function Hero({ onScrollToFeatures }: HeroProps) {
         >
           Start Learning
         </Link>
-      </div>
-
-      {/* Honest Value Props */}
-      <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-neutral-500 select-none">
-        <div className="flex items-center gap-1.5">
-          <ShieldCheck className="w-4 h-4 text-emerald-600" />
-          <span>Page-cited grounded answers</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-neutral-300"></span>
-          <span>Free tier with 20 daily AI questions</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-neutral-300"></span>
-          <span>No credit card required</span>
-        </div>
       </div>
     </section>
   );
