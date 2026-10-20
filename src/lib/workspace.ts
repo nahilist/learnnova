@@ -37,11 +37,11 @@ export interface WorkspaceData {
 
 export const DEFAULT_SPACES: SpaceItem[] = [
   {
-    id: "bio",
-    title: "Human Behavioral Biology",
-    count: 21,
-    bgGradient: "from-amber-700 via-orange-600 to-amber-900",
-    description: "Evolutionary genetics, neuroscience, and behavior biology lectures.",
+    id: "himanshu-space",
+    title: "Himanshu's Space",
+    count: 0,
+    bgGradient: "from-neutral-200 via-neutral-100 to-stone-200",
+    description: "Personal study workspace, lectures, flashcards, and notes.",
   },
   {
     id: "ml",
@@ -51,44 +51,64 @@ export const DEFAULT_SPACES: SpaceItem[] = [
     description: "Transformers, neural network architectures, and mathematical loss functions.",
   },
   {
-    id: "psych",
-    title: "Intro to Psychology",
-    count: 6,
-    bgGradient: "from-teal-700 via-emerald-800 to-cyan-900",
-    description: "Cognitive biases, memory systems, and developmental psychology.",
+    id: "bio",
+    title: "Human Behavioral Biology",
+    count: 21,
+    bgGradient: "from-amber-700 via-orange-600 to-amber-900",
+    description: "Evolutionary genetics, neuroscience, and behavior biology lectures.",
   },
 ];
 
 export const DEFAULT_DOCUMENTS: DocumentItem[] = [
   {
     id: "doc-1",
-    title: "The Genetic Code & Translation (Chapter 11)",
-    type: "pdf",
-    space: "Human Behavioral Biology",
+    title: "1. Introduction to the Human Behavioral Biology",
+    type: "youtube",
+    space: "Himanshu's Space",
     date: "Today",
-    pagesOrDuration: "24 pages",
+    pagesOrDuration: "Lecture 1",
     summaryText:
-      "Transfer RNAs act as adaptors between codons and amino acids. Wobble base pairing at the 3' position allows 61 codons to be recognized with fewer tRNAs.",
+      "Stanford lecture series exploring evolutionary genetics, neurobiology, and behavioral endocrinology to understand complex human actions without reductionist bias.",
   },
   {
     id: "doc-2",
-    title: "Justice 01: The Moral Side of Murder (Harvard)",
-    type: "youtube",
-    space: "Philosophy & Law",
+    title: "Positional Encoding in Transformer Models",
+    type: "pdf",
+    space: "Himanshu's Space",
     date: "Yesterday",
-    pagesOrDuration: "54 mins",
+    pagesOrDuration: "12 pages",
     summaryText:
-      "Explores utilitarian ethics versus categorical moral duties through famous ethical dilemmas like the trolley problem.",
+      "Mathematical formulation of sine and cosine positional encodings enabling attention mechanisms to retain sequence order without recurrent loops.",
   },
   {
     id: "doc-3",
-    title: "Teaching CS50 with AI (ACM SIGCSE 2024)",
+    title: "What is Multi-head Attention Mechanism?",
     type: "pdf",
-    space: "Machine Learning & AI",
-    date: "3 days ago",
-    pagesOrDuration: "8 pages",
+    space: "Himanshu's Space",
+    date: "2 days ago",
+    pagesOrDuration: "18 pages",
     summaryText:
-      "Analyzes student engagement and outcomes when using 24/7 AI teaching assistants in large introductory programming courses.",
+      "Detailed explanation of linear projections of Query, Key, and Value vectors across multiple representation subspaces to capture diverse semantic relationships.",
+  },
+  {
+    id: "doc-4",
+    title: "Why is Self Attention called \"Scaled\"?",
+    type: "pdf",
+    space: "Himanshu's Space",
+    date: "3 days ago",
+    pagesOrDuration: "6 pages",
+    summaryText:
+      "The 1/sqrt(d_k) scaling factor prevents dot products from growing excessively large in high dimensions, preventing small softmax gradients.",
+  },
+  {
+    id: "doc-5",
+    title: "Scaled Dot Product Attention Explained",
+    type: "pdf",
+    space: "Himanshu's Space",
+    date: "4 days ago",
+    pagesOrDuration: "14 pages",
+    summaryText:
+      "Step-by-step breakdown of softmax((QK^T)/sqrt(d_k))V, matrix multiplications, masking techniques, and computational complexity trade-offs.",
   },
 ];
 
