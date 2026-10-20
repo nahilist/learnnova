@@ -24,24 +24,33 @@ export function Hero({ onScrollToFeatures }: HeroProps) {
       </h1>
 
       {/* Supporting Subtitle */}
-      <p className="text-lg sm:text-xl md:text-[21px] text-neutral-500 font-normal leading-relaxed max-w-2xl mx-auto mb-9">
-        Turns your PDFs, lecture notes, and YouTube videos into source-grounded chats, active recall flashcards, and practice exams.
+      <p className="text-base sm:text-lg md:text-[20px] text-neutral-500 font-normal leading-relaxed max-w-2xl mx-auto mb-7 sm:mb-8">
+        Turns your learning materials into notes, interactive chats, quizzes, and more
       </p>
 
       {/* CTA Buttons */}
-      <div className="flex items-center justify-center gap-4 mb-9 w-full sm:w-auto">
-        <button
-          onClick={onScrollToFeatures}
-          className="inline-flex items-center justify-center px-7 py-3.5 rounded-full bg-[#f3f4f6] hover:bg-neutral-200/70 border border-neutral-200 text-neutral-900 font-medium text-[16px] transition-all active:scale-[0.98] shadow-xs cursor-pointer"
+      <div className="flex items-center justify-center gap-3 mb-9 w-full sm:w-auto">
+        <a
+          href="#closing-cta"
+          onClick={(e) => {
+            const el = document.getElementById("closing-cta") || document.getElementById("features");
+            if (el) {
+              e.preventDefault();
+              el.scrollIntoView({ behavior: "smooth" });
+            } else {
+              onScrollToFeatures();
+            }
+          }}
+          className="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-white hover:bg-neutral-50 border border-neutral-200 text-neutral-800 font-medium text-sm transition-all active:scale-[0.98] shadow-2xs whitespace-nowrap cursor-pointer"
         >
-          Explore features
-        </button>
+          Get the app
+        </a>
 
         <Link
           href="/app"
-          className="inline-flex items-center justify-center px-7 py-3.5 rounded-full bg-neutral-950 hover:bg-neutral-800 text-white font-medium text-[16px] transition-all active:scale-[0.98] shadow-sm cursor-pointer"
+          className="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-black hover:bg-neutral-800 text-white font-medium text-sm transition-all active:scale-[0.98] shadow-xs whitespace-nowrap cursor-pointer"
         >
-          Start Learning Free
+          Start Learning
         </Link>
       </div>
 

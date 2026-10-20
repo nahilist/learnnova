@@ -11,7 +11,7 @@ export interface ClosingCtaProps {
 export function ClosingCta(props?: ClosingCtaProps) {
   void props;
   return (
-    <section className="w-full max-w-[1240px] mx-auto px-4 sm:px-6 pb-20">
+    <section id="closing-cta" className="w-full max-w-[1240px] mx-auto px-4 sm:px-6 pb-20">
       <div className="w-full bg-[#f8f9fa] rounded-3xl sm:rounded-[40px] border border-neutral-200/90 py-16 sm:py-24 px-6 text-center shadow-xs">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-neutral-200 text-xs font-semibold text-neutral-800 mb-6 shadow-2xs">
           <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
