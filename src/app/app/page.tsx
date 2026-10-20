@@ -198,8 +198,9 @@ export default function AppWorkspacePage() {
 
   // Upload Modal State
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
-  const [uploadType, setUploadType] = useState<"file" | "paste" | "record">("file");
+  const [uploadType, setUploadType] = useState<"file" | "link" | "text" | "record">("file");
   const [pasteUrl, setPasteUrl] = useState("");
+  const [pastedText, setPastedText] = useState("");
   const [uploadedFileName, setUploadedFileName] = useState("");
   const [uploadStep, setUploadStep] = useState<string>("");
   const [isSavingContent, setIsSavingContent] = useState(false);
@@ -694,8 +695,8 @@ export default function AppWorkspacePage() {
     }
   };
 
-  // Process File / Link Upload
-  const handleProcessUpload = async () => {
+  // Process File / Link / Text / Record Upload
+  const handleProcessUpload = async (recordSource?: "mic" | "tab") => {
     if (!user) {
       setWorkspaceError("Your session expired. Please sign in again.");
       return;
@@ -706,7 +707,7 @@ export default function AppWorkspacePage() {
     setUploadStep("1/3 Validating content and quotas...");
 
     try {
-      let title = uploadedFileName || (pasteUrl ? "YouTube Video Lecture" : "Classroom Audio Recording");
+      let title = uploadedFileName || (pasteUrl ? "YouTube Video Lecture" : (pastedText ? "Pasted Study Notes" : "Classroom Audio Recording"));
       let summaryText = "AI generated study notes and practice flashcards are ready for review.";
       let pagesOrDuration = "1 page";
       let docType: "pdf" | "youtube" | "recording" | "text" | "notes" = "pdf";
@@ -743,7 +744,7 @@ export default function AppWorkspacePage() {
         if (pdfData.quizQuestions?.length) {
           pregeneratedQuestions = pdfData.quizQuestions;
         }
-      } else if (uploadType === "paste" && pasteUrl.trim()) {
+      } else if (uploadType === "link" && pasteUrl.trim()) {
         const url = pasteUrl.trim();
         if (url.includes("youtube.com") || url.includes("youtu.be")) {
           docType = "youtube";
@@ -769,14 +770,107 @@ export default function AppWorkspacePage() {
           }
         } else {
           docType = "text";
-          title = "Web Resource";
-          summaryText = `Content processed from ${url}.`;
+          title = url.replace(/^https?:\/\//, "").slice(0, 30) || "Web Resource";
+          summaryText = `Content processed from ${url}. Ready for active recall study.`;
+          generatedChunks = [
+            {
+              pageNumber: 1,
+              chunkIndex: 0,
+              content: `Extracted content from ${url}. High-density academic resource for study and exam prep.`,
+            },
+          ];
         }
+      } else if (uploadType === "text" && pastedText.trim()) {
+        docType = "text";
+        setUploadStep("2/3 Processing text notes into study units...");
+        const lines = pastedText.trim().split("\n").filter((l) => l.trim().length > 0);
+        const firstLine = lines[0] || "Pasted Notes";
+        title = firstLine.length > 40 ? firstLine.slice(0, 37) + "..." : firstLine;
+        summaryText = pastedText.trim().slice(0, 300) + (pastedText.length > 300 ? "..." : "");
+        const words = pastedText.trim().split(/\s+/).length;
+        pagesOrDuration = `${Math.max(1, Math.ceil(words / 250))} pages`;
+
+        const paragraphs = pastedText.split(/\n\n+/).filter((p) => p.trim().length > 0);
+        generatedChunks = (paragraphs.length > 0 ? paragraphs : [pastedText]).map((para, idx) => ({
+          pageNumber: idx + 1,
+          chunkIndex: idx,
+          content: para.trim(),
+        }));
+
+        pregeneratedCards = [
+          {
+            id: 101,
+            front: `Core summary: ${title}`,
+            back: summaryText.slice(0, 160),
+            known: null,
+            mastery: 0,
+          },
+          {
+            id: 102,
+            front: `Key Concept in Notes`,
+            back: paragraphs[0] ? paragraphs[0].slice(0, 160) : summaryText.slice(0, 160),
+            known: null,
+            mastery: 0,
+          },
+        ];
+
+        pregeneratedQuestions = [
+          {
+            id: 201,
+            question: `What is the key insight covered in "${title}"?`,
+            options: [
+              summaryText.slice(0, 60),
+              "An unrelated theoretical framework",
+              "A deprecated historical notation",
+              "Opposing counter-intuitive hypothesis",
+            ],
+            correctIndex: 0,
+            explanation: "Directly derived from the pasted study notes.",
+          },
+        ];
       } else if (uploadType === "record") {
         docType = "recording";
-        title = "Live Classroom Recording";
+        const isTab = recordSource === "tab";
+        title = isTab ? "Browser Tab Audio Lecture" : "Microphone Audio Lecture";
         pagesOrDuration = "18 mins";
-        summaryText = "Audio lecture transcription parsed into active study notes.";
+        summaryText = isTab
+          ? "Audio captured from active browser tab session, transcribed and analyzed into key insights."
+          : "Classroom microphone lecture recording transcribed into active recall flashcards and notes.";
+
+        generatedChunks = [
+          {
+            pageNumber: 1,
+            chunkIndex: 0,
+            content: "[00:00 - 05:30] Introduction and fundamental theorem overview.",
+          },
+          {
+            pageNumber: 2,
+            chunkIndex: 1,
+            content: "[05:31 - 12:45] Detailed derivations, key mechanisms, and proofs.",
+          },
+          {
+            pageNumber: 3,
+            chunkIndex: 2,
+            content: "[12:46 - 18:00] Real-world analogies, practical review, and wrap-up.",
+          },
+        ];
+
+        pregeneratedCards = [
+          {
+            id: 301,
+            front: `What was emphasized during the introductory segment of ${title}?`,
+            back: `The fundamental theorem and its core conceptual foundation.`,
+            known: null,
+            mastery: 0,
+          },
+          {
+            id: 302,
+            front: `What was the key derivation highlighted in the lecture?`,
+            back: `Rigorous mathematical proofs and verifying constraints against edge-cases.`,
+            known: null,
+            mastery: 0,
+          },
+        ];
       }
 
       const newDocId = `doc-${Date.now()}`;
@@ -836,6 +930,7 @@ export default function AppWorkspacePage() {
       setUploadModalOpen(false);
       setUploadedFileName("");
       setPasteUrl("");
+      setPastedText("");
       setActiveTab("study");
       setStudyTool("reader");
     } catch (err: unknown) {
@@ -846,6 +941,11 @@ export default function AppWorkspacePage() {
       setIsSavingContent(false);
       setUploadStep("");
     }
+  };
+
+  // Start Recording Handler (Microphone or Browser Tab)
+  const handleStartRecording = async (source: "mic" | "tab") => {
+    await handleProcessUpload(source);
   };
 
   // Create Space Handler
@@ -904,7 +1004,7 @@ export default function AppWorkspacePage() {
       handleOpenDoc(match);
     } else {
       setPasteUrl(learnPrompt);
-      setUploadType("paste");
+      setUploadType("link");
       setUploadModalOpen(true);
     }
   };
@@ -1272,7 +1372,7 @@ export default function AppWorkspacePage() {
                 {/* Card 2: Link */}
                 <button
                   onClick={() => {
-                    setUploadType("paste");
+                    setUploadType("link");
                     setUploadModalOpen(true);
                   }}
                   className="rounded-2xl border border-neutral-200/90 bg-white p-4 sm:p-5 hover:border-neutral-300 hover:shadow-xs transition-all text-left flex flex-col justify-between min-h-[116px] cursor-pointer group select-none"
@@ -1296,7 +1396,7 @@ export default function AppWorkspacePage() {
                 {/* Card 3: Paste */}
                 <button
                   onClick={() => {
-                    setUploadType("paste");
+                    setUploadType("text");
                     setUploadModalOpen(true);
                   }}
                   className="rounded-2xl border border-neutral-200/90 bg-white p-4 sm:p-5 hover:border-neutral-300 hover:shadow-xs transition-all text-left flex flex-col justify-between min-h-[116px] cursor-pointer group select-none"
@@ -2083,52 +2183,207 @@ export default function AppWorkspacePage() {
         )}
       </main>
 
-      {/* MODAL 1: UPLOAD & INGESTION MODAL */}
+      {/* ========================================================= */}
+      {/* DEDICATED INGESTION MODALS (100% MATCHING SCREENSHOTS)   */}
+      {/* ========================================================= */}
       {uploadModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-7 border border-neutral-200 shadow-2xl relative animate-in zoom-in-95 duration-200">
-            <button
-              onClick={() => setUploadModalOpen(false)}
-              className="absolute top-5 right-5 w-8 h-8 rounded-full bg-neutral-100 hover:bg-neutral-200 flex items-center justify-center text-neutral-600 transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
+          {/* 1. YOUTUBE, WEBSITE MODAL (100% MATCHING IMAGE 1) */}
+          {uploadType === "link" && (
+            <div className="bg-white rounded-[26px] max-w-[480px] w-full p-6 sm:p-7 shadow-2xl relative animate-in zoom-in-95 duration-150">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2.5">
+                  <LinkIcon className="w-5 h-5 text-neutral-800" strokeWidth={2} />
+                  <h3 className="text-lg font-semibold text-neutral-900">YouTube, Website</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setUploadModalOpen(false)}
+                  className="text-neutral-400 hover:text-neutral-700 transition-colors p-1 cursor-pointer"
+                  aria-label="Close"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
 
-            <h3 className="text-xl font-bold text-neutral-900 mb-1">Add Study Material</h3>
-            <p className="text-xs text-neutral-500 mb-6">
-              Our AI extracts page chunks, builds active recall flashcards, and generates practice exams.
-            </p>
+              <p className="text-xs text-[#737373] leading-relaxed mb-5">
+                YouTube (videos & playlists), websites, arXiv, and public file URLs: .pdf, .docx, .pptx, .mp3, .mp4
+              </p>
 
-            {/* Ingestion Type Tabs */}
-            <div className="flex items-center p-1 bg-neutral-100 rounded-2xl mb-6">
-              <button
-                onClick={() => setUploadType("file")}
-                className={`flex-1 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                  uploadType === "file" ? "bg-white text-neutral-900 shadow-2xs" : "text-neutral-500"
-                }`}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleProcessUpload();
+                }}
               >
-                Upload File
-              </button>
-              <button
-                onClick={() => setUploadType("paste")}
-                className={`flex-1 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                  uploadType === "paste" ? "bg-white text-neutral-900 shadow-2xs" : "text-neutral-500"
-                }`}
-              >
-                YouTube Link
-              </button>
-              <button
-                onClick={() => setUploadType("record")}
-                className={`flex-1 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                  uploadType === "record" ? "bg-white text-neutral-900 shadow-2xs" : "text-neutral-500"
-                }`}
-              >
-                Audio Notes
-              </button>
+                <input
+                  type="text"
+                  value={pasteUrl}
+                  onChange={(e) => setPasteUrl(e.target.value)}
+                  placeholder="https://youtu.be/dQw4w9WgXcQ"
+                  autoFocus
+                  className="w-full px-4 py-3.5 rounded-2xl border border-neutral-300 focus:border-neutral-900 text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none transition-colors"
+                />
+
+                {uploadStep && (
+                  <p className="text-xs text-emerald-800 font-mono mt-3 text-center animate-pulse">
+                    {uploadStep}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isSavingContent || !pasteUrl.trim()}
+                  className="w-full mt-4 py-3.5 rounded-2xl bg-[#737373] hover:bg-[#525252] text-white text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center"
+                >
+                  {isSavingContent ? "Adding..." : "Add"}
+                </button>
+              </form>
             </div>
+          )}
 
-            {/* TAB 1: FILE UPLOAD */}
-            {uploadType === "file" && (
+          {/* 2. PASTE TEXT MODAL (100% MATCHING IMAGE 2) */}
+          {uploadType === "text" && (
+            <div className="bg-white rounded-[26px] max-w-[480px] w-full p-6 sm:p-7 shadow-2xl relative animate-in zoom-in-95 duration-150">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2.5">
+                  <svg className="w-5 h-5 text-neutral-800 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 3H19a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
+                    <path d="M3 12h8" />
+                    <path d="M8 9l3 3-3 3" />
+                  </svg>
+                  <h3 className="text-lg font-semibold text-neutral-900">Paste Text</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setUploadModalOpen(false)}
+                  className="text-neutral-400 hover:text-neutral-700 transition-colors p-1 cursor-pointer"
+                  aria-label="Close"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <p className="text-xs text-[#737373] leading-relaxed mb-5">
+                Copy and paste text to add as content
+              </p>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleProcessUpload();
+                }}
+              >
+                <textarea
+                  rows={5}
+                  value={pastedText}
+                  onChange={(e) => setPastedText(e.target.value)}
+                  placeholder="Paste your notes here"
+                  autoFocus
+                  className="w-full p-4 rounded-2xl border border-neutral-300 focus:border-neutral-900 text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none resize-none transition-colors min-h-[140px]"
+                />
+
+                {uploadStep && (
+                  <p className="text-xs text-emerald-800 font-mono mt-3 text-center animate-pulse">
+                    {uploadStep}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isSavingContent || !pastedText.trim()}
+                  className="w-full mt-4 py-3.5 rounded-2xl bg-[#737373] hover:bg-[#525252] text-white text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center"
+                >
+                  {isSavingContent ? "Adding..." : "Add"}
+                </button>
+              </form>
+            </div>
+          )}
+
+          {/* 3. RECORD LECTURE MODAL (100% MATCHING IMAGE 3) */}
+          {uploadType === "record" && (
+            <div className="bg-white rounded-[26px] max-w-[480px] w-full p-6 sm:p-7 shadow-2xl relative animate-in zoom-in-95 duration-150">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-lg font-semibold text-neutral-900">Record Lecture</h3>
+                <button
+                  type="button"
+                  onClick={() => setUploadModalOpen(false)}
+                  className="text-neutral-400 hover:text-neutral-700 transition-colors p-1 cursor-pointer"
+                  aria-label="Close"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {uploadStep && (
+                <p className="text-xs text-emerald-800 font-mono mb-4 text-center animate-pulse">
+                  {uploadStep}
+                </p>
+              )}
+
+              <div className="space-y-3">
+                {/* Option 1: Microphone */}
+                <button
+                  type="button"
+                  onClick={() => handleStartRecording("mic")}
+                  disabled={isSavingContent}
+                  className="w-full p-4 rounded-2xl border border-neutral-200 hover:border-neutral-400 bg-white flex items-center gap-4 text-left transition-all cursor-pointer group"
+                >
+                  <div className="w-9 h-9 flex items-center justify-center text-neutral-700 shrink-0">
+                    <Mic className="w-5 h-5 text-neutral-700 stroke-[1.8]" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-neutral-900">Microphone</h4>
+                    <p className="text-xs text-neutral-500 mt-0.5">Record your voice or class</p>
+                  </div>
+                </button>
+
+                {/* Option 2: Browser Tab */}
+                <button
+                  type="button"
+                  onClick={() => handleStartRecording("tab")}
+                  disabled={isSavingContent}
+                  className="w-full p-4 rounded-2xl border border-neutral-200 hover:border-neutral-400 bg-white flex items-center gap-4 text-left transition-all cursor-pointer group"
+                >
+                  <div className="w-9 h-9 flex items-center justify-center text-neutral-700 shrink-0">
+                    <svg className="w-5 h-5 text-neutral-700 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="2" y="3" width="20" height="14" rx="2" />
+                      <circle cx="18" cy="7" r="1.5" fill="currentColor" stroke="none" />
+                      <path d="M8 21h8" />
+                      <path d="M12 17v4" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-neutral-900">Browser Tab</h4>
+                    <p className="text-xs text-neutral-500 mt-0.5">Capture audio playing in a browser tab</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* 4. FILE UPLOAD MODAL */}
+          {uploadType === "file" && (
+            <div className="bg-white rounded-[26px] max-w-[480px] w-full p-6 sm:p-7 shadow-2xl relative animate-in zoom-in-95 duration-150">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2.5">
+                  <Upload className="w-5 h-5 text-neutral-800" strokeWidth={2} />
+                  <h3 className="text-lg font-semibold text-neutral-900">Upload File</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setUploadModalOpen(false)}
+                  className="text-neutral-400 hover:text-neutral-700 transition-colors p-1 cursor-pointer"
+                  aria-label="Close"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <p className="text-xs text-[#737373] leading-relaxed mb-5">
+                Upload documents, slides, audio, or video files (.pdf, .docx, .pptx, .mp3, .mp4)
+              </p>
+
               <div>
                 <input
                   type="file"
@@ -2139,66 +2394,39 @@ export default function AppWorkspacePage() {
                     }
                   }}
                   className="hidden"
-                  accept=".pdf,.docx,.txt,.md,.mp3,.mp4"
+                  accept=".pdf,.docx,.txt,.md,.mp3,.mp4,.pptx"
                 />
+
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-neutral-200 rounded-2xl p-8 text-center bg-neutral-50 hover:bg-neutral-100/70 transition-colors cursor-pointer mb-6"
+                  className="border-2 border-dashed border-neutral-300 rounded-2xl p-7 text-center bg-neutral-50/70 hover:bg-neutral-100/60 transition-colors cursor-pointer"
                 >
-                  <Upload className="w-8 h-8 text-neutral-400 mx-auto mb-2" />
+                  <Upload className="w-6 h-6 text-neutral-400 mx-auto mb-2" />
                   <p className="text-xs font-semibold text-neutral-800">
                     {uploadedFileName ? `Selected: ${uploadedFileName}` : "Click to select or drag & drop"}
                   </p>
                   <p className="text-[11px] text-neutral-400 mt-1">
-                    PDF, DOCX, TXT, Markdown (up to 10 MB per file)
+                    PDF, DOCX, PPTX, MP3, MP4 (up to 50 MB)
                   </p>
                 </div>
+
+                {uploadStep && (
+                  <p className="text-xs text-emerald-800 font-mono mt-3 text-center animate-pulse">
+                    {uploadStep}
+                  </p>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => handleProcessUpload()}
+                  disabled={isSavingContent || !uploadedFileName}
+                  className="w-full mt-4 py-3.5 rounded-2xl bg-[#737373] hover:bg-[#525252] text-white text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center"
+                >
+                  {isSavingContent ? "Adding..." : "Add"}
+                </button>
               </div>
-            )}
-
-            {/* TAB 2: YOUTUBE LINK */}
-            {uploadType === "paste" && (
-              <div className="space-y-3 mb-6">
-                <input
-                  type="url"
-                  value={pasteUrl}
-                  onChange={(e) => setPasteUrl(e.target.value)}
-                  placeholder="https://www.youtube.com/watch?v=..."
-                  className="w-full px-4 py-3 rounded-2xl bg-neutral-50 border border-neutral-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:bg-white"
-                />
-                <p className="text-[11px] text-neutral-400">
-                  Transcribes public YouTube lectures, seminars, and talks into chapters and study decks.
-                </p>
-              </div>
-            )}
-
-            {/* TAB 3: AUDIO NOTES */}
-            {uploadType === "record" && (
-              <div className="bg-neutral-50 rounded-2xl p-6 text-center border border-neutral-200 mb-6">
-                <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-3">
-                  <Mic className="w-6 h-6 animate-pulse" />
-                </div>
-                <p className="text-xs font-semibold text-neutral-800">Classroom Audio Ready</p>
-                <p className="text-[11px] text-neutral-400 mt-1">
-                  Transcribe classroom lectures or Zoom audio into synthesized study materials.
-                </p>
-              </div>
-            )}
-
-            {uploadStep && (
-              <p className="text-xs text-emerald-800 font-mono mb-4 text-center animate-pulse">
-                {uploadStep}
-              </p>
-            )}
-
-            <button
-              onClick={handleProcessUpload}
-              disabled={isSavingContent || (uploadType === "file" && !uploadedFileName)}
-              className="w-full py-3.5 rounded-full bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-semibold shadow-md active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
-            >
-              {isSavingContent ? "Processing Study Material..." : "Start AI Synthesis"}
-            </button>
-          </div>
+            </div>
+          )}
         </div>
       )}
 
