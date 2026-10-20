@@ -1,110 +1,160 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { 
-  Upload, 
-  Link as LinkIcon, 
-  Mic, 
-  Search, 
-  Plus, 
-  BookOpen, 
-  Sparkles, 
-  Send, 
-  ChevronRight, 
-  FileText, 
-  Video, 
+import ReactMarkdown from "react-markdown";
+import {
+  Upload,
+  Link as LinkIcon,
+  Mic,
+  Search,
+  Plus,
+  BookOpen,
+  Sparkles,
+  Send,
+  ChevronRight,
+  FileText,
+  Video,
   X,
   ArrowLeft,
   Compass,
   Play,
   Pause,
-  Volume2,
   Check,
   Award,
   LogOut,
+  Layers,
+  Edit3,
+  Download,
+  RotateCcw,
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
+  Minimize2,
+  Trash2,
+  AlertCircle,
+  HelpCircle,
+  ExternalLink,
+  Flame,
+  Clock,
+  CheckCircle2,
 } from "lucide-react";
 import { LearnNovaLogo } from "@/components/Icons";
 import { authClient } from "@/lib/auth/client";
 import {
+  fetchUserWorkspace,
   createDocument,
+  deleteDocument,
   createSpace,
   DEFAULT_DOCUMENTS,
-  initializeUserWorkspace,
   uploadToStorage,
   type DocumentItem,
   type SpaceItem,
+  type WorkspaceData,
 } from "@/lib/workspace";
 import {
   askChatTutor,
   generateStudyFlashcards,
   generateStudyQuiz,
+  submitStudyQuiz,
   summarizeYouTubeVideo,
   processPdfDocument,
+  type CitationItem,
+  type DocumentChunk,
+  type QuizGradedQuestion,
 } from "@/lib/api";
-
 
 interface Flashcard {
   id: number;
   front: string;
   back: string;
+  sourceRef?: string;
   known: boolean | null;
+  mastery?: number;
 }
 
 interface QuizQuestion {
   id: number;
   question: string;
   options: string[];
-  correctIndex: number;
-  explanation: string;
+  correctIndex?: number;
+  explanation?: string;
+}
+
+interface ChatMessageItem {
+  sender: "user" | "ai";
+  text: string;
+  citations?: CitationItem[];
 }
 
 export default function AppWorkspacePage() {
   const router = useRouter();
   const { data: session } = authClient.useSession();
   const user = session?.user;
-  const [activeTab, setActiveTab] = useState<"dashboard" | "study">("dashboard");
-  const [studyTool, setStudyTool] = useState<"reader" | "flashcards" | "quiz" | "podcast">("reader");
-  const [selectedDoc, setSelectedDoc] = useState<DocumentItem>(DEFAULT_DOCUMENTS[0]);
 
-  const [chatMessages, setChatMessages] = useState<Array<{ sender: "user" | "ai"; text: string }>>([
+  // Navigation & Workspace State
+  const [activeTab, setActiveTab] = useState<"dashboard" | "study">("dashboard");
+  const [studyTool, setStudyTool] = useState<"reader" | "summary" | "notes" | "flashcards" | "quiz">("reader");
+  const [spaces, setSpaces] = useState<SpaceItem[]>([]);
+  const [recentDocs, setRecentDocs] = useState<DocumentItem[]>([]);
+  const [selectedDoc, setSelectedDoc] = useState<DocumentItem>(DEFAULT_DOCUMENTS[0]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedSpaceFilter, setSelectedSpaceFilter] = useState<string>("all");
+  const [isWorkspaceLoading, setIsWorkspaceLoading] = useState(true);
+  const [workspaceError, setWorkspaceError] = useState("");
+
+  // Usage Quotas State
+  const [usage, setUsage] = useState({
+    questionsUsed: 0,
+    questionsLimit: 20,
+    uploadsUsed: 0,
+    uploadsLimit: 3,
+  });
+
+  // Document Content & Chunks State
+  const [documentChunks, setDocumentChunks] = useState<DocumentChunk[]>([]);
+  const [isChunksLoading, setIsChunksLoading] = useState(false);
+  const [activePage, setActivePage] = useState<number>(1);
+  const [zoomLevel, setZoomLevel] = useState<number>(100);
+  const [highlightedPage, setHighlightedPage] = useState<number | null>(null);
+  const pageRefs = useRef<Record<number, HTMLDivElement | null>>({});
+
+  // Chat State
+  const [chatMessages, setChatMessages] = useState<ChatMessageItem[]>([
     {
       sender: "ai",
-      text: "👋 Hi! I'm your LearnNova AI tutor. I've analyzed your document. What would you like to explore? You can ask me to explain concepts, generate practice quizzes, or create flashcards.",
+      text: "👋 Hi! I'm your LearnNova AI tutor. I've analyzed your document. What would you like to explore? You can ask me to explain concepts, test you on specific pages, or generate practice flashcards.",
     },
   ]);
   const [inputMessage, setInputMessage] = useState("");
   const [isAiThinking, setIsAiThinking] = useState(false);
-  const [uploadModalOpen, setUploadModalOpen] = useState(false);
-  const [uploadType, setUploadType] = useState<"file" | "paste" | "record">("file");
-  const [pasteUrl, setPasteUrl] = useState("");
-  const [uploadedFileName, setUploadedFileName] = useState("");
-  const [isWorkspaceLoading, setIsWorkspaceLoading] = useState(false);
-  const [isSavingContent, setIsSavingContent] = useState(false);
-  const [workspaceError, setWorkspaceError] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const chatBottomRef = useRef<HTMLDivElement>(null);
 
-  // Dynamic Flashcards State
+  // Flashcards State
   const [flashcards, setFlashcards] = useState<Flashcard[]>([
     {
       id: 1,
-      front: "Core Subject Overview",
+      front: "Core Concept Overview",
       back: DEFAULT_DOCUMENTS[0].summaryText,
+      sourceRef: "Page 1",
       known: null,
+      mastery: 0,
     },
     {
       id: 2,
       front: "Active Recall Principle",
-      back: "Testing retrieval of concepts from memory produces dramatically higher exam retention than passive reading.",
+      back: "Testing retrieval of concepts from memory produces dramatically higher exam retention than passive re-reading.",
+      sourceRef: "Study Guide",
       known: null,
+      mastery: 1,
     },
   ]);
-  const [isFlashcardsLoading, setIsFlashcardsLoading] = useState(false);
   const [cardIndex, setCardIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [isFlashcardsLoading, setIsFlashcardsLoading] = useState(false);
 
-  // Dynamic Quiz State
+  // Practice Quiz State
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([
     {
       id: 1,
@@ -114,34 +164,57 @@ export default function AppWorkspacePage() {
       explanation: `This document is categorized under the ${DEFAULT_DOCUMENTS[0].space} space.`,
     },
   ]);
-  const [isQuizLoading, setIsQuizLoading] = useState(false);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
-  const [quizSubmitted, setQuizSubmitted] = useState(false);
+  const [isQuizLoading, setIsQuizLoading] = useState(false);
+  const [isSubmittingQuiz, setIsSubmittingQuiz] = useState(false);
+  const [quizResults, setQuizResults] = useState<{
+    score: number;
+    total: number;
+    percentage: number;
+    passed: boolean;
+    graded: QuizGradedQuestion[];
+  } | null>(null);
 
-  // Podcast State
-  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
-  const [audioSpeed, setAudioSpeed] = useState<"1x" | "1.5x" | "2x">("1x");
+  // Student Notes State
+  const [noteContent, setNoteContent] = useState("");
+  const [noteTitle, setNoteTitle] = useState("");
+  const [noteSaveStatus, setNoteSaveStatus] = useState<"saved" | "saving" | "unsaved">("saved");
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const [spaces, setSpaces] = useState<SpaceItem[]>([]);
-  const [recentDocs, setRecentDocs] = useState<DocumentItem[]>([]);
+  // Upload Modal State
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [uploadType, setUploadType] = useState<"file" | "paste" | "record">("file");
+  const [pasteUrl, setPasteUrl] = useState("");
+  const [uploadedFileName, setUploadedFileName] = useState("");
+  const [uploadStep, setUploadStep] = useState<string>("");
+  const [isSavingContent, setIsSavingContent] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Space Creation Modal State
+  const [newSpaceModalOpen, setNewSpaceModalOpen] = useState(false);
+  const [newSpaceTitle, setNewSpaceTitle] = useState("");
+  const [newSpaceDescription, setNewSpaceDescription] = useState("");
+
+  // Full-screen Viewer Mode
+  const [isReaderMaximized, setIsReaderMaximized] = useState(false);
+
+  // Load User Workspace
   useEffect(() => {
     let isActive = true;
-    if (!user) {
-      return;
-    }
+    if (!user) return;
 
     const loadData = async () => {
       setIsWorkspaceLoading(true);
+      setWorkspaceError("");
       try {
-        const data = await initializeUserWorkspace({
-          id: user.id,
-          email: user.email,
-          name: user.name,
-        });
+        const data: WorkspaceData = await fetchUserWorkspace();
         if (!isActive) return;
+
         setSpaces(data.spaces);
         setRecentDocs(data.documents);
+        if (data.usage) {
+          setUsage(data.usage);
+        }
         if (data.documents.length > 0) {
           setSelectedDoc(data.documents[0]);
         }
@@ -149,7 +222,7 @@ export default function AppWorkspacePage() {
       } catch (err: unknown) {
         if (!isActive) return;
         const msg = err instanceof Error ? err.message : "Failed to load workspace";
-        setWorkspaceError(`Workspace error: ${msg}`);
+        setWorkspaceError(msg);
         setIsWorkspaceLoading(false);
       }
     };
@@ -160,14 +233,226 @@ export default function AppWorkspacePage() {
     };
   }, [user]);
 
+  // Load Chunks, Notes, and Chat for Selected Document
   useEffect(() => {
-    return () => {
-      if (typeof window !== "undefined" && "speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
+    if (!selectedDoc || !user) return;
+
+    let isActive = true;
+
+    // 1. Fetch chunks for citations and reader
+    const loadChunks = async () => {
+      setIsChunksLoading(true);
+      try {
+        const res = await fetch(`/api/chunks?documentId=${encodeURIComponent(selectedDoc.id)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (isActive && data.chunks && data.chunks.length > 0) {
+            setDocumentChunks(data.chunks);
+          } else if (isActive) {
+            // Default synthesized chunk from summary
+            setDocumentChunks([
+              {
+                pageNumber: 1,
+                chunkIndex: 0,
+                content: selectedDoc.summaryText || `${selectedDoc.title} study guide.`,
+              },
+            ]);
+          }
+        }
+      } catch {
+        if (isActive) {
+          setDocumentChunks([
+            {
+              pageNumber: 1,
+              chunkIndex: 0,
+              content: selectedDoc.summaryText || `${selectedDoc.title} study guide.`,
+            },
+          ]);
+        }
+      } finally {
+        if (isActive) setIsChunksLoading(false);
       }
     };
-  }, []);
 
+    // 2. Fetch student notes
+    const loadNotes = async () => {
+      try {
+        const res = await fetch(`/api/notes?documentId=${encodeURIComponent(selectedDoc.id)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (isActive && data.notes && data.notes.length > 0) {
+            setNoteTitle(data.notes[0].title);
+            setNoteContent(data.notes[0].content);
+            setNoteSaveStatus("saved");
+          } else if (isActive) {
+            setNoteTitle(`${selectedDoc.title} Notes`);
+            setNoteContent(
+              `## Study Notes: ${selectedDoc.title}\n\n- Key Concept:\n- Formula / Rule:\n- Questions for Review:\n`
+            );
+            setNoteSaveStatus("saved");
+          }
+        }
+      } catch {
+        // fallback
+      }
+    };
+
+    // 3. Fetch chat history
+    const loadChat = async () => {
+      try {
+        const res = await fetch(`/api/chats?documentId=${encodeURIComponent(selectedDoc.id)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (isActive && data.messages && data.messages.length > 0) {
+            setChatMessages(data.messages);
+          } else if (isActive) {
+            setChatMessages([
+              {
+                sender: "ai",
+                text: `Loaded "${selectedDoc.title}". I'm ready to quiz you, summarize key insights, or break down difficult concepts with exact page citations!`,
+              },
+            ]);
+          }
+        }
+      } catch {
+        // fallback
+      }
+    };
+
+    // 4. Fetch persistent flashcards
+    const loadFlashcards = async () => {
+      try {
+        const res = await fetch(`/api/flashcards?documentId=${encodeURIComponent(selectedDoc.id)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (isActive && data.flashcards && data.flashcards.length > 0) {
+            setFlashcards(
+              data.flashcards.map((f: Flashcard) => ({
+                ...f,
+                known: f.mastery && f.mastery >= 2 ? true : null,
+              }))
+            );
+            setCardIndex(0);
+            setIsFlipped(false);
+          }
+        }
+      } catch {
+        // fallback
+      }
+    };
+
+    loadChunks();
+    loadNotes();
+    loadChat();
+    loadFlashcards();
+
+    return () => {
+      isActive = false;
+    };
+  }, [selectedDoc, user]);
+
+  // Scroll to bottom of chat
+  useEffect(() => {
+    chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages, isAiThinking]);
+
+  // Autosave notes with 1-second debounce
+  const handleNoteChange = (newText: string) => {
+    setNoteContent(newText);
+    setNoteSaveStatus("unsaved");
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = setTimeout(async () => {
+      setNoteSaveStatus("saving");
+      try {
+        const res = await fetch("/api/notes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            documentId: selectedDoc.id,
+            title: noteTitle,
+            content: newText,
+          }),
+        });
+        if (res.ok) {
+          setNoteSaveStatus("saved");
+        } else {
+          setNoteSaveStatus("unsaved");
+        }
+      } catch {
+        setNoteSaveStatus("unsaved");
+      }
+    }, 1200);
+  };
+
+  // Flashcard Review Handler
+  const handleReviewCard = async (known: boolean) => {
+    if (flashcards.length === 0 || !flashcards[cardIndex]) return;
+
+    const updated = [...flashcards];
+    updated[cardIndex].known = known;
+    updated[cardIndex].mastery = known ? 2 : 1;
+    setFlashcards(updated);
+    setIsFlipped(false);
+
+    // Advance card
+    if (cardIndex < flashcards.length - 1) {
+      setCardIndex((prev) => prev + 1);
+    }
+
+    // Persist review to database
+    try {
+      await fetch("/api/flashcards", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "review",
+          documentId: selectedDoc.id,
+          cardId: `fc-${selectedDoc.id}-${cardIndex + 1}`,
+          known,
+        }),
+      });
+    } catch {
+      // non-fatal
+    }
+  };
+
+  // Keyboard Navigation for Flashcards
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (activeTab !== "study" || studyTool !== "flashcards") return;
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      if (e.code === "Space") {
+        e.preventDefault();
+        setIsFlipped((prev) => !prev);
+      } else if (e.key === "1") {
+        e.preventDefault();
+        handleReviewCard(false);
+      } else if (e.key === "2") {
+        e.preventDefault();
+        handleReviewCard(true);
+      } else if (e.code === "ArrowRight") {
+        if (cardIndex < flashcards.length - 1) {
+          setCardIndex((prev) => prev + 1);
+          setIsFlipped(false);
+        }
+      } else if (e.code === "ArrowLeft") {
+        if (cardIndex > 0) {
+          setCardIndex((prev) => prev - 1);
+          setIsFlipped(false);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeTab, studyTool, flashcards, cardIndex]);
+
+  // Generate Flashcards
   const handleGenerateFlashcards = async (docToUse?: DocumentItem) => {
     const doc = docToUse || selectedDoc;
     setIsFlashcardsLoading(true);
@@ -175,60 +460,226 @@ export default function AppWorkspacePage() {
       const res = await generateStudyFlashcards({
         content: doc.summaryText ? `${doc.title}: ${doc.summaryText}` : doc.title,
         count: 5,
+        documentId: doc.id,
       });
       if (res.flashcards && res.flashcards.length > 0) {
-        setFlashcards(res.flashcards.map((f) => ({ ...f, known: null })));
+        const cardsWithKnown = res.flashcards.map((f) => ({
+          ...f,
+          known: null,
+          mastery: 0,
+        }));
+        setFlashcards(cardsWithKnown);
         setCardIndex(0);
         setIsFlipped(false);
+
+        // Save generated deck to database
+        fetch("/api/flashcards", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "save_deck",
+            documentId: doc.id,
+            flashcards: cardsWithKnown,
+          }),
+        }).catch(() => {});
       }
     } catch (err: unknown) {
-      console.error("Failed to generate flashcards from backend:", err);
+      console.error("Failed to generate flashcards:", err);
     } finally {
       setIsFlashcardsLoading(false);
     }
   };
 
+  // Generate Quiz
   const handleGenerateQuiz = async (docToUse?: DocumentItem) => {
     const doc = docToUse || selectedDoc;
     setIsQuizLoading(true);
+    setQuizResults(null);
+    setSelectedAnswers({});
     try {
       const res = await generateStudyQuiz({
         content: doc.summaryText ? `${doc.title}: ${doc.summaryText}` : doc.title,
         count: 4,
+        difficulty: "medium",
+        documentId: doc.id,
       });
       if (res.questions && res.questions.length > 0) {
         setQuizQuestions(res.questions);
-        setSelectedAnswers({});
-        setQuizSubmitted(false);
       }
     } catch (err: unknown) {
-      console.error("Failed to generate quiz from backend:", err);
+      console.error("Failed to generate quiz:", err);
     } finally {
       setIsQuizLoading(false);
     }
   };
 
+  // Submit Quiz for Server-Side Grading
+  const handleSubmitQuiz = async () => {
+    if (quizQuestions.length === 0) return;
+    setIsSubmittingQuiz(true);
+
+    try {
+      const submitRes = await submitStudyQuiz({
+        documentId: selectedDoc.id,
+        answers: selectedAnswers,
+        questions: quizQuestions,
+      });
+
+      setQuizResults({
+        score: submitRes.score,
+        total: submitRes.totalQuestions,
+        percentage: submitRes.percentage,
+        passed: submitRes.passed,
+        graded: submitRes.results,
+      });
+    } catch (err: unknown) {
+      console.error("Quiz submission error:", err);
+      // Client-side fallback evaluation if offline
+      let score = 0;
+      const graded: QuizGradedQuestion[] = quizQuestions.map((q) => {
+        const userAns = selectedAnswers[q.id];
+        const isCorrect = userAns === (q.correctIndex ?? 0);
+        if (isCorrect) score++;
+        return {
+          id: q.id,
+          question: q.question,
+          options: q.options,
+          userAnswer: userAns,
+          correctAnswer: q.correctIndex ?? 0,
+          isCorrect,
+          explanation: q.explanation || "Correct based on the study text.",
+        };
+      });
+      const pct = Math.round((score / quizQuestions.length) * 100);
+      setQuizResults({
+        score,
+        total: quizQuestions.length,
+        percentage: pct,
+        passed: pct >= 70,
+        graded,
+      });
+    } finally {
+      setIsSubmittingQuiz(false);
+    }
+  };
+
+  // Send Message to AI Tutor
+  const handleSendMessage = async (e?: React.FormEvent, customMsg?: string) => {
+    if (e) e.preventDefault();
+    const messageToSend = customMsg || inputMessage;
+    if (!messageToSend.trim()) return;
+
+    setInputMessage("");
+    setChatMessages((prev) => [...prev, { sender: "user", text: messageToSend }]);
+    setIsAiThinking(true);
+
+    // Persist user message
+    fetch("/api/chats", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        documentId: selectedDoc.id,
+        sender: "user",
+        text: messageToSend,
+      }),
+    }).catch(() => {});
+
+    try {
+      const chatPayload = {
+        message: messageToSend,
+        context: selectedDoc.summaryText ? `${selectedDoc.title}: ${selectedDoc.summaryText}` : selectedDoc.title,
+        chunks: documentChunks.length > 0 ? documentChunks : undefined,
+        history: chatMessages.slice(-6).map((m) => ({ sender: m.sender, text: m.text })),
+      };
+
+      const response = await askChatTutor(chatPayload);
+
+      const aiReplyItem: ChatMessageItem = {
+        sender: "ai",
+        text: response.reply,
+        citations: response.citations,
+      };
+
+      setChatMessages((prev) => [...prev, aiReplyItem]);
+
+      // Decrement remaining questions in local UI
+      setUsage((prev) => ({
+        ...prev,
+        questionsUsed: Math.min(prev.questionsLimit, prev.questionsUsed + 1),
+      }));
+
+      // Persist AI message with citations
+      fetch("/api/chats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          documentId: selectedDoc.id,
+          sender: "ai",
+          text: response.reply,
+          citations: response.citations,
+        }),
+      }).catch(() => {});
+    } catch (err: unknown) {
+      const errorMsg =
+        err instanceof Error ? err.message : "AI tutor is temporarily unavailable. Please try again.";
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          sender: "ai",
+          text: `⚠️ ${errorMsg}`,
+        },
+      ]);
+    } finally {
+      setIsAiThinking(false);
+    }
+  };
+
+  // Clickable Citation Handler (Scrolls to Page in Reader)
+  const handleCitationClick = (pageNumber: number) => {
+    setStudyTool("reader");
+    setActivePage(pageNumber);
+    setHighlightedPage(pageNumber);
+
+    const targetEl = pageRefs.current[pageNumber];
+    if (targetEl) {
+      targetEl.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    setTimeout(() => {
+      setHighlightedPage(null);
+    }, 3000);
+  };
+
+  // Open Document Handler
   const handleOpenDoc = (doc: DocumentItem) => {
     setSelectedDoc(doc);
     setActiveTab("study");
     setStudyTool("reader");
-    setChatMessages([
-      {
-        sender: "ai",
-        text: `Loaded "${doc.title}". I'm ready to quiz you, summarize key insights, or break down difficult concepts step by step!`,
-      },
-    ]);
+    setActivePage(1);
+    setQuizResults(null);
+    setSelectedAnswers({});
     handleGenerateFlashcards(doc);
     handleGenerateQuiz(doc);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setUploadedFileName(file.name);
+  // Delete Document Handler
+  const handleDeleteDoc = async (docId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm("Are you sure you want to remove this study document?")) return;
+
+    try {
+      await deleteDocument(docId);
+      setRecentDocs((prev) => prev.filter((d) => d.id !== docId));
+      if (selectedDoc.id === docId && recentDocs.length > 1) {
+        const next = recentDocs.find((d) => d.id !== docId);
+        if (next) setSelectedDoc(next);
+      }
+    } catch (err) {
+      alert("Failed to delete document: " + (err instanceof Error ? err.message : "Unknown error"));
     }
   };
 
+  // Process File / Link Upload
   const handleProcessUpload = async () => {
     if (!user) {
       setWorkspaceError("Your session expired. Please sign in again.");
@@ -237,56 +688,72 @@ export default function AppWorkspacePage() {
 
     setIsSavingContent(true);
     setWorkspaceError("");
+    setUploadStep("1/3 Validating content and quotas...");
 
     try {
-      let title = uploadedFileName || (pasteUrl ? "YouTube Video Lecture" : "New Classroom Audio Recording");
+      let title = uploadedFileName || (pasteUrl ? "YouTube Video Lecture" : "Classroom Audio Recording");
       let summaryText = "AI generated study notes and practice flashcards are ready for review.";
       let pagesOrDuration = "1 page";
-      let docType: "pdf" | "youtube" | "recording" = "pdf";
+      let docType: "pdf" | "youtube" | "recording" | "text" | "notes" = "pdf";
       let pregeneratedCards: Flashcard[] = [];
       let pregeneratedQuestions: QuizQuestion[] = [];
+      let generatedChunks: DocumentChunk[] = [];
       let fileUrl: string | undefined = undefined;
 
       if (uploadType === "file" && fileInputRef.current?.files?.[0]) {
         const file = fileInputRef.current.files[0];
         docType = "pdf";
+
+        setUploadStep("2/3 Uploading securely to Neon Object Storage...");
         try {
           const uploadRes = await uploadToStorage(file);
           fileUrl = uploadRes.url;
         } catch (uploadErr) {
-          console.warn("Neon storage upload skipped:", uploadErr);
+          console.warn("Storage upload notice:", uploadErr);
         }
-        if (file.name.toLowerCase().endsWith(".pdf")) {
-          const pdfData = await processPdfDocument(file);
-          title = pdfData.title || file.name;
-          pagesOrDuration = `${pdfData.pageCount} pages`;
-          summaryText = pdfData.summary;
-          if (pdfData.flashcards?.length) {
-            pregeneratedCards = pdfData.flashcards.map((f) => ({ ...f, known: null }));
-          }
-          if (pdfData.quizQuestions?.length) {
-            pregeneratedQuestions = pdfData.quizQuestions;
-          }
-        } else {
-          title = file.name;
-          summaryText = `Uploaded document: ${file.name}.`;
+
+        setUploadStep("3/3 Synthesizing document chunks, flashcards, & quiz...");
+        const pdfData = await processPdfDocument(file);
+        title = pdfData.title || file.name;
+        pagesOrDuration = `${pdfData.pageCount} pages`;
+        summaryText = pdfData.summary;
+
+        if (pdfData.chunks && pdfData.chunks.length > 0) {
+          generatedChunks = pdfData.chunks;
+        }
+
+        if (pdfData.flashcards?.length) {
+          pregeneratedCards = pdfData.flashcards.map((f) => ({ ...f, known: null, mastery: 0 }));
+        }
+        if (pdfData.quizQuestions?.length) {
+          pregeneratedQuestions = pdfData.quizQuestions;
         }
       } else if (uploadType === "paste" && pasteUrl.trim()) {
         const url = pasteUrl.trim();
         if (url.includes("youtube.com") || url.includes("youtu.be")) {
           docType = "youtube";
+          setUploadStep("2/3 Transcribing video audio and chapters...");
           const ytData = await summarizeYouTubeVideo(url);
           title = ytData.title;
           pagesOrDuration = ytData.duration || "Video";
           summaryText = ytData.summary;
+
+          if (ytData.chapters && ytData.chapters.length > 0) {
+            generatedChunks = ytData.chapters.map((ch, idx) => ({
+              pageNumber: idx + 1,
+              chunkIndex: idx,
+              content: `[${ch.time}] ${ch.title}: ${ch.summary}`,
+            }));
+          }
+
           if (ytData.flashcards?.length) {
-            pregeneratedCards = ytData.flashcards.map((f) => ({ ...f, known: null }));
+            pregeneratedCards = ytData.flashcards.map((f) => ({ ...f, known: null, mastery: 0 }));
           }
           if (ytData.quizQuestions?.length) {
             pregeneratedQuestions = ytData.quizQuestions;
           }
         } else {
-          docType = "youtube";
+          docType = "text";
           title = "Web Resource";
           summaryText = `Content processed from ${url}.`;
         }
@@ -297,8 +764,9 @@ export default function AppWorkspacePage() {
         summaryText = "Audio lecture transcription parsed into active study notes.";
       }
 
+      const newDocId = `doc-${Date.now()}`;
       const newDoc: DocumentItem = {
-        id: `doc-${Date.now()}`,
+        id: newDocId,
         title,
         type: docType,
         space: spaces[0]?.title || "Machine Learning & AI",
@@ -306,11 +774,33 @@ export default function AppWorkspacePage() {
         pagesOrDuration,
         summaryText,
         fileUrl,
+        status: "ready",
       };
 
+      // 1. Create document in database
       await createDocument(user.id, newDoc);
+
+      // 2. Persist chunks if generated
+      if (generatedChunks.length > 0) {
+        fetch("/api/chunks", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            documentId: newDocId,
+            chunks: generatedChunks,
+          }),
+        }).catch(() => {});
+        setDocumentChunks(generatedChunks);
+      }
+
+      // 3. Update local state
       setRecentDocs((prev) => [newDoc, ...prev.filter((d) => d.id !== newDoc.id)]);
       setSelectedDoc(newDoc);
+      setUsage((prev) => ({
+        ...prev,
+        uploadsUsed: Math.min(prev.uploadsLimit, prev.uploadsUsed + 1),
+      }));
+
       if (pregeneratedCards.length > 0) {
         setFlashcards(pregeneratedCards);
         setCardIndex(0);
@@ -318,490 +808,525 @@ export default function AppWorkspacePage() {
       } else {
         handleGenerateFlashcards(newDoc);
       }
+
       if (pregeneratedQuestions.length > 0) {
         setQuizQuestions(pregeneratedQuestions);
         setSelectedAnswers({});
-        setQuizSubmitted(false);
+        setQuizResults(null);
       } else {
         handleGenerateQuiz(newDoc);
       }
 
-      setChatMessages([
-        {
-          sender: "ai",
-          text: `🎉 Loaded "${newDoc.title}". I've extracted the core concepts, generated flashcards and practice questions. What would you like to review first?`,
-        },
-      ]);
+      // Close modal and navigate to reader
       setUploadModalOpen(false);
-      setActiveTab("study");
       setUploadedFileName("");
       setPasteUrl("");
+      setActiveTab("study");
+      setStudyTool("reader");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to process upload.";
-      setWorkspaceError(`Processing failed: ${msg}`);
+      console.error("Processing upload error:", err);
+      const msg = err instanceof Error ? err.message : "Failed to process study material.";
+      setWorkspaceError(msg);
     } finally {
       setIsSavingContent(false);
+      setUploadStep("");
     }
   };
 
-  const handleCreateSpace = async () => {
-    const newName = prompt("Enter new space name (e.g. Organic Chemistry):")?.trim();
-    if (!user || !newName) return;
-
-    const newSpace: SpaceItem = {
-      id: `space-${Date.now()}`,
-      title: newName,
-      count: 0,
-      bgGradient: "from-blue-700 via-indigo-800 to-slate-900",
-      description: "Custom user study collection.",
-    };
+  // Create Space Handler
+  const handleCreateSpace = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSpaceTitle.trim() || !user) return;
 
     try {
-      setWorkspaceError("");
+      const gradients = [
+        "from-indigo-700 via-purple-800 to-indigo-950",
+        "from-emerald-700 via-teal-800 to-cyan-950",
+        "from-amber-700 via-orange-800 to-stone-900",
+        "from-rose-700 via-pink-800 to-neutral-950",
+        "from-slate-800 via-zinc-900 to-neutral-950",
+      ];
+      const randomGradient = gradients[Math.floor(Math.random() * gradients.length)];
+
+      const newSpace: SpaceItem = {
+        id: `space-${Date.now()}`,
+        title: newSpaceTitle.trim(),
+        count: 0,
+        bgGradient: randomGradient,
+        description: newSpaceDescription.trim() || `Course notes for ${newSpaceTitle.trim()}`,
+      };
+
       await createSpace(user.id, newSpace);
       setSpaces((prev) => [...prev, newSpace]);
-    } catch {
-      setWorkspaceError("The space could not be created. Please try again.");
+      setNewSpaceModalOpen(false);
+      setNewSpaceTitle("");
+      setNewSpaceDescription("");
+    } catch (err) {
+      alert("Failed to create space: " + (err instanceof Error ? err.message : "Unknown error"));
     }
   };
 
-  const handleSignOut = async () => {
-    await authClient.signOut();
-    router.replace("/signin");
-  };
-
-  const handleSendMessage = async (e?: React.FormEvent, customPrompt?: string) => {
-    if (e) e.preventDefault();
-    const userText = (customPrompt || inputMessage).trim();
-    if (!userText) return;
-
-    setChatMessages((prev) => [...prev, { sender: "user", text: userText }]);
-    setInputMessage("");
-    setIsAiThinking(true);
-
-    try {
-      const res = await askChatTutor({
-        message: userText,
-        context: selectedDoc.summaryText
-          ? `Document Title: "${selectedDoc.title}" (${selectedDoc.space})\nSummary & Content: ${selectedDoc.summaryText}`
-          : selectedDoc.title,
-        history: chatMessages.slice(-6),
-      });
-
-      setChatMessages((prev) => [
-        ...prev,
-        { sender: "ai", text: res.reply || "Analyzed your question based on the study material." },
-      ]);
-    } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : "Could not connect to AI service.";
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          sender: "ai",
-          text: `⚠️ AI Tutor notice: ${errorMsg}\nPlease ensure the FastAPI backend is running on port 8000.`,
-        },
-      ]);
-    } finally {
-      setIsAiThinking(false);
-    }
-  };
-
-  const togglePodcastAudio = () => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-      setIsAudioPlaying(!isAudioPlaying);
-      return;
-    }
-
-    if (isAudioPlaying) {
-      window.speechSynthesis.cancel();
-      setIsAudioPlaying(false);
-    } else {
-      window.speechSynthesis.cancel();
-      const narrationText = `Welcome to LearnNova Audio Review. Today we are breaking down: ${selectedDoc.title}. Summary: ${selectedDoc.summaryText}. Pay special attention to these core takeaways for upcoming examinations.`;
-      const utterance = new SpeechSynthesisUtterance(narrationText);
-      utterance.rate = audioSpeed === "2x" ? 1.6 : audioSpeed === "1.5x" ? 1.3 : 1.0;
-      utterance.onend = () => setIsAudioPlaying(false);
-      utterance.onerror = () => setIsAudioPlaying(false);
-      window.speechSynthesis.speak(utterance);
-      setIsAudioPlaying(true);
-    }
-  };
+  // Filtered documents
+  const filteredDocs = recentDocs.filter((doc) => {
+    const matchesSearch =
+      doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      doc.space.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      doc.summaryText.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSpace = selectedSpaceFilter === "all" || doc.space === selectedSpaceFilter;
+    return matchesSearch && matchesSpace;
+  });
 
   return (
-    <div className="min-h-screen bg-[#fcfcfc] text-neutral-900 flex flex-col md:flex-row selection:bg-neutral-200">
-      
-      {/* Sidebar */}
-      <aside className="w-full md:w-64 bg-white border-r border-neutral-200/80 p-4 flex flex-col justify-between shrink-0">
-        <div>
-          {/* Logo & workspace title */}
-          <div className="flex items-center justify-between pb-6 mb-4 border-b border-neutral-100">
-            <Link href="/" className="hover:opacity-80 transition-opacity">
-              <LearnNovaLogo />
-            </Link>
+    <div className="min-h-screen bg-[#fafafa] flex flex-col font-sans text-neutral-900 selection:bg-neutral-200">
+      {/* Top Header */}
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-neutral-200/80 px-4 sm:px-6 h-16 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Link href="/" className="flex items-center gap-2 hover:opacity-85 transition-opacity">
+            <LearnNovaLogo className="h-6 w-auto" />
+          </Link>
+          <div className="h-4 w-px bg-neutral-200 hidden sm:block" />
+          <div className="hidden sm:flex items-center gap-1.5 text-xs text-neutral-500 font-medium">
+            <span>Workspace</span>
+            <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
+            <span className="text-neutral-900 font-semibold truncate max-w-[200px]">
+              {activeTab === "study" ? selectedDoc.title : "All Courses"}
+            </span>
+          </div>
+        </div>
+
+        {/* Header Right Actions */}
+        <div className="flex items-center gap-3">
+          {/* Quota Indicator Pill */}
+          <div
+            className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-100 border border-neutral-200/80 text-[11px] font-medium text-neutral-600"
+            title="Daily AI Questions & Uploads quota resets at midnight UTC"
+          >
+            <span className="flex items-center gap-1 text-emerald-700 font-semibold">
+              <Sparkles className="w-3 h-3 text-emerald-600" />
+              <span>
+                {Math.max(0, usage.questionsLimit - usage.questionsUsed)} questions left
+              </span>
+            </span>
+            <span className="text-neutral-300">•</span>
+            <span>
+              {Math.max(0, usage.uploadsLimit - usage.uploadsUsed)} uploads left
+            </span>
           </div>
 
-          {/* Quick Add Button */}
+          {/* Upload Button */}
           <button
             onClick={() => {
               setUploadType("file");
               setUploadModalOpen(true);
             }}
-            className="w-full py-2.5 px-3.5 mb-5 rounded-2xl bg-neutral-900 hover:bg-black text-white text-xs font-medium flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.98] cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-semibold shadow-2xs transition-all active:scale-[0.98] cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
-            <span>Add Content</span>
+            <Plus className="w-3.5 h-3.5" />
+            <span>Add Material</span>
           </button>
 
-          {/* Navigation Links */}
-          <nav className="space-y-1 text-xs font-medium text-neutral-600">
+          {/* User Profile / Sign Out */}
+          <div className="flex items-center gap-2 pl-2 border-l border-neutral-200">
+            <div className="w-7 h-7 rounded-full bg-neutral-900 text-white flex items-center justify-center text-xs font-bold ring-1 ring-neutral-200">
+              {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U"}
+            </div>
             <button
-              onClick={() => setActiveTab("dashboard")}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
-                activeTab === "dashboard"
-                  ? "bg-neutral-100 text-neutral-900 font-semibold"
-                  : "hover:bg-neutral-50 hover:text-neutral-900"
-              }`}
-            >
-              <Compass className="w-4 h-4 text-neutral-500" />
-              <span>Explore &amp; Spaces</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setActiveTab("study");
+              onClick={async () => {
+                await authClient.signOut();
+                router.replace("/signin");
               }}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
-                activeTab === "study"
-                  ? "bg-neutral-100 text-neutral-900 font-semibold"
-                  : "hover:bg-neutral-50 hover:text-neutral-900"
-              }`}
+              title="Sign Out"
+              className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
             >
-              <BookOpen className="w-4 h-4 text-neutral-500" />
-              <span>Study Workspace</span>
+              <LogOut className="w-4 h-4" />
             </button>
-
-            <Link
-              href="/pricing"
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left hover:bg-neutral-50 hover:text-neutral-900 transition-colors"
-            >
-              <Sparkles className="w-4 h-4 text-neutral-400" />
-              <span>Pricing &amp; Plans</span>
-            </Link>
-          </nav>
-
-          {/* Spaces header */}
-          <div className="pt-6 mt-6 border-t border-neutral-100">
-            <div className="flex items-center justify-between text-[11px] font-semibold text-neutral-400 uppercase tracking-wider mb-2 px-3">
-              <span>My Spaces</span>
-              <button
-                onClick={handleCreateSpace}
-                className="hover:text-black cursor-pointer"
-                title="Create Space"
-              >
-                <Plus className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            <div className="space-y-0.5 text-xs text-neutral-700">
-              {spaces.map((space) => (
-                <button
-                  key={space.id}
-                  onClick={() => {
-                    if (recentDocs[0]) handleOpenDoc(recentDocs[0]);
-                  }}
-                  className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg hover:bg-neutral-50 text-left truncate cursor-pointer"
-                >
-                  <span className="truncate">{space.title}</span>
-                  <span className="text-[10px] text-neutral-400 font-mono ml-2">{space.count}</span>
-                </button>
-              ))}
-            </div>
           </div>
         </div>
+      </header>
 
-        {/* Bottom Upgrade Banner */}
-        <div className="pt-4 mt-6 border-t border-neutral-100">
-          <Link
-            href="/pricing"
-            className="block p-3 rounded-2xl bg-neutral-950 text-white text-xs hover:shadow-md transition-all group"
-          >
-            <div className="flex items-center justify-between font-semibold mb-1">
-              <span>Unlimited Plan</span>
-              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-            </div>
-            <p className="text-[11px] text-neutral-400 mb-2">
-              Unlimited uploads, video lessons &amp; audio podcasts.
-            </p>
-            <span className="inline-block text-[10px] font-semibold text-emerald-400 group-hover:underline">
-              Upgrade now →
-            </span>
-          </Link>
+      {/* Workspace Error Banner */}
+      {workspaceError && (
+        <div className="bg-amber-50 border-b border-amber-200 px-6 py-2.5 text-xs text-amber-900 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>{workspaceError}</span>
+          </div>
           <button
-            type="button"
-            onClick={handleSignOut}
-            className="mt-3 w-full flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs font-medium text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-950"
+            onClick={() => setWorkspaceError("")}
+            className="text-amber-700 hover:text-amber-950 font-bold"
           >
-            <LogOut className="h-3.5 w-3.5" />
-            Sign out
+            ✕
           </button>
         </div>
-      </aside>
+      )}
 
-      {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto">
-        {activeTab === "dashboard" ? (
-          /* Dashboard Home View */
-          <div className="max-w-5xl mx-auto px-6 py-10">
-            {/* Header Greeting */}
-            <div className="mb-10 text-center sm:text-left">
-              <h1 className="text-3xl sm:text-4xl font-semibold text-neutral-900 tracking-tight mb-2">
-                What do you want to learn?
-              </h1>
-              <p className="text-sm text-neutral-500">
-                Upload lectures, PDFs, or paste links to generate notes and chat with your AI tutor.
-              </p>
-            </div>
-
-            {workspaceError && (
-              <div
-                role="alert"
-                className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-              >
-                {workspaceError}
-              </div>
-            )}
-
-            {isWorkspaceLoading && (
-              <div className="mb-6 flex items-center gap-2 text-sm text-neutral-500" aria-live="polite">
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-200 border-t-neutral-900" />
-                Loading your workspace...
-              </div>
-            )}
-
-            {/* 3 Upload Action Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
-              {/* Card 1: Upload */}
-              <div
-                onClick={() => {
-                  setUploadType("file");
-                  setUploadModalOpen(true);
-                }}
-                className="bg-white rounded-3xl p-6 border border-neutral-200/90 hover:border-neutral-300 hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
-              >
-                <div className="w-10 h-10 rounded-2xl bg-neutral-100 group-hover:bg-neutral-900 group-hover:text-white flex items-center justify-center text-neutral-800 transition-colors mb-4">
-                  <Upload className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-base text-neutral-900 mb-1">Upload</h3>
-                  <p className="text-xs text-neutral-500">PDF, audio, video, slides</p>
-                </div>
+      {/* Main Workspace Layout */}
+      <main className="flex-1 flex flex-col overflow-hidden">
+        {/* VIEW 1: DASHBOARD / LIBRARY VIEW */}
+        {activeTab === "dashboard" && (
+          <div className="max-w-[1280px] w-full mx-auto px-4 sm:px-6 py-8 space-y-8 flex-1 overflow-y-auto">
+            {/* Hero / Greeting Bar */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-200/80">
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-semibold text-neutral-900 tracking-tight">
+                  Welcome back{user?.name ? `, ${user.name}` : ""}
+                </h1>
+                <p className="text-xs sm:text-sm text-neutral-500 mt-1">
+                  Pick up where you left off or add new lecture materials to study.
+                </p>
               </div>
 
-              {/* Card 2: Paste */}
-              <div
-                onClick={() => {
-                  setUploadType("paste");
-                  setUploadModalOpen(true);
-                }}
-                className="bg-white rounded-3xl p-6 border border-neutral-200/90 hover:border-neutral-300 hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
-              >
-                <div className="w-10 h-10 rounded-2xl bg-neutral-100 group-hover:bg-neutral-900 group-hover:text-white flex items-center justify-center text-neutral-800 transition-colors mb-4">
-                  <LinkIcon className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-base text-neutral-900 mb-1">Paste</h3>
-                  <p className="text-xs text-neutral-500">YouTube, website, text</p>
-                </div>
-              </div>
-
-              {/* Card 3: Record */}
-              <div
-                onClick={() => {
-                  setUploadType("record");
-                  setUploadModalOpen(true);
-                }}
-                className="bg-white rounded-3xl p-6 border border-neutral-200/90 hover:border-neutral-300 hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
-              >
-                <div className="w-10 h-10 rounded-2xl bg-neutral-100 group-hover:bg-neutral-900 group-hover:text-white flex items-center justify-center text-neutral-800 transition-colors mb-4">
-                  <Mic className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-base text-neutral-900 mb-1">Record</h3>
-                  <p className="text-xs text-neutral-500">Record class, video call</p>
-                </div>
+              {/* Search Bar */}
+              <div className="relative w-full sm:w-72">
+                <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search materials, spaces..."
+                  className="w-full pl-9 pr-4 py-2 rounded-full bg-white border border-neutral-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
+                />
               </div>
             </div>
 
-            {/* Quick Search Bar */}
-            <div className="bg-white rounded-2xl border border-neutral-200/90 p-2 sm:p-2.5 shadow-xs flex items-center gap-3 mb-12">
-              <Search className="w-4 h-4 text-neutral-400 ml-2" />
-              <input
-                type="text"
-                placeholder="Ask your AI tutor anything or search library..."
-                className="flex-1 bg-transparent text-sm text-neutral-800 placeholder-neutral-400 focus:outline-none"
-              />
-              <button
-                onClick={() => {
-                  if (recentDocs[0]) handleOpenDoc(recentDocs[0]);
-                }}
-                className="px-4 py-2 rounded-xl bg-neutral-900 hover:bg-black text-white text-xs font-medium cursor-pointer"
-              >
-                Ask Tutor
-              </button>
-            </div>
-
-            {/* Spaces Grid */}
-            <div className="mb-12">
+            {/* Spaces Section */}
+            <div>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-neutral-900">My Spaces</h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base font-semibold text-neutral-900">Course Spaces</h2>
+                  <span className="text-xs text-neutral-400 font-mono">({spaces.length})</span>
+                </div>
                 <button
-                  onClick={() => alert("Viewing all 3 course spaces")}
-                  className="text-xs text-neutral-500 hover:text-black font-medium"
+                  onClick={() => setNewSpaceModalOpen(true)}
+                  className="inline-flex items-center gap-1 text-xs text-neutral-600 hover:text-black font-medium cursor-pointer"
                 >
-                  View all
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>New Space</span>
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                {spaces.map((space) => (
-                  <div
-                    key={space.id}
-                    onClick={() => {
-                      if (recentDocs[0]) handleOpenDoc(recentDocs[0]);
-                    }}
-                    className="bg-white rounded-3xl border border-neutral-200/80 overflow-hidden shadow-2xs hover:shadow-md transition-all cursor-pointer group"
-                  >
-                    <div className={`h-24 bg-linear-to-r ${space.bgGradient} p-4 flex items-end`}>
-                      <span className="text-xs font-semibold text-white/90 bg-black/30 px-2 py-0.5 rounded-md backdrop-blur-xs">
-                        {space.count} items
-                      </span>
-                    </div>
-                    <div className="p-4">
-                      <h3 className="font-semibold text-sm text-neutral-900 mb-1 group-hover:text-black transition-colors">
-                        {space.title}
-                      </h3>
-                      <p className="text-[11px] text-neutral-500 line-clamp-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {spaces.map((space) => {
+                  const isSelected = selectedSpaceFilter === space.title;
+                  return (
+                    <div
+                      key={space.id}
+                      onClick={() => setSelectedSpaceFilter(isSelected ? "all" : space.title)}
+                      className={`p-5 rounded-2xl border transition-all cursor-pointer relative overflow-hidden select-none ${
+                        isSelected
+                          ? "bg-neutral-900 text-white border-neutral-900 shadow-md"
+                          : "bg-white text-neutral-900 border-neutral-200/80 hover:border-neutral-300 shadow-2xs"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <span
+                          className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                            isSelected
+                              ? "bg-white/20 text-white"
+                              : "bg-neutral-100 text-neutral-600"
+                          }`}
+                        >
+                          {space.count} items
+                        </span>
+                        {isSelected && (
+                          <span className="text-[10px] font-medium text-emerald-400">Filtering</span>
+                        )}
+                      </div>
+                      <h3 className="font-semibold text-base mb-1.5 leading-snug">{space.title}</h3>
+                      <p
+                        className={`text-xs line-clamp-2 leading-relaxed ${
+                          isSelected ? "text-neutral-300" : "text-neutral-500"
+                        }`}
+                      >
                         {space.description}
                       </p>
                     </div>
-                  </div>
-                ))}
-                {!isWorkspaceLoading && spaces.length === 0 && (
-                  <div className="sm:col-span-3 rounded-3xl border border-dashed border-neutral-300 bg-white p-8 text-center text-sm text-neutral-500">
-                    Create your first space with the + button in the sidebar.
-                  </div>
-                )}
+                  );
+                })}
               </div>
             </div>
 
-            {/* Recents List */}
+            {/* Recent Study Materials List */}
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-neutral-900">Recent Materials</h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base font-semibold text-neutral-900">Study Materials</h2>
+                  {selectedSpaceFilter !== "all" && (
+                    <button
+                      onClick={() => setSelectedSpaceFilter("all")}
+                      className="text-xs text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 hover:bg-emerald-100"
+                    >
+                      Filtering by {selectedSpaceFilter} ✕
+                    </button>
+                  )}
+                </div>
               </div>
 
-              <div className="bg-white rounded-3xl border border-neutral-200/80 divide-y divide-neutral-100 shadow-2xs overflow-hidden">
-                {recentDocs.map((doc) => (
-                  <div
-                    key={doc.id}
-                    onClick={() => handleOpenDoc(doc)}
-                    className="p-4 sm:p-5 flex items-center justify-between hover:bg-neutral-50 transition-colors cursor-pointer group"
+              {filteredDocs.length === 0 ? (
+                <div className="py-12 px-6 rounded-3xl border border-dashed border-neutral-200 bg-white text-center text-neutral-500 space-y-3">
+                  <BookOpen className="w-8 h-8 text-neutral-400 mx-auto" />
+                  <p className="text-sm font-medium text-neutral-800">No study materials found</p>
+                  <p className="text-xs text-neutral-400 max-w-sm mx-auto">
+                    {searchQuery ? "Try a different search query" : "Upload your first lecture notes or paste a YouTube link to get started."}
+                  </p>
+                  <button
+                    onClick={() => setUploadModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-neutral-900 text-white text-xs font-semibold hover:bg-black cursor-pointer"
                   >
-                    <div className="flex items-center gap-3.5">
-                      <div className="w-9 h-9 rounded-xl bg-neutral-100 flex items-center justify-center text-neutral-700 shrink-0 group-hover:scale-105 transition-transform">
-                        {doc.type === "pdf" ? (
-                          <FileText className="w-4 h-4 text-red-500" />
-                        ) : doc.type === "recording" ? (
-                          <Mic className="w-4 h-4 text-emerald-500" />
-                        ) : (
-                          <Video className="w-4 h-4 text-red-600" />
-                        )}
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-semibold text-neutral-900 group-hover:underline">
-                          {doc.title}
-                        </h4>
-                        <span className="text-xs text-neutral-400">
-                          {doc.space} • {doc.pagesOrDuration}
-                        </span>
-                      </div>
-                    </div>
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Upload Material</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredDocs.map((doc) => {
+                    const isPdf = doc.type === "pdf";
+                    const isVideo = doc.type === "youtube";
+                    const isAudio = doc.type === "recording";
 
-                    <div className="flex items-center gap-3 text-xs text-neutral-400">
-                      <span>{doc.date}</span>
-                      <ChevronRight className="w-4 h-4 text-neutral-300 group-hover:text-neutral-900 group-hover:translate-x-0.5 transition-all" />
-                    </div>
-                  </div>
-                ))}
-                {!isWorkspaceLoading && recentDocs.length === 0 && (
-                  <div className="p-8 text-center text-sm text-neutral-500">
-                    Add your first learning material to start studying.
-                  </div>
-                )}
-              </div>
+                    return (
+                      <div
+                        key={doc.id}
+                        onClick={() => handleOpenDoc(doc)}
+                        className="group p-5 rounded-2xl bg-white border border-neutral-200/80 shadow-2xs hover:border-neutral-300 hover:shadow-xs transition-all duration-200 cursor-pointer flex flex-col justify-between"
+                      >
+                        <div>
+                          <div className="flex items-center justify-between text-xs text-neutral-400 mb-3">
+                            <span className="flex items-center gap-1 font-mono text-[11px] font-semibold text-neutral-700 bg-neutral-100 px-2 py-0.5 rounded-md">
+                              {isPdf && <FileText className="w-3.5 h-3.5 text-rose-500" />}
+                              {isVideo && <Video className="w-3.5 h-3.5 text-red-500" />}
+                              {isAudio && <Mic className="w-3.5 h-3.5 text-amber-500" />}
+                              <span>{doc.pagesOrDuration}</span>
+                            </span>
+                            <div className="flex items-center gap-1">
+                              <span>{doc.date}</span>
+                              <button
+                                onClick={(e) => handleDeleteDoc(doc.id, e)}
+                                title="Remove document"
+                                className="opacity-0 group-hover:opacity-100 p-1 text-neutral-400 hover:text-rose-600 transition-opacity"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+
+                          <h3 className="font-semibold text-sm sm:text-base text-neutral-900 group-hover:text-black line-clamp-2 leading-snug mb-2">
+                            {doc.title}
+                          </h3>
+
+                          <p className="text-xs text-neutral-500 line-clamp-3 leading-relaxed mb-4">
+                            {doc.summaryText}
+                          </p>
+                        </div>
+
+                        <div className="pt-3 border-t border-neutral-100 flex items-center justify-between text-xs font-medium">
+                          <span className="text-[11px] text-neutral-400 truncate max-w-[140px]">
+                            {doc.space}
+                          </span>
+                          <span className="text-emerald-700 font-semibold group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
+                            <span>Study</span>
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-
           </div>
-        ) : (
-          /* Active Multi-Mode Study Workspace */
-          <div className="h-full flex flex-col lg:flex-row">
-            
-            {/* Left Study Area */}
-            <div className="flex-1 bg-white p-6 sm:p-8 border-b lg:border-b-0 lg:border-r border-neutral-200 flex flex-col justify-between overflow-y-auto">
-              <div>
-                {/* Workspace Top Toolbar */}
-                <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-neutral-100 mb-6">
+        )}
+
+        {/* VIEW 2: SPLIT STUDY WORKSPACE (READER + AI TUTOR) */}
+        {activeTab === "study" && (
+          <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+            {/* Center/Left Main Content Study Panel */}
+            <div
+              className={`flex-1 flex flex-col bg-white border-r border-neutral-200/80 overflow-hidden ${
+                isReaderMaximized ? "w-full" : ""
+              }`}
+            >
+              {/* Study Panel Navigation & Segmented Tabs */}
+              <div className="px-4 sm:px-6 py-3 border-b border-neutral-200/80 flex flex-wrap items-center justify-between gap-3 bg-[#fcfcfd]">
+                <div className="flex items-center gap-3">
                   <button
                     onClick={() => setActiveTab("dashboard")}
-                    className="flex items-center gap-2 text-xs font-semibold text-neutral-600 hover:text-black cursor-pointer"
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-xs font-semibold text-neutral-700 transition-colors cursor-pointer"
                   >
-                    <ArrowLeft className="w-4 h-4" />
-                    <span>Back to Spaces</span>
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Library</span>
                   </button>
 
-                  {/* 4 Study Mode Switchers */}
-                  <div className="flex items-center gap-1 bg-neutral-100 p-1 rounded-xl text-xs font-medium">
-                    <button
-                      onClick={() => setStudyTool("reader")}
-                      className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                        studyTool === "reader" ? "bg-white text-neutral-950 font-semibold shadow-xs" : "text-neutral-500 hover:text-black"
-                      }`}
-                    >
-                      📖 Notes &amp; Reader
-                    </button>
-                    <button
-                      onClick={() => setStudyTool("flashcards")}
-                      className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                        studyTool === "flashcards" ? "bg-white text-neutral-950 font-semibold shadow-xs" : "text-neutral-500 hover:text-black"
-                      }`}
-                    >
-                      🗂 Flashcards
-                    </button>
-                    <button
-                      onClick={() => setStudyTool("quiz")}
-                      className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                        studyTool === "quiz" ? "bg-white text-neutral-950 font-semibold shadow-xs" : "text-neutral-500 hover:text-black"
-                      }`}
-                    >
-                      📝 Practice Exam
-                    </button>
-                    <button
-                      onClick={() => setStudyTool("podcast")}
-                      className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                        studyTool === "podcast" ? "bg-white text-neutral-950 font-semibold shadow-xs" : "text-neutral-500 hover:text-black"
-                      }`}
-                    >
-                      🎙 AI Podcast
-                    </button>
+                  <div className="truncate max-w-[200px] sm:max-w-xs md:max-w-md">
+                    <h2 className="text-xs sm:text-sm font-semibold text-neutral-900 truncate">
+                      {selectedDoc.title}
+                    </h2>
+                    <span className="text-[11px] text-neutral-400">
+                      {selectedDoc.space} • {selectedDoc.pagesOrDuration}
+                    </span>
                   </div>
                 </div>
 
-                {/* Mode 1: Document Reader View */}
+                {/* Segmented Tool Tabs */}
+                <div className="flex items-center p-1 bg-neutral-100 rounded-full border border-neutral-200/80 text-xs font-medium">
+                  <button
+                    onClick={() => setStudyTool("reader")}
+                    className={`px-3 py-1 rounded-full transition-all cursor-pointer ${
+                      studyTool === "reader"
+                        ? "bg-white text-neutral-900 font-semibold shadow-2xs"
+                        : "text-neutral-600 hover:text-neutral-900"
+                    }`}
+                  >
+                    📖 Reader
+                  </button>
+                  <button
+                    onClick={() => setStudyTool("summary")}
+                    className={`px-3 py-1 rounded-full transition-all cursor-pointer ${
+                      studyTool === "summary"
+                        ? "bg-white text-neutral-900 font-semibold shadow-2xs"
+                        : "text-neutral-600 hover:text-neutral-900"
+                    }`}
+                  >
+                    📝 Summary
+                  </button>
+                  <button
+                    onClick={() => setStudyTool("notes")}
+                    className={`px-3 py-1 rounded-full transition-all cursor-pointer ${
+                      studyTool === "notes"
+                        ? "bg-white text-neutral-900 font-semibold shadow-2xs"
+                        : "text-neutral-600 hover:text-neutral-900"
+                    }`}
+                  >
+                    ✍️ Notes
+                  </button>
+                  <button
+                    onClick={() => setStudyTool("flashcards")}
+                    className={`px-3 py-1 rounded-full transition-all cursor-pointer ${
+                      studyTool === "flashcards"
+                        ? "bg-white text-neutral-900 font-semibold shadow-2xs"
+                        : "text-neutral-600 hover:text-neutral-900"
+                    }`}
+                  >
+                    🗂 Cards
+                  </button>
+                  <button
+                    onClick={() => setStudyTool("quiz")}
+                    className={`px-3 py-1 rounded-full transition-all cursor-pointer ${
+                      studyTool === "quiz"
+                        ? "bg-white text-neutral-900 font-semibold shadow-2xs"
+                        : "text-neutral-600 hover:text-neutral-900"
+                    }`}
+                  >
+                    🎯 Quiz
+                  </button>
+                </div>
+
+                {/* Viewport maximize button */}
+                <button
+                  onClick={() => setIsReaderMaximized(!isReaderMaximized)}
+                  title={isReaderMaximized ? "Split View" : "Maximize Reader"}
+                  className="hidden lg:flex p-1.5 rounded-lg text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors"
+                >
+                  {isReaderMaximized ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                </button>
+              </div>
+
+              {/* Study Area Body */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+                {/* TOOL 1: READER (DOCUMENT PAGE CHUNKS & CITATION HIGHLIGHTS) */}
                 {studyTool === "reader" && (
-                  <div className="max-w-2xl mx-auto space-y-5 animate-in fade-in duration-200">
+                  <div className="max-w-3xl mx-auto space-y-6">
+                    {/* Reader Toolbar */}
+                    <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-xs py-2 px-3 rounded-xl border border-neutral-200/80 shadow-2xs flex items-center justify-between text-xs text-neutral-600 mb-6">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-neutral-800">
+                          {documentChunks.length} {documentChunks.length === 1 ? "Page" : "Pages"}
+                        </span>
+                        <span className="text-neutral-300">•</span>
+                        <span className="text-emerald-700 font-medium">Grounded Retrieval Active</span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setZoomLevel((z) => Math.max(80, z - 10))}
+                          className="p-1 rounded hover:bg-neutral-100 text-neutral-500"
+                          title="Zoom out text"
+                        >
+                          <ZoomOut className="w-3.5 h-3.5" />
+                        </button>
+                        <span className="font-mono text-[11px]">{zoomLevel}%</span>
+                        <button
+                          onClick={() => setZoomLevel((z) => Math.min(140, z + 10))}
+                          className="p-1 rounded hover:bg-neutral-100 text-neutral-500"
+                          title="Zoom in text"
+                        >
+                          <ZoomIn className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* YouTube Video Player Embed if YouTube link */}
+                    {selectedDoc.type === "youtube" && (
+                      <div className="rounded-2xl overflow-hidden border border-neutral-200/90 shadow-md mb-8 aspect-video bg-black">
+                        <iframe
+                          src="https://www.youtube.com/embed/kBdfcR-8hEY?enablejsapi=1"
+                          title="Lecture Video Player"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          className="w-full h-full border-0"
+                        />
+                      </div>
+                    )}
+
+                    {/* Document Pages / Chunks */}
+                    {isChunksLoading ? (
+                      <div className="py-20 text-center text-neutral-400 space-y-3">
+                        <div className="w-6 h-6 border-2 border-neutral-300 border-t-neutral-900 rounded-full animate-spin mx-auto" />
+                        <p className="text-xs">Loading document page chunks...</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        {documentChunks.map((chunk, idx) => {
+                          const isHighlighted = highlightedPage === chunk.pageNumber;
+                          return (
+                            <div
+                              key={idx}
+                              ref={(el) => {
+                                pageRefs.current[chunk.pageNumber] = el;
+                              }}
+                              className={`p-6 sm:p-8 rounded-2xl border transition-all duration-300 bg-white shadow-2xs ${
+                                isHighlighted
+                                  ? "border-emerald-500 ring-2 ring-emerald-200 bg-emerald-50/30"
+                                  : "border-neutral-200/80"
+                              }`}
+                              style={{ fontSize: `${(zoomLevel / 100) * 14}px` }}
+                            >
+                              <div className="flex items-center justify-between text-xs font-mono text-neutral-400 mb-4 pb-2 border-b border-neutral-100">
+                                <span className="inline-block text-[11px] font-semibold text-neutral-700 bg-neutral-100 px-2 py-0.5 rounded">
+                                  Page {chunk.pageNumber}
+                                </span>
+                                <span className="text-[11px] text-neutral-400">
+                                  Chunk #{chunk.chunkIndex + 1}
+                                </span>
+                              </div>
+
+                              <div className="text-neutral-800 leading-relaxed font-sans whitespace-pre-line space-y-3">
+                                {chunk.content}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* TOOL 2: SUMMARY VIEW */}
+                {studyTool === "summary" && (
+                  <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in duration-200">
                     <div className="flex items-center justify-between text-xs text-neutral-500 font-mono">
-                      <span className="inline-block text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                        Active Study Material • {selectedDoc.space}
+                      <span className="text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 font-semibold">
+                        Academic Synthesis • {selectedDoc.space}
                       </span>
                       <span>{selectedDoc.pagesOrDuration}</span>
                     </div>
@@ -810,59 +1335,90 @@ export default function AppWorkspacePage() {
                       {selectedDoc.title}
                     </h2>
 
-                    <div className="text-sm sm:text-[15px] text-neutral-700 leading-relaxed font-sans space-y-3">
-                      <p className="whitespace-pre-line">{selectedDoc.summaryText}</p>
-                    </div>
-
-                    <div className="p-4 sm:p-5 bg-emerald-50/90 border-l-4 border-emerald-500 rounded-r-2xl text-xs sm:text-sm text-emerald-950 font-medium my-4 space-y-1.5">
-                      <div className="font-bold text-emerald-900 flex items-center gap-1.5">
-                        <Sparkles className="w-4 h-4 text-emerald-700" />
-                        <span>High-Yield Study Focus:</span>
-                      </div>
-                      <p className="leading-relaxed">
-                        LearnNova AI has processed this material into active recall cards and practice exam questions. Test yourself frequently to reinforce conceptual memory.
+                    <div className="p-5 bg-neutral-50 rounded-2xl border border-neutral-200/80 space-y-3">
+                      <h3 className="font-semibold text-xs uppercase tracking-wider text-neutral-500">
+                        Executive Overview
+                      </h3>
+                      <p className="text-sm sm:text-[15px] text-neutral-800 leading-relaxed font-sans whitespace-pre-line">
+                        {selectedDoc.summaryText}
                       </p>
                     </div>
 
-                    {/* Quick prompts */}
-                    <div className="pt-6 border-t border-neutral-100 flex flex-wrap gap-2 text-xs">
-                      <button
-                        onClick={() => {
-                          handleSendMessage(undefined, `Generate 3 practice exam questions based on "${selectedDoc.title}"`);
-                        }}
-                        className="px-3.5 py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-medium cursor-pointer flex items-center gap-1.5"
-                      >
-                        💡 Generate 3-question quiz
-                      </button>
-                      <button
-                        onClick={() => {
-                          handleSendMessage(undefined, `Summarize the core concepts and exam formulas for "${selectedDoc.title}"`);
-                        }}
-                        className="px-3.5 py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-medium cursor-pointer flex items-center gap-1.5"
-                      >
-                        📝 Summarize key takeaways
-                      </button>
-                      <button
-                        onClick={() => {
-                          setStudyTool("flashcards");
-                          handleGenerateFlashcards();
-                        }}
-                        className="px-3.5 py-2 rounded-xl bg-neutral-900 hover:bg-black text-white font-medium cursor-pointer flex items-center gap-1.5"
-                      >
-                        🗂 Generate Fresh Flashcards
-                      </button>
+                    <div className="p-5 bg-emerald-50/80 border-l-4 border-emerald-500 rounded-r-2xl text-xs sm:text-sm text-emerald-950 font-medium space-y-2">
+                      <div className="font-bold text-emerald-900 flex items-center gap-1.5">
+                        <Sparkles className="w-4 h-4 text-emerald-700" />
+                        <span>High-Yield Study Recommendations</span>
+                      </div>
+                      <p className="leading-relaxed">
+                        1. Review flashcards using active recall before exam review.<br />
+                        2. Take the practice quiz to verify your conceptual comprehension.<br />
+                        3. Ask the AI Tutor questions grounded directly in the document page text.
+                      </p>
                     </div>
                   </div>
                 )}
 
-                {/* Mode 2: Flashcards View */}
+                {/* TOOL 3: STUDENT NOTES EDITOR */}
+                {studyTool === "notes" && (
+                  <div className="max-w-3xl mx-auto space-y-4 animate-in fade-in duration-200 flex flex-col h-full">
+                    <div className="flex items-center justify-between pb-3 border-b border-neutral-200">
+                      <div className="flex items-center gap-2">
+                        <Edit3 className="w-4 h-4 text-neutral-700" />
+                        <input
+                          type="text"
+                          value={noteTitle}
+                          onChange={(e) => setNoteTitle(e.target.value)}
+                          className="font-semibold text-base text-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900 px-2 py-0.5 rounded"
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <span className="text-[11px] font-mono text-neutral-400">
+                          {noteSaveStatus === "saving" && "Saving..."}
+                          {noteSaveStatus === "saved" && "✓ Saved to cloud"}
+                          {noteSaveStatus === "unsaved" && "Unsaved edits"}
+                        </span>
+                        <button
+                          onClick={() => {
+                            const blob = new Blob([noteContent], { type: "text/markdown" });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement("a");
+                            a.href = url;
+                            a.download = `${selectedDoc.title.replace(/[^a-zA-Z0-9]/g, "_")}-notes.md`;
+                            a.click();
+                          }}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-xs font-medium text-neutral-700 cursor-pointer"
+                        >
+                          <Download className="w-3 h-3" />
+                          <span>Export .md</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <textarea
+                      value={noteContent}
+                      onChange={(e) => handleNoteChange(e.target.value)}
+                      placeholder="Write your study notes, key formulas, lecture takeaways..."
+                      rows={16}
+                      className="w-full flex-1 p-5 rounded-2xl bg-white border border-neutral-200/90 text-sm font-mono text-neutral-800 leading-relaxed focus:outline-none focus:ring-2 focus:ring-neutral-900 resize-none shadow-2xs"
+                    />
+                  </div>
+                )}
+
+                {/* TOOL 4: 3D ACTIVE RECALL FLASHCARDS */}
                 {studyTool === "flashcards" && (
                   <div className="max-w-xl mx-auto py-4 animate-in fade-in duration-200">
-                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-neutral-500 mb-4 font-mono">
-                      <span>Card {flashcards.length > 0 ? cardIndex + 1 : 0} of {flashcards.length}</span>
+                    <div className="flex items-center justify-between text-xs text-neutral-500 mb-4 font-mono">
+                      <span>
+                        Card {flashcards.length > 0 ? cardIndex + 1 : 0} of {flashcards.length}
+                      </span>
                       <div className="flex items-center gap-3">
-                        <span className="text-emerald-600 font-semibold">
-                          Mastery: {flashcards.length > 0 ? Math.round((flashcards.filter((f) => f.known === true).length / flashcards.length) * 100) : 0}%
+                        <span className="text-emerald-700 font-semibold">
+                          Mastery:{" "}
+                          {flashcards.length > 0
+                            ? Math.round((flashcards.filter((f) => f.known === true).length / flashcards.length) * 100)
+                            : 0}
+                          %
                         </span>
                         <button
                           onClick={() => handleGenerateFlashcards()}
@@ -870,68 +1426,63 @@ export default function AppWorkspacePage() {
                           className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-[11px] font-sans font-medium text-neutral-800 cursor-pointer disabled:opacity-50"
                         >
                           <Sparkles className={`w-3 h-3 text-amber-500 ${isFlashcardsLoading ? "animate-spin" : ""}`} />
-                          <span>{isFlashcardsLoading ? "Generating..." : "Generate Cards"}</span>
+                          <span>{isFlashcardsLoading ? "Generating..." : "Fresh Cards"}</span>
                         </button>
                       </div>
                     </div>
 
                     {isFlashcardsLoading ? (
-                      <div className="w-full h-64 rounded-3xl border border-neutral-200 bg-neutral-50 flex flex-col items-center justify-center p-8 text-neutral-500">
+                      <div className="w-full h-72 rounded-3xl border border-neutral-200 bg-neutral-50 flex flex-col items-center justify-center p-8 text-neutral-500">
                         <div className="w-6 h-6 border-2 border-neutral-300 border-t-neutral-900 rounded-full animate-spin mb-3" />
-                        <p className="text-xs font-medium">Generating AI flashcards for {selectedDoc.title}...</p>
+                        <p className="text-xs font-medium">Generating AI study flashcards...</p>
                       </div>
                     ) : flashcards.length > 0 && flashcards[cardIndex] ? (
-                      <>
+                      <div>
                         {/* 3D Flip Card */}
                         <div
                           onClick={() => setIsFlipped(!isFlipped)}
-                          className="w-full h-64 sm:h-72 bg-neutral-50 hover:bg-neutral-100/70 rounded-3xl border border-neutral-200 p-8 flex flex-col justify-between text-center shadow-xs cursor-pointer select-none transition-all duration-200 relative"
+                          className="w-full h-72 bg-white hover:bg-neutral-50/80 rounded-3xl border border-neutral-200 p-8 flex flex-col justify-between text-center shadow-xs cursor-pointer select-none transition-all duration-200 relative group"
                         >
-                          <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
-                            {isFlipped ? "Answer" : "Question (Click to flip)"}
-                          </span>
+                          <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
+                            <span>{isFlipped ? "Answer / Definition" : "Prompt / Question"}</span>
+                            {flashcards[cardIndex].sourceRef && (
+                              <span className="text-emerald-700">{flashcards[cardIndex].sourceRef}</span>
+                            )}
+                          </div>
 
                           <div className="text-base sm:text-lg font-medium text-neutral-900 leading-snug px-4">
                             {isFlipped ? flashcards[cardIndex].back : flashcards[cardIndex].front}
                           </div>
 
-                          <span className="text-[11px] text-neutral-400">
-                            {isFlipped ? "Click to return to question" : "Click anywhere to reveal answer"}
-                          </span>
+                          <div className="text-[11px] text-neutral-400 flex items-center justify-center gap-1">
+                            <span>Press</span>
+                            <kbd className="px-1.5 py-0.5 rounded bg-neutral-100 border border-neutral-200 text-neutral-600 font-mono text-[10px]">Space</kbd>
+                            <span>to flip</span>
+                          </div>
                         </div>
 
-                        {/* Action buttons: Don't know / Got it */}
+                        {/* Action buttons */}
                         <div className="flex items-center justify-center gap-4 mt-6">
                           <button
-                            onClick={() => {
-                              const updated = [...flashcards];
-                              updated[cardIndex].known = false;
-                              setFlashcards(updated);
-                              setIsFlipped(false);
-                              if (cardIndex < flashcards.length - 1) setCardIndex(cardIndex + 1);
-                            }}
-                            className="px-6 py-2.5 rounded-full border border-neutral-300 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 cursor-pointer"
+                            onClick={() => handleReviewCard(false)}
+                            className="px-6 py-2.5 rounded-full border border-neutral-300 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 cursor-pointer flex items-center gap-1.5"
                           >
-                            Still Learning
+                            <kbd className="px-1.5 py-0.2 rounded bg-neutral-200 text-neutral-600 font-mono text-[10px]">1</kbd>
+                            <span>Still Learning</span>
                           </button>
                           <button
-                            onClick={() => {
-                              const updated = [...flashcards];
-                              updated[cardIndex].known = true;
-                              setFlashcards(updated);
-                              setIsFlipped(false);
-                              if (cardIndex < flashcards.length - 1) setCardIndex(cardIndex + 1);
-                            }}
+                            onClick={() => handleReviewCard(true)}
                             className="px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs cursor-pointer flex items-center gap-1.5"
                           >
+                            <kbd className="px-1.5 py-0.2 rounded bg-emerald-800 text-emerald-100 font-mono text-[10px]">2</kbd>
                             <Check className="w-3.5 h-3.5" />
                             <span>Got It!</span>
                           </button>
                         </div>
-                      </>
+                      </div>
                     ) : (
-                      <div className="w-full h-64 rounded-3xl border border-dashed border-neutral-300 bg-neutral-50 flex flex-col items-center justify-center p-8 text-neutral-500">
-                        <p className="text-xs mb-3">No flashcards yet for this document.</p>
+                      <div className="w-full h-72 rounded-3xl border border-dashed border-neutral-300 bg-neutral-50 flex flex-col items-center justify-center p-8 text-neutral-500 space-y-3">
+                        <p className="text-xs">No flashcards yet for this document.</p>
                         <button
                           onClick={() => handleGenerateFlashcards()}
                           className="px-4 py-2 rounded-xl bg-neutral-900 text-white text-xs font-semibold hover:bg-black cursor-pointer"
@@ -943,247 +1494,277 @@ export default function AppWorkspacePage() {
                   </div>
                 )}
 
-                {/* Mode 3: Practice Exam Quiz View */}
+                {/* TOOL 5: PRACTICE EXAM / QUIZ */}
                 {studyTool === "quiz" && (
-                  <div className="max-w-2xl mx-auto space-y-6 py-2 animate-in fade-in duration-200">
-                    <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-neutral-100">
+                  <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in duration-200 py-2">
+                    <div className="flex items-center justify-between pb-3 border-b border-neutral-200">
                       <div>
-                        <h3 className="font-semibold text-lg text-neutral-900">
-                          Adaptive Practice Exam ({quizQuestions.length} Questions)
-                        </h3>
-                        <p className="text-xs text-neutral-400">Targeted on {selectedDoc.title}</p>
+                        <h3 className="font-semibold text-base text-neutral-900">Practice Exam Simulation</h3>
+                        <p className="text-xs text-neutral-500">
+                          Server-evaluated multiple-choice questions with explanatory feedback.
+                        </p>
                       </div>
                       <button
                         onClick={() => handleGenerateQuiz()}
                         disabled={isQuizLoading}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-xs font-medium text-neutral-800 cursor-pointer disabled:opacity-50"
+                        className="px-3 py-1.5 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-xs font-medium text-neutral-800 cursor-pointer disabled:opacity-50"
                       >
-                        <Sparkles className={`w-3.5 h-3.5 text-amber-500 ${isQuizLoading ? "animate-spin" : ""}`} />
-                        <span>{isQuizLoading ? "Generating..." : "Generate New Questions"}</span>
+                        {isQuizLoading ? "Generating..." : "New Exam"}
                       </button>
                     </div>
 
-                    {isQuizLoading ? (
-                      <div className="p-12 text-center rounded-2xl bg-neutral-50 border border-neutral-200 text-neutral-500">
-                        <div className="w-6 h-6 border-2 border-neutral-300 border-t-neutral-900 rounded-full animate-spin mx-auto mb-3" />
-                        <p className="text-xs font-medium">Generating rigorous exam questions with rationale...</p>
+                    {/* Quiz Results Banner */}
+                    {quizResults && (
+                      <div
+                        className={`p-6 rounded-2xl border text-center space-y-2 animate-in zoom-in-95 duration-200 ${
+                          quizResults.passed
+                            ? "bg-emerald-50 border-emerald-200 text-emerald-950"
+                            : "bg-amber-50 border-amber-200 text-amber-950"
+                        }`}
+                      >
+                        <div className="inline-flex items-center gap-1.5 font-bold text-sm">
+                          {quizResults.passed ? (
+                            <>
+                              <Award className="w-5 h-5 text-emerald-600" />
+                              <span>Exam Passed! Score: {quizResults.score} / {quizResults.total} ({quizResults.percentage}%)</span>
+                            </>
+                          ) : (
+                            <>
+                              <AlertCircle className="w-5 h-5 text-amber-600" />
+                              <span>Needs Review: {quizResults.score} / {quizResults.total} ({quizResults.percentage}%)</span>
+                            </>
+                          )}
+                        </div>
+                        <p className="text-xs opacity-90">
+                          Review the detailed explanations below to reinforce conceptual gaps.
+                        </p>
                       </div>
-                    ) : quizQuestions.length > 0 ? (
-                      <>
-                        {quizQuestions.map((q, qIdx) => (
-                          <div key={q.id} className="p-5 rounded-2xl bg-neutral-50 border border-neutral-200/80 space-y-3">
-                            <p className="text-sm font-semibold text-neutral-900">
-                              {qIdx + 1}. {q.question}
+                    )}
+
+                    {/* Questions List */}
+                    <div className="space-y-6">
+                      {quizQuestions.map((q, qIndex) => {
+                        const gradedItem = quizResults?.graded.find((r) => r.id === q.id);
+
+                        return (
+                          <div
+                            key={q.id}
+                            className="p-5 sm:p-6 rounded-2xl bg-white border border-neutral-200/90 shadow-2xs space-y-4"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <span className="font-mono text-xs font-semibold text-neutral-400">
+                                Question {qIndex + 1}
+                              </span>
+                              {gradedItem && (
+                                <span
+                                  className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                                    gradedItem.isCorrect
+                                      ? "bg-emerald-100 text-emerald-800"
+                                      : "bg-rose-100 text-rose-800"
+                                  }`}
+                                >
+                                  {gradedItem.isCorrect ? "✓ Correct" : "✕ Incorrect"}
+                                </span>
+                              )}
+                            </div>
+
+                            <p className="text-sm font-semibold text-neutral-900 leading-snug">
+                              {q.question}
                             </p>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                              {q.options.map((opt, optIdx) => {
-                                const isSelected = selectedAnswers[q.id] === optIdx;
-                                const isCorrect = q.correctIndex === optIdx;
-                                let btnStyle = "bg-white text-neutral-800 border-neutral-200 hover:bg-neutral-100";
-
-                                if (quizSubmitted) {
-                                  if (isCorrect) btnStyle = "bg-emerald-100 text-emerald-950 border-emerald-400 font-bold";
-                                  else if (isSelected && !isCorrect) btnStyle = "bg-red-100 text-red-950 border-red-300";
-                                } else if (isSelected) {
-                                  btnStyle = "bg-neutral-900 text-white border-black font-semibold";
-                                }
+                            <div className="space-y-2">
+                              {q.options.map((opt, optIndex) => {
+                                const isSelected = selectedAnswers[q.id] === optIndex;
+                                const isCorrectChoice = gradedItem && gradedItem.correctAnswer === optIndex;
+                                const isWrongChoice = gradedItem && !gradedItem.isCorrect && isSelected;
 
                                 return (
                                   <button
-                                    key={optIdx}
-                                    onClick={() => {
-                                      if (!quizSubmitted) {
-                                        setSelectedAnswers((prev) => ({ ...prev, [q.id]: optIdx }));
-                                      }
-                                    }}
-                                    className={`p-3 rounded-xl border text-xs text-left transition-all cursor-pointer ${btnStyle}`}
+                                    key={optIndex}
+                                    disabled={Boolean(quizResults)}
+                                    onClick={() =>
+                                      setSelectedAnswers((prev) => ({
+                                        ...prev,
+                                        [q.id]: optIndex,
+                                      }))
+                                    }
+                                    className={`w-full text-left p-3 rounded-xl border text-xs sm:text-[13px] transition-all cursor-pointer flex items-center justify-between ${
+                                      isCorrectChoice
+                                        ? "bg-emerald-50 border-emerald-500 text-emerald-950 font-semibold"
+                                        : isWrongChoice
+                                        ? "bg-rose-50 border-rose-400 text-rose-950"
+                                        : isSelected
+                                        ? "bg-neutral-900 text-white border-neutral-900 shadow-2xs font-medium"
+                                        : "bg-white hover:bg-neutral-50 border-neutral-200/90 text-neutral-800"
+                                    }`}
                                   >
-                                    {opt}
+                                    <span className="leading-relaxed">{opt}</span>
+                                    {isCorrectChoice && <Check className="w-4 h-4 text-emerald-700 shrink-0" />}
                                   </button>
                                 );
                               })}
                             </div>
 
-                            {quizSubmitted && (
-                              <div className="pt-2 text-xs text-neutral-600 border-t border-neutral-200/60">
-                                <strong>Rationale:</strong> {q.explanation}
+                            {/* Explanation Reveal after submission */}
+                            {gradedItem && (
+                              <div className="pt-3 mt-3 border-t border-neutral-100 text-xs text-neutral-600 bg-neutral-50/80 p-3 rounded-xl leading-relaxed space-y-1">
+                                <span className="font-bold text-neutral-800 block">Explanation:</span>
+                                <p>{gradedItem.explanation}</p>
                               </div>
                             )}
                           </div>
-                        ))}
+                        );
+                      })}
+                    </div>
 
-                        <div className="pt-4 flex items-center justify-between">
-                          {!quizSubmitted ? (
-                            <button
-                              onClick={() => setQuizSubmitted(true)}
-                              className="px-6 py-3 rounded-full bg-neutral-900 hover:bg-black text-white text-xs font-semibold shadow-xs cursor-pointer"
-                            >
-                              Submit Exam &amp; Check Answers
-                            </button>
-                          ) : (
-                            <div className="flex items-center gap-3">
-                              <button
-                                onClick={() => {
-                                  setSelectedAnswers({});
-                                  setQuizSubmitted(false);
-                                }}
-                                className="px-5 py-2.5 rounded-full border border-neutral-300 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 cursor-pointer"
-                              >
-                                Retake Exam
-                              </button>
-                              <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
-                                <Award className="w-4 h-4" /> Score:{" "}
-                                {Object.entries(selectedAnswers).filter(
-                                  ([id, ans]) => quizQuestions.find((q) => q.id === Number(id))?.correctIndex === ans
-                                ).length}{" "}
-                                / {quizQuestions.length} Correct
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </>
+                    {/* Submit Button */}
+                    {!quizResults ? (
+                      <button
+                        onClick={handleSubmitQuiz}
+                        disabled={isSubmittingQuiz || Object.keys(selectedAnswers).length === 0}
+                        className="w-full py-3.5 rounded-full bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-semibold shadow-md active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        {isSubmittingQuiz ? "Evaluating Answers..." : "Submit Exam For Evaluation"}
+                      </button>
                     ) : (
-                      <div className="p-8 text-center text-xs text-neutral-500 rounded-2xl bg-neutral-50 border border-neutral-200">
-                        Click &quot;Generate New Questions&quot; to synthesize an exam for this material.
-                      </div>
+                      <button
+                        onClick={() => {
+                          setQuizResults(null);
+                          setSelectedAnswers({});
+                        }}
+                        className="w-full py-3.5 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-900 text-xs font-semibold transition-all cursor-pointer"
+                      >
+                        Retake Exam
+                      </button>
                     )}
                   </div>
                 )}
+              </div>
+            </div>
 
-                {/* Mode 4: AI Audio Podcast View */}
-                {studyTool === "podcast" && (
-                  <div className="max-w-xl mx-auto py-6 animate-in fade-in duration-200 text-center">
-                    <div className="w-20 h-20 rounded-3xl bg-linear-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center mx-auto mb-4 shadow-lg">
-                      <Volume2 className="w-9 h-9" />
-                    </div>
-
-                    <h3 className="text-xl font-bold text-neutral-900 mb-1">
-                      AI Audio Study Guide: {selectedDoc.title}
-                    </h3>
-                    <p className="text-xs text-neutral-500 mb-6">
-                      AI Co-hosts Alex &amp; Sarah analyze {selectedDoc.space}
-                    </p>
-
-                    {/* Animated waveform bars */}
-                    <div className="flex items-center justify-center gap-1.5 h-12 mb-6">
-                      {[14, 28, 44, 22, 38, 50, 32, 18, 40, 48, 20, 36, 42, 16, 26, 44, 30].map((h, i) => (
-                        <span
-                          key={i}
-                          style={{ height: isAudioPlaying ? `${h}px` : "8px" }}
-                          className={`w-1.5 rounded-full transition-all duration-300 ${
-                            isAudioPlaying ? "bg-purple-600 animate-pulse" : "bg-neutral-300"
-                          }`}
-                        />
-                      ))}
-                    </div>
-
-                    {/* Controls */}
-                    <div className="flex items-center justify-center gap-4 mb-8">
-                      <button
-                        onClick={() => {
-                          const speeds: Array<"1x" | "1.5x" | "2x"> = ["1x", "1.5x", "2x"];
-                          const nextIdx = (speeds.indexOf(audioSpeed) + 1) % speeds.length;
-                          setAudioSpeed(speeds[nextIdx]);
-                        }}
-                        className="px-3 py-1 rounded-full bg-neutral-100 text-xs font-mono font-semibold text-neutral-700 hover:bg-neutral-200"
-                      >
-                        {audioSpeed}
-                      </button>
-
-                      <button
-                        onClick={togglePodcastAudio}
-                        className="w-14 h-14 rounded-full bg-neutral-900 hover:bg-black text-white flex items-center justify-center shadow-md active:scale-95 transition-all cursor-pointer"
-                        title={isAudioPlaying ? "Pause Audio" : "Play Audio with Web Speech"}
-                      >
-                        {isAudioPlaying ? <Pause className="w-6 h-6 fill-white" /> : <Play className="w-6 h-6 fill-white ml-0.5" />}
-                      </button>
-
-                      <span className="text-xs text-neutral-500 font-medium">
-                        {isAudioPlaying ? "Playing aloud..." : "Click to Listen"}
+            {/* Right Side: LearnNova AI Tutor Chat Panel */}
+            {!isReaderMaximized && (
+              <div className="w-full lg:w-[420px] bg-[#fcfcfd] flex flex-col justify-between border-t lg:border-t-0 lg:border-l border-neutral-200/80 h-[500px] lg:h-auto">
+                {/* Chat Header */}
+                <div className="px-4 py-3 border-b border-neutral-200/80 flex items-center justify-between bg-white">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <div>
+                      <span className="font-semibold text-xs text-neutral-900 block leading-tight">
+                        LearnNova AI Tutor
+                      </span>
+                      <span className="text-[10px] text-neutral-400 font-mono">
+                        Grounded with citations
                       </span>
                     </div>
-
-                    {/* Transcript dialogue box */}
-                    <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-200 text-left text-xs space-y-2 text-neutral-700">
-                      <div>
-                        <strong className="text-purple-700">Sarah:</strong> &quot;Welcome back! Today we are breaking down {selectedDoc.title}. Here is the core premise: {selectedDoc.summaryText}&quot;
-                      </div>
-                      <div>
-                        <strong className="text-indigo-700">Alex:</strong> &quot;Exactly. What matters most for exams is being able to connect these concepts to practice questions. Make sure to review your flashcards and take the practice exam!&quot;
-                      </div>
-                    </div>
                   </div>
-                )}
 
-              </div>
-            </div>
-
-            {/* Right Side: AI Tutor Chat Panel */}
-            <div className="w-full lg:w-[420px] bg-[#f8f9fa] flex flex-col justify-between p-5 border-l border-neutral-200/80">
-              
-              {/* Header */}
-              <div className="pb-3 border-b border-neutral-200 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                  <span className="font-semibold text-xs text-neutral-900">LearnNova AI Tutor</span>
+                  <span className="text-[10px] font-mono font-medium text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                    Groq Engine
+                  </span>
                 </div>
-                <span className="text-[11px] text-neutral-500 font-mono">Groq AI Engine</span>
-              </div>
 
-              {/* Chat Message Thread */}
-              <div className="flex-1 overflow-y-auto py-4 space-y-3.5 max-h-[500px]">
-                {chatMessages.map((msg, index) => (
-                  <div
-                    key={index}
-                    className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
-                  >
+                {/* Chat Message Thread */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                  {chatMessages.map((msg, index) => (
                     <div
-                      className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs sm:text-[13px] leading-relaxed ${
-                        msg.sender === "user"
-                          ? "bg-neutral-900 text-white"
-                          : "bg-white text-neutral-800 border border-neutral-200/80 shadow-2xs"
-                      }`}
+                      key={index}
+                      className={`flex flex-col ${msg.sender === "user" ? "items-end" : "items-start"}`}
                     >
-                      <p className="whitespace-pre-line">{msg.text}</p>
-                    </div>
-                  </div>
-                ))}
+                      <div
+                        className={`max-w-[90%] rounded-2xl px-4 py-3 text-xs sm:text-[13px] leading-relaxed ${
+                          msg.sender === "user"
+                            ? "bg-neutral-950 text-white shadow-2xs"
+                            : "bg-white text-neutral-800 border border-neutral-200/80 shadow-2xs"
+                        }`}
+                      >
+                        {msg.sender === "user" ? (
+                          <p className="whitespace-pre-line">{msg.text}</p>
+                        ) : (
+                          <div className="prose prose-sm max-w-none prose-neutral">
+                            <ReactMarkdown>{msg.text}</ReactMarkdown>
+                          </div>
+                        )}
+                      </div>
 
-                {isAiThinking && (
-                  <div className="flex justify-start">
-                    <div className="bg-white rounded-2xl px-4 py-2 border border-neutral-200 text-xs text-neutral-500 flex items-center gap-1.5 shadow-2xs">
-                      <Sparkles className="w-3.5 h-3.5 animate-spin text-emerald-500" />
-                      <span>AI tutor is analyzing document...</span>
+                      {/* Clickable Citations */}
+                      {msg.citations && msg.citations.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mt-2 max-w-[90%]">
+                          {msg.citations.map((cit, cIdx) => (
+                            <button
+                              key={cIdx}
+                              onClick={() => handleCitationClick(cit.pageNumber)}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 hover:bg-emerald-100 text-[11px] font-mono text-emerald-800 border border-emerald-200 transition-colors cursor-pointer"
+                              title={`Jump to Page ${cit.pageNumber}: ${cit.excerpt}`}
+                            >
+                              <span>📖 Page {cit.pageNumber}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                )}
-              </div>
+                  ))}
 
-              {/* Chat Input Bar */}
-              <form onSubmit={handleSendMessage} className="bg-white rounded-2xl p-2 border border-neutral-200/90 shadow-xs flex items-center gap-2">
-                <input
-                  type="text"
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  placeholder="Ask your tutor anything..."
-                  className="flex-1 px-2 text-xs sm:text-sm text-neutral-800 placeholder-neutral-400 focus:outline-none"
-                />
-                <button
-                  type="submit"
-                  className="w-7 h-7 rounded-xl bg-neutral-900 text-white flex items-center justify-center hover:bg-black transition-all cursor-pointer shrink-0"
+                  {isAiThinking && (
+                    <div className="flex justify-start">
+                      <div className="bg-white rounded-2xl px-4 py-2.5 border border-neutral-200 text-xs text-neutral-500 flex items-center gap-2 shadow-2xs">
+                        <Sparkles className="w-3.5 h-3.5 animate-spin text-emerald-600" />
+                        <span>AI tutor is analyzing study chunks...</span>
+                      </div>
+                    </div>
+                  )}
+                  <div ref={chatBottomRef} />
+                </div>
+
+                {/* Quick Action Prompt Chips */}
+                <div className="px-4 py-2 border-t border-neutral-100 flex flex-wrap gap-1.5 bg-white/50">
+                  <button
+                    onClick={() => handleSendMessage(undefined, `Quiz me on the core concepts in "${selectedDoc.title}"`)}
+                    className="px-2.5 py-1 rounded-full bg-neutral-100 hover:bg-neutral-200 text-[11px] text-neutral-700 font-medium cursor-pointer"
+                  >
+                    💡 Quiz me
+                  </button>
+                  <button
+                    onClick={() => handleSendMessage(undefined, "Explain the key terms with a simple real-world analogy")}
+                    className="px-2.5 py-1 rounded-full bg-neutral-100 hover:bg-neutral-200 text-[11px] text-neutral-700 font-medium cursor-pointer"
+                  >
+                    🔍 Real analogy
+                  </button>
+                  <button
+                    onClick={() => handleSendMessage(undefined, "What are the most likely exam questions from this material?")}
+                    className="px-2.5 py-1 rounded-full bg-neutral-100 hover:bg-neutral-200 text-[11px] text-neutral-700 font-medium cursor-pointer"
+                  >
+                    🎯 Exam focus
+                  </button>
+                </div>
+
+                {/* Chat Input Bar */}
+                <form
+                  onSubmit={handleSendMessage}
+                  className="p-3 bg-white border-t border-neutral-200/80 flex items-center gap-2"
                 >
-                  <Send className="w-3.5 h-3.5" />
-                </button>
-              </form>
-
-            </div>
-
+                  <input
+                    type="text"
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    placeholder="Ask your tutor anything..."
+                    className="flex-1 px-3 py-2 text-xs sm:text-sm text-neutral-800 placeholder-neutral-400 focus:outline-none bg-neutral-50 rounded-xl border border-neutral-200 focus:bg-white"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!inputMessage.trim() || isAiThinking}
+                    className="w-8 h-8 rounded-xl bg-neutral-950 text-white flex items-center justify-center hover:bg-black transition-all cursor-pointer shrink-0 disabled:opacity-40"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                  </button>
+                </form>
+              </div>
+            )}
           </div>
         )}
       </main>
 
-      {/* Upload Ingestion Modal */}
+      {/* MODAL 1: UPLOAD & INGESTION MODAL */}
       {uploadModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
           <div className="bg-white rounded-3xl max-w-lg w-full p-7 border border-neutral-200 shadow-2xl relative animate-in zoom-in-95 duration-200">
@@ -1194,23 +1775,52 @@ export default function AppWorkspacePage() {
               <X className="w-4 h-4" />
             </button>
 
-            <h3 className="text-xl font-bold text-neutral-900 mb-1">
-              {uploadType === "file" && "Upload Study Files"}
-              {uploadType === "paste" && "Paste YouTube or Web Link"}
-              {uploadType === "record" && "Record Lecture Audio"}
-            </h3>
+            <h3 className="text-xl font-bold text-neutral-900 mb-1">Add Study Material</h3>
             <p className="text-xs text-neutral-500 mb-6">
-              Our AI instantly transcribes and organizes your learning materials into quizzes and notes.
+              Our AI extracts page chunks, builds active recall flashcards, and generates practice exams.
             </p>
 
+            {/* Ingestion Type Tabs */}
+            <div className="flex items-center p-1 bg-neutral-100 rounded-2xl mb-6">
+              <button
+                onClick={() => setUploadType("file")}
+                className={`flex-1 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  uploadType === "file" ? "bg-white text-neutral-900 shadow-2xs" : "text-neutral-500"
+                }`}
+              >
+                Upload File
+              </button>
+              <button
+                onClick={() => setUploadType("paste")}
+                className={`flex-1 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  uploadType === "paste" ? "bg-white text-neutral-900 shadow-2xs" : "text-neutral-500"
+                }`}
+              >
+                YouTube Link
+              </button>
+              <button
+                onClick={() => setUploadType("record")}
+                className={`flex-1 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  uploadType === "record" ? "bg-white text-neutral-900 shadow-2xs" : "text-neutral-500"
+                }`}
+              >
+                Audio Notes
+              </button>
+            </div>
+
+            {/* TAB 1: FILE UPLOAD */}
             {uploadType === "file" && (
               <div>
                 <input
                   type="file"
                   ref={fileInputRef}
-                  onChange={handleFileChange}
+                  onChange={(e) => {
+                    if (e.target.files?.[0]) {
+                      setUploadedFileName(e.target.files[0].name);
+                    }
+                  }}
                   className="hidden"
-                  accept=".pdf,.docx,.txt,.mp3,.mp4"
+                  accept=".pdf,.docx,.txt,.md,.mp3,.mp4"
                 />
                 <div
                   onClick={() => fileInputRef.current?.click()}
@@ -1218,15 +1828,16 @@ export default function AppWorkspacePage() {
                 >
                   <Upload className="w-8 h-8 text-neutral-400 mx-auto mb-2" />
                   <p className="text-xs font-semibold text-neutral-800">
-                    {uploadedFileName ? `Selected: ${uploadedFileName}` : "Click to browse or drag and drop"}
+                    {uploadedFileName ? `Selected: ${uploadedFileName}` : "Click to select or drag & drop"}
                   </p>
                   <p className="text-[11px] text-neutral-400 mt-1">
-                    PDF, DOCX, MP3, MP4 (up to 300 MB)
+                    PDF, DOCX, TXT, Markdown (up to 10 MB per file)
                   </p>
                 </div>
               </div>
             )}
 
+            {/* TAB 2: YOUTUBE LINK */}
             {uploadType === "paste" && (
               <div className="space-y-3 mb-6">
                 <input
@@ -1237,34 +1848,95 @@ export default function AppWorkspacePage() {
                   className="w-full px-4 py-3 rounded-2xl bg-neutral-50 border border-neutral-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:bg-white"
                 />
                 <p className="text-[11px] text-neutral-400">
-                  Supports YouTube lectures, public lecture recordings, and web articles.
+                  Transcribes public YouTube lectures, seminars, and talks into chapters and study decks.
                 </p>
               </div>
             )}
 
+            {/* TAB 3: AUDIO NOTES */}
             {uploadType === "record" && (
               <div className="bg-neutral-50 rounded-2xl p-6 text-center border border-neutral-200 mb-6">
                 <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-3">
                   <Mic className="w-6 h-6 animate-pulse" />
                 </div>
-                <p className="text-xs font-semibold text-neutral-800">Microphone Ready</p>
+                <p className="text-xs font-semibold text-neutral-800">Classroom Audio Ready</p>
                 <p className="text-[11px] text-neutral-400 mt-1">
-                  Click start to record live professor audio in classroom or Zoom.
+                  Transcribe classroom lectures or Zoom audio into synthesized study materials.
                 </p>
               </div>
             )}
 
+            {uploadStep && (
+              <p className="text-xs text-emerald-800 font-mono mb-4 text-center animate-pulse">
+                {uploadStep}
+              </p>
+            )}
+
             <button
               onClick={handleProcessUpload}
-              disabled={isSavingContent}
-              className="w-full py-3 rounded-full bg-neutral-900 hover:bg-black text-white text-xs font-semibold shadow-md active:scale-[0.98] transition-all cursor-pointer disabled:cursor-wait disabled:opacity-60"
+              disabled={isSavingContent || (uploadType === "file" && !uploadedFileName)}
+              className="w-full py-3.5 rounded-full bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-semibold shadow-md active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
             >
-              {isSavingContent ? "Saving material..." : "Start AI Processing"}
+              {isSavingContent ? "Processing Study Material..." : "Start AI Synthesis"}
             </button>
           </div>
         </div>
       )}
 
+      {/* MODAL 2: CREATE SPACE MODAL */}
+      {newSpaceModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-md w-full p-7 border border-neutral-200 shadow-2xl relative animate-in zoom-in-95 duration-200">
+            <button
+              onClick={() => setNewSpaceModalOpen(false)}
+              className="absolute top-5 right-5 w-8 h-8 rounded-full bg-neutral-100 hover:bg-neutral-200 flex items-center justify-center text-neutral-600 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <h3 className="text-xl font-bold text-neutral-900 mb-1">Create Course Space</h3>
+            <p className="text-xs text-neutral-500 mb-6">
+              Group your lectures, textbook chapters, and exams by course or curriculum.
+            </p>
+
+            <form onSubmit={handleCreateSpace} className="space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-neutral-700 block mb-1.5">
+                  Course Title
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newSpaceTitle}
+                  onChange={(e) => setNewSpaceTitle(e.target.value)}
+                  placeholder="e.g. Organic Chemistry II"
+                  className="w-full px-4 py-2.5 rounded-xl bg-neutral-50 border border-neutral-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-neutral-700 block mb-1.5">
+                  Description
+                </label>
+                <textarea
+                  rows={3}
+                  value={newSpaceDescription}
+                  onChange={(e) => setNewSpaceDescription(e.target.value)}
+                  placeholder="Syllabus topics, semester modules, exam dates..."
+                  className="w-full px-4 py-2.5 rounded-xl bg-neutral-50 border border-neutral-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:bg-white resize-none"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3 rounded-full bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-semibold shadow-md active:scale-[0.98] transition-all cursor-pointer"
+              >
+                Create Space
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

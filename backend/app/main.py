@@ -19,7 +19,7 @@ app = FastAPI(
 
 # Configure CORS
 origins = settings.cors_origins_list
-default_origins = ["http://localhost:3000", "http://127.0.0.1:3000", "https://youlearn-ai.vercel.app"]
+default_origins = ["http://localhost:3000", "http://127.0.0.1:3000", "https://learnnova-taupe.vercel.app"]
 for default_origin in default_origins:
     if default_origin not in origins and "*" not in origins:
         origins.append(default_origin)

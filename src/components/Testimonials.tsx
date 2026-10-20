@@ -1,117 +1,83 @@
 "use client";
 
 import React from "react";
-import { Star } from "lucide-react";
+import { CheckCircle2, ShieldCheck, Zap, BookOpen, Layers } from "lucide-react";
 
 export function Testimonials() {
-  const testimonials = [
+  const pillars = [
     {
-      id: 1,
-      quote:
-        "LearnNova.ai is awesome , just used it to learn from a biotech roundtable discussion!",
-      name: "Rohan Robinson",
-      role: "Software Engineer, Independent",
-      avatarInitials: "RR",
-      avatarBg: "bg-blue-600",
+      icon: ShieldCheck,
+      badge: "Grounded In Source",
+      title: "Verifiable Page Citations",
+      desc: "Never wonder where an answer came from. LearnNova AI quotes exact page numbers and paragraphs from your uploaded textbook or lecture slides so you can verify facts instantly.",
     },
     {
-      id: 2,
-      quote:
-        'This LearnNova site, with features like "Chat with PDF," has become an integral part of our daily workflow. It\'s streamlined our process of understanding videos and PDFs.',
-      name: "Jason Patel",
-      role: "Writer",
-      avatarInitials: "JP",
-      avatarBg: "bg-emerald-600",
+      icon: Layers,
+      badge: "Active Recall",
+      title: "Spaced Repetition Flashcards",
+      desc: "Turn dense 80-page slide decks into high-yield flashcard decks. Flip cards, mark what you know, and reinforce weak spots before exam day.",
     },
     {
-      id: 3,
-      quote:
-        "I love this tool, like the YouTube video summarizer! I use it to learn concepts ranging from Econ to Quantum Mechanics, and it makes learning so much easier and more effective.",
-      name: "Mihir Wadekar",
-      role: "Product Engineer, Web3",
-      avatarInitials: "MW",
-      avatarBg: "bg-purple-600",
+      icon: BookOpen,
+      badge: "Exam Simulation",
+      title: "Server-Graded Practice Quizzes",
+      desc: "Generate conceptual practice exams tailored to your syllabus. Scores and detailed rationales are calculated server-side to simulate real exam conditions.",
     },
     {
-      id: 4,
-      quote:
-        "I definitely plan to experiment with LearnNova in my online course this summer to offer students an additional method of engagement with more complex topics.",
-      name: "G. Shaw Jr.",
-      role: "Assistant Professor, UNC",
-      avatarInitials: "GS",
-      avatarBg: "bg-amber-600",
-    },
-    {
-      id: 5,
-      quote:
-        "I use LearnNova on a daily basis now. It's streamlined our research and greatly improved how I learn complex materials.",
-      name: "Kate Doe",
-      role: "Content Manager",
-      avatarInitials: "KD",
-      avatarBg: "bg-pink-600",
-    },
-    {
-      id: 6,
-      quote:
-        "LearnNova turns 80-page slide decks into high-yield quizzes and flashcards in seconds. It saved me dozens of hours studying for board exams.",
-      name: "Marcus Vance",
-      role: "Medical Student",
-      avatarInitials: "MV",
-      avatarBg: "bg-indigo-600",
+      icon: Zap,
+      badge: "Ultra-Fast AI",
+      title: "Immediate Tutoring Feedback",
+      desc: "Powered by Groq's high-speed inference, get answers in sub-seconds. Break down formulas, request step-by-step math derivations, or ask for analogies.",
     },
   ];
 
   return (
-    <section className="w-full py-16 md:py-24 overflow-hidden">
-      <div className="max-w-[1240px] mx-auto px-4 sm:px-6 mb-8 text-center sm:text-left flex items-center justify-between">
-        <div>
-          <span className="text-xs uppercase tracking-wider text-neutral-400 font-semibold block mb-1">
-            Community Love
+    <section className="w-full py-16 md:py-24 bg-white overflow-hidden border-t border-neutral-100">
+      <div className="max-w-[1240px] mx-auto px-4 sm:px-6">
+        <div className="text-center max-w-2xl mx-auto mb-12">
+          <span className="text-xs uppercase tracking-wider text-neutral-400 font-semibold block mb-2">
+            The LearnNova Learning Framework
           </span>
-          <h2 className="text-2xl sm:text-3xl font-semibold text-neutral-900 tracking-tight">
-            Loved by learners and educators
+          <h2 className="text-3xl sm:text-4xl font-semibold text-neutral-900 tracking-tight">
+            Built for deep comprehension, not just surface summaries
           </h2>
+          <p className="text-sm sm:text-base text-neutral-500 mt-3 leading-relaxed">
+            Passive reading leads to quick forgetting. LearnNova uses proven active recall and Socratic testing methodologies.
+          </p>
         </div>
-      </div>
 
-      {/* Marquee Row */}
-      <div className="relative w-full overflow-hidden">
-        {/* Left & Right gradient fade masks */}
-        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-16 sm:w-28 bg-linear-to-r from-white to-transparent z-10" />
-        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-16 sm:w-28 bg-linear-to-l from-white to-transparent z-10" />
-
-        <div className="animate-marquee flex gap-6 py-4">
-          {[...testimonials, ...testimonials].map((item, index) => (
-            <div
-              key={`${item.id}-${index}`}
-              className="w-[340px] sm:w-[380px] shrink-0 bg-[#f8f9fa] rounded-3xl p-7 border border-neutral-200/80 flex flex-col justify-between shadow-2xs hover:border-neutral-300 hover:shadow-md transition-all duration-200"
-            >
-              <div className="mb-6">
-                <div className="flex items-center gap-1 text-amber-400 mb-3">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-3.5 h-3.5 fill-current" />
-                  ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {pillars.map((pillar, idx) => {
+            const Icon = pillar.icon;
+            return (
+              <div
+                key={idx}
+                className="p-7 rounded-3xl bg-[#fafafa] border border-neutral-200/80 shadow-2xs hover:border-neutral-300 transition-all duration-200 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-9 h-9 rounded-xl bg-neutral-900 text-white flex items-center justify-center">
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    <span className="text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                      {pillar.badge}
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-neutral-900 mb-2">
+                    {pillar.title}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed">
+                    {pillar.desc}
+                  </p>
                 </div>
-                <p className="text-[14.5px] sm:text-[15px] text-neutral-700 leading-relaxed font-normal">
-                  &ldquo;{item.quote}&rdquo;
-                </p>
-              </div>
 
-              <div className="flex items-center gap-3 pt-3 border-t border-neutral-200/60">
-                <div
-                  className={`w-9 h-9 rounded-full ${item.avatarBg} text-white flex items-center justify-center text-xs font-semibold shrink-0 shadow-xs`}
-                >
-                  {item.avatarInitials}
-                </div>
-                <div className="overflow-hidden">
-                  <h4 className="text-sm font-semibold text-neutral-900 truncate">
-                    {item.name}
-                  </h4>
-                  <p className="text-xs text-neutral-500 truncate">{item.role}</p>
+                <div className="pt-6 mt-6 border-t border-neutral-200/60 flex items-center gap-2 text-xs text-neutral-500 font-medium">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>Available on Free Starter Tier</span>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

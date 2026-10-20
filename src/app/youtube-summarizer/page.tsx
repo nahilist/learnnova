@@ -306,7 +306,12 @@ export default function YouTubeSummarizerPage() {
               },
             ],
         quizQuestions: result.quizQuestions && result.quizQuestions.length > 0
-          ? result.quizQuestions
+          ? result.quizQuestions.map((q) => ({
+              question: q.question,
+              options: q.options,
+              correctIndex: q.correctIndex ?? 0,
+              explanation: q.explanation || "Derived from the lecture transcript.",
+            }))
           : [
               {
                 question: `What is the primary topic of "${result.title}"?`,

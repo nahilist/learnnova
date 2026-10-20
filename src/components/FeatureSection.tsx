@@ -73,7 +73,7 @@ export function FeatureSection({ onOpenDemo }: FeatureSectionProps) {
               <div className="flex items-center gap-3">
                 <Menu className="w-4 h-4 text-neutral-400" />
                 <div className="flex items-center gap-1.5 font-semibold text-white">
-                  <span className="w-3.5 h-3.5 rounded-sm bg-white flex items-center justify-center text-[8px] text-black font-bold">YL</span>
+                  <span className="w-3.5 h-3.5 rounded-sm bg-white flex items-center justify-center text-[8px] text-black font-bold">LN</span>
                   <span className="truncate max-w-[240px] sm:max-w-md font-sans text-[13px]">
                     Justice: What&apos;s The Right Thing To Do? Episode 01 &quot;THE MORAL SIDE OF MURDER&quot;
                   </span>

@@ -6,12 +6,18 @@ from app.schemas.study import FlashcardItem, QuizQuestionItem
 from app.services.youtube_service import youtube_service
 from app.services.ai_service import ai_service
 
+from app.core.auth import get_verified_user_id
+from fastapi import Depends
+
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/youtube", tags=["YouTube Summarizer"])
 
 
 @router.post("/summarize", response_model=YouTubeSummarizeResponse)
-async def summarize_youtube_video(payload: YouTubeSummarizeRequest):
+async def summarize_youtube_video(
+    payload: YouTubeSummarizeRequest,
+    user_id: str = Depends(get_verified_user_id)
+):
     video_id = youtube_service.extract_video_id(payload.url)
     if not video_id:
         raise HTTPException(

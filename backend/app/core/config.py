@@ -6,9 +6,15 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     PROJECT_NAME: str = "LearnNova AI Backend"
-    VERSION: str = "0.1.0"
+    VERSION: str = "0.2.0"
     API_V1_PREFIX: str = "/api"
     
+    # Shared secret for trusted server-to-server Next.js -> FastAPI communication
+    BACKEND_SECRET: str = "learnnova-secure-backend-shared-secret-dev"
+
+    # Database URL (Neon PostgreSQL)
+    DATABASE_URL: str = ""
+
     # Groq Cloud API Settings (Primary high-speed provider)
     GROQ_API_KEY: str = ""
     GROQ_BASE_URL: str = "https://api.groq.com/openai/v1"
@@ -28,8 +34,8 @@ class Settings(BaseSettings):
     PORT: int = 8000
     ENVIRONMENT: str = "development"
     
-    # CORS Origins
-    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000,https://youlearn-ai.vercel.app"
+    # CORS Origins (Restricted in production)
+    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000,https://learnnova-taupe.vercel.app"
 
     @property
     def cors_origins_list(self) -> List[str]:

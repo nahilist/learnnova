@@ -1,13 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { storage } from "@/lib/storage";
+import { requireAuthUser } from "@/lib/auth/session";
 
 export async function GET(request: NextRequest) {
   try {
+    const authCheck = await requireAuthUser();
+    if (authCheck.errorResponse) {
+      return authCheck.errorResponse;
+    }
+    const { user } = authCheck;
+
     const { searchParams } = new URL(request.url);
     const key = searchParams.get("key");
 
     if (!key) {
       return NextResponse.json({ error: "key parameter is required" }, { status: 400 });
+    }
+
+    // Verify ownership: Key must start with uploads/<user.id>/ or be public demo asset
+    const isOwnerKey = key.startsWith(`uploads/${user.id}/`);
+    const isDemoAsset = key.startsWith("demo/") || key.startsWith("public/");
+
+    if (!isOwnerKey && !isDemoAsset) {
+      return NextResponse.json(
+        { error: "Forbidden: You do not have permission to access this file." },
+        { status: 403 }
+      );
     }
 
     const exists = await storage.exists(key);
@@ -22,6 +40,7 @@ export async function GET(request: NextRequest) {
       headers: {
         "Content-Type": file.type || "application/octet-stream",
         "Content-Disposition": `inline; filename="${key.split("/").pop()}"`,
+        "Cache-Control": "private, max-age=3600",
       },
     });
   } catch (error) {
@@ -29,6 +48,9 @@ export async function GET(request: NextRequest) {
       throw error;
     }
     console.error("Storage download error:", error);
-    return NextResponse.json({ error: "Failed to download file from Neon Object Storage" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to download file from storage." },
+      { status: 500 }
+    );
   }
 }

@@ -1,45 +1,52 @@
 /**
  * LearnNova Unified Backend API Client
- * Connects Next.js Frontend to FastAPI Python Backend
+ * Connects Next.js Frontend to FastAPI Backend via Session-Authenticated Proxy
  */
 
-export const API_BASE_URL = (() => {
-  // When running in the browser on an HTTPS production page (e.g. Vercel),
-  // always route through the Next.js same-origin reverse proxy (/api/backend)
-  // unless the API URL is already secure HTTPS, preventing browser Mixed Content blocking.
-  if (typeof window !== "undefined" && window.location.protocol === "https:") {
-    const publicUrl = process.env.NEXT_PUBLIC_API_URL;
-    if (!publicUrl || publicUrl.startsWith("http://")) {
-      return "/api/backend";
-    }
-  }
-  return process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "/api/backend";
-})();
+// Route all browser calls through the session-aware /api/backend proxy
+export const API_BASE_URL = "/api/backend";
 
 export interface ChatMessage {
   sender: "user" | "ai";
   text: string;
 }
 
+export interface CitationItem {
+  pageNumber: number;
+  excerpt: string;
+}
+
+export interface DocumentChunk {
+  pageNumber: number;
+  chunkIndex: number;
+  content: string;
+}
+
 export interface ChatRequest {
   message: string;
   context?: string;
+  chunks?: DocumentChunk[];
   history?: ChatMessage[];
 }
 
 export interface ChatResponse {
   reply: string;
+  citations?: CitationItem[];
+  grounded?: boolean;
 }
 
 export interface FlashcardItem {
   id: number;
   front: string;
   back: string;
+  sourceRef?: string;
+  mastery?: number;
 }
 
 export interface GenerateFlashcardsRequest {
   content: string;
   count?: number;
+  documentId?: string;
 }
 
 export interface GenerateFlashcardsResponse {
@@ -50,18 +57,46 @@ export interface QuizQuestionItem {
   id: number;
   question: string;
   options: string[];
-  correctIndex: number;
-  explanation: string;
+  correctIndex?: number;
+  explanation?: string;
 }
 
 export interface GenerateQuizRequest {
   content: string;
   count?: number;
+  difficulty?: "easy" | "medium" | "hard";
+  documentId?: string;
 }
 
 export interface GenerateQuizResponse {
   questions: QuizQuestionItem[];
 }
+
+export interface QuizGradedQuestion {
+  id: number;
+  question: string;
+  options: string[];
+  userAnswer?: number;
+  correctAnswer: number;
+  isCorrect: boolean;
+  explanation: string;
+}
+
+export interface QuizSubmitRequest {
+  documentId?: string;
+  answers: Record<string | number, number>;
+  questions?: QuizQuestionItem[];
+}
+
+export interface QuizSubmitResponse {
+  score: number;
+  totalQuestions: number;
+  percentage: float;
+  passed: boolean;
+  results: QuizGradedQuestion[];
+}
+
+type float = number;
 
 export interface ChapterItem {
   time: string;
@@ -95,6 +130,7 @@ export interface DocumentProcessResponse {
   keyTakeaways: string[];
   flashcards: FlashcardItem[];
   quizQuestions: QuizQuestionItem[];
+  chunks?: DocumentChunk[];
 }
 
 export interface BackendHealthResponse {
@@ -109,7 +145,6 @@ export interface BackendHealthResponse {
 }
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  // If API_BASE_URL is set, use direct URL; otherwise fallback to Next.js proxy
   const url = `${API_BASE_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
 
   const defaultHeaders: Record<string, string> = {};
@@ -129,7 +164,9 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     let errorDetail = `Request failed with status ${response.status}`;
     try {
       const errJson = await response.json();
-      if (errJson.detail) {
+      if (errJson.error) {
+        errorDetail = errJson.error;
+      } else if (errJson.detail) {
         errorDetail = typeof errJson.detail === "string" ? errJson.detail : JSON.stringify(errJson.detail);
       }
     } catch {
@@ -143,12 +180,12 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
 /** Check health and AI provider status of Python backend */
 export async function getBackendHealth(): Promise<BackendHealthResponse> {
-  return request<BackendHealthResponse>("/api/health");
+  return request<BackendHealthResponse>("/health");
 }
 
-/** Ask AI Tutor a question with optional document context and chat history */
+/** Ask AI Tutor a question with optional document chunks and citations */
 export async function askChatTutor(payload: ChatRequest): Promise<ChatResponse> {
-  return request<ChatResponse>("/api/chat/ask", {
+  return request<ChatResponse>("/chat/ask", {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -158,25 +195,38 @@ export async function askChatTutor(payload: ChatRequest): Promise<ChatResponse> 
 export async function generateStudyFlashcards(
   payload: GenerateFlashcardsRequest
 ): Promise<GenerateFlashcardsResponse> {
-  return request<GenerateFlashcardsResponse>("/api/study/flashcards", {
+  return request<GenerateFlashcardsResponse>("/study/flashcards", {
     method: "POST",
     body: JSON.stringify({
       content: payload.content,
       count: payload.count ?? 5,
+      documentId: payload.documentId,
     }),
   });
 }
 
-/** Generate multiple-choice quiz questions from document content */
+/** Generate practice exam quiz questions from document content */
 export async function generateStudyQuiz(
   payload: GenerateQuizRequest
 ): Promise<GenerateQuizResponse> {
-  return request<GenerateQuizResponse>("/api/study/quiz", {
+  return request<GenerateQuizResponse>("/study/quiz", {
     method: "POST",
     body: JSON.stringify({
       content: payload.content,
       count: payload.count ?? 4,
+      difficulty: payload.difficulty ?? "medium",
+      documentId: payload.documentId,
     }),
+  });
+}
+
+/** Submit quiz answers for server-side score calculation and explanation reveal */
+export async function submitStudyQuiz(
+  payload: QuizSubmitRequest
+): Promise<QuizSubmitResponse> {
+  return request<QuizSubmitResponse>("/study/quiz/submit", {
+    method: "POST",
+    body: JSON.stringify(payload),
   });
 }
 
@@ -184,7 +234,7 @@ export async function generateStudyQuiz(
 export async function summarizeYouTubeVideo(
   url: string
 ): Promise<YouTubeSummarizeResponse> {
-  return request<YouTubeSummarizeResponse>("/api/youtube/summarize", {
+  return request<YouTubeSummarizeResponse>("/youtube/summarize", {
     method: "POST",
     body: JSON.stringify({ url }),
   });
@@ -197,7 +247,7 @@ export async function processPdfDocument(
   const formData = new FormData();
   formData.append("file", file);
 
-  return request<DocumentProcessResponse>("/api/documents/process-pdf", {
+  return request<DocumentProcessResponse>("/documents/process-pdf", {
     method: "POST",
     body: formData,
   });

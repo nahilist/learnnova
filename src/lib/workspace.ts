@@ -9,12 +9,30 @@ export interface SpaceItem {
 export interface DocumentItem {
   id: string;
   title: string;
-  type: "pdf" | "youtube" | "recording";
+  type: "pdf" | "youtube" | "recording" | "text" | "notes";
   space: string;
   date: string;
   pagesOrDuration: string;
   summaryText: string;
   fileUrl?: string;
+  status?: string;
+  failureReason?: string;
+}
+
+export interface WorkspaceData {
+  spaces: SpaceItem[];
+  documents: DocumentItem[];
+  usage?: {
+    questionsUsed: number;
+    questionsLimit: number;
+    uploadsUsed: number;
+    uploadsLimit: number;
+  };
+  user?: {
+    id: string;
+    email: string;
+    name?: string | null;
+  };
 }
 
 export const DEFAULT_SPACES: SpaceItem[] = [
@@ -74,37 +92,47 @@ export const DEFAULT_DOCUMENTS: DocumentItem[] = [
   },
 ];
 
-export async function fetchUserWorkspace(userId: string): Promise<{ spaces: SpaceItem[]; documents: DocumentItem[] }> {
-  const res = await fetch(`/api/workspace?userId=${encodeURIComponent(userId)}`, {
+/**
+ * Fetches the authenticated user's workspace securely using session cookie.
+ */
+export async function fetchUserWorkspace(): Promise<WorkspaceData> {
+  const res = await fetch("/api/workspace", {
     method: "GET",
   });
   if (!res.ok) {
+    if (res.status === 401) {
+      throw new Error("Session expired. Please sign in again.");
+    }
     throw new Error(`Failed to load workspace: ${res.statusText}`);
   }
   return res.json();
 }
 
-export async function initializeUserWorkspace(user: { id: string; email?: string | null; name?: string | null }): Promise<{ spaces: SpaceItem[]; documents: DocumentItem[] }> {
+/**
+ * Initializes or verifies the authenticated user's workspace.
+ */
+export async function initializeUserWorkspace(): Promise<WorkspaceData> {
   const res = await fetch("/api/workspace/init", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      userId: user.id,
-      email: user.email,
-      name: user.name,
-    }),
   });
   if (!res.ok) {
+    if (res.status === 401) {
+      throw new Error("Session expired. Please sign in again.");
+    }
     throw new Error(`Failed to initialize workspace: ${res.statusText}`);
   }
   return res.json();
 }
 
-export async function createSpace(userId: string, space: SpaceItem): Promise<SpaceItem> {
+/**
+ * Creates a new space for the authenticated user.
+ */
+export async function createSpace(_userId: string, space: SpaceItem): Promise<SpaceItem> {
   const res = await fetch("/api/workspace/spaces", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ userId, space }),
+    body: JSON.stringify({ space }),
   });
   if (!res.ok) {
     throw new Error(`Failed to create space: ${res.statusText}`);
@@ -112,11 +140,14 @@ export async function createSpace(userId: string, space: SpaceItem): Promise<Spa
   return res.json();
 }
 
-export async function createDocument(userId: string, documentItem: DocumentItem): Promise<DocumentItem> {
+/**
+ * Creates or updates a document for the authenticated user.
+ */
+export async function createDocument(_userId: string, documentItem: DocumentItem): Promise<DocumentItem> {
   const res = await fetch("/api/workspace/documents", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ userId, document: documentItem }),
+    body: JSON.stringify({ document: documentItem }),
   });
   if (!res.ok) {
     throw new Error(`Failed to create document: ${res.statusText}`);
@@ -124,7 +155,23 @@ export async function createDocument(userId: string, documentItem: DocumentItem)
   return res.json();
 }
 
-export async function uploadToStorage(file: File): Promise<{ key: string; url: string }> {
+/**
+ * Deletes a document owned by the authenticated user.
+ */
+export async function deleteDocument(documentId: string): Promise<{ success: boolean; deletedId: string }> {
+  const res = await fetch(`/api/workspace/documents?id=${encodeURIComponent(documentId)}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to delete document: ${res.statusText}`);
+  }
+  return res.json();
+}
+
+/**
+ * Uploads file to secure user-scoped storage with quota validation.
+ */
+export async function uploadToStorage(file: File): Promise<{ key: string; url: string; quotaRemaining?: number }> {
   const formData = new FormData();
   formData.append("file", file);
 
@@ -134,8 +181,14 @@ export async function uploadToStorage(file: File): Promise<{ key: string; url: s
   });
 
   if (!res.ok) {
-    throw new Error(`Failed to upload file to Neon Object Storage: ${res.statusText}`);
+    let errMessage = `Failed to upload file (${res.statusText})`;
+    try {
+      const err = await res.json();
+      if (err.error) errMessage = err.error;
+    } catch {
+      // fallback
+    }
+    throw new Error(errMessage);
   }
   return res.json();
 }
-

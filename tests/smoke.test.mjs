@@ -33,13 +33,11 @@ describe("LearnNova Production Route & Asset Validation", () => {
     }
   });
 
-  it("should have standard brand assets and icons defined", () => {
+  it("should have standard LearnNova brand assets and logos defined", () => {
     const iconsPath = path.join(rootDir, "src/components/Icons.tsx");
     assert.ok(fs.existsSync(iconsPath), "Icons.tsx missing");
     const iconsContent = fs.readFileSync(iconsPath, "utf-8");
     assert.ok(iconsContent.includes("LearnNovaLogo"), "LearnNovaLogo missing from Icons.tsx");
-    assert.ok(iconsContent.includes("StanfordSeal"), "StanfordSeal missing from Icons.tsx");
-    assert.ok(iconsContent.includes("HarvardSeal"), "HarvardSeal missing from Icons.tsx");
   });
 
   it("should have standalone output configured in next.config.ts for Docker deployment", () => {
@@ -72,19 +70,25 @@ describe("LearnNova Production Route & Asset Validation", () => {
     assert.ok(envExample.includes("NEON_AUTH_BASE_URL"), "NEON_AUTH_BASE_URL is undocumented in .env.example");
   });
 
-  it("should have Neon Lakebase Postgres and Object Storage workspace integration", () => {
+  it("should have Neon Lakebase Postgres, Object Storage, and secure backend proxy integration", () => {
     const workspacePath = path.join(rootDir, "src/lib/workspace.ts");
     const dbPath = path.join(rootDir, "src/lib/db.ts");
     const storagePath = path.join(rootDir, "src/lib/storage.ts");
     const neonConfigPath = path.join(rootDir, "neon.ts");
+    const backendProxyPath = path.join(rootDir, "src/app/api/backend/[...path]/route.ts");
+    const notesApiPath = path.join(rootDir, "src/app/api/notes/route.ts");
+    const flashcardsApiPath = path.join(rootDir, "src/app/api/flashcards/route.ts");
 
     assert.ok(fs.existsSync(workspacePath), "Workspace data layer is missing");
     assert.ok(fs.existsSync(dbPath), "Neon Postgres db client is missing");
     assert.ok(fs.existsSync(storagePath), "Neon Object Storage client is missing");
     assert.ok(fs.existsSync(neonConfigPath), "neon.ts config is missing");
+    assert.ok(fs.existsSync(backendProxyPath), "Secure backend proxy route handler is missing");
+    assert.ok(fs.existsSync(notesApiPath), "Notes persistence API route is missing");
+    assert.ok(fs.existsSync(flashcardsApiPath), "Flashcards persistence API route is missing");
 
     const workspace = fs.readFileSync(workspacePath, "utf-8");
-    assert.ok(workspace.includes("initializeUserWorkspace"), "User workspace initialization is missing");
+    assert.ok(workspace.includes("fetchUserWorkspace"), "User workspace fetch is missing");
     assert.ok(workspace.includes("createDocument"), "Document creation is missing");
   });
 });

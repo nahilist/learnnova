@@ -96,13 +96,13 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: ${{ needs.validate-and-tag.outputs.env }}
-      url: ${{ steps.deploy-step.outputs.deploy_url || 'https://youlearn-ai.vercel.app' }}
+      url: ${{ steps.deploy-step.outputs.deploy_url || 'https://learnnova-taupe.vercel.app' }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Setup Node.js (LTS v20)
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: "npm"
@@ -115,6 +115,13 @@ jobs:
         env:
           NEXT_TELEMETRY_DISABLED: "1"
           NODE_ENV: "production"
+          NEXT_PUBLIC_API_URL: "https://learnnova-taupe.vercel.app"
+          BACKEND_URL: "https://learnnova-taupe.vercel.app"
+          BETTER_AUTH_SECRET: "ci-dummy-secret-at-least-32-characters-long"
+          BETTER_AUTH_URL: "http://localhost:3000"
+          NEON_AUTH_COOKIE_SECRET: "ci-dummy-cookie-secret-32-chars-long"
+          INTERNAL_API_SECRET: "ci-dummy-internal-secret-32-chars-long"
+          DATABASE_URL: "postgres://dummy:dummy@ep-dummy.ap-southeast-1.neon.tech/neondb?sslmode=require"
 
       - name: Deploy to Vercel (or Cloud Hosting)
         id: deploy-step
@@ -122,10 +129,10 @@ jobs:
           if [ -n "${{ secrets.VERCEL_TOKEN }}" ]; then
             echo "Deploying via Vercel CLI..."
             npx vercel --prod --token="${{ secrets.VERCEL_TOKEN }}" --yes
-            echo "deploy_url=https://youlearn-ai.vercel.app" >> $GITHUB_OUTPUT
+            echo "deploy_url=https://learnnova-taupe.vercel.app" >> $GITHUB_OUTPUT
           else
             echo "VERCEL_TOKEN not configured in repository secrets; simulated deployment completed successfully."
-            echo "deploy_url=https://youlearn-ai.vercel.app" >> $GITHUB_OUTPUT
+            echo "deploy_url=https://learnnova-taupe.vercel.app" >> $GITHUB_OUTPUT
           fi
 
   post-deploy-verification:
@@ -148,7 +155,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Generate Release Notes
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@v2
         with:
           name: Release ${{ needs.validate-and-tag.outputs.version }}
           tag_name: ${{ needs.validate-and-tag.outputs.version }}
