@@ -48,7 +48,7 @@ jobs:
           npx @lhci/cli@0.14.x collect --url=http://localhost:3000 --url=http://localhost:3000/pricing --numberOfRuns=1 || echo "Lighthouse audit collected report"
 
       - name: Upload Lighthouse Reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: lighthouse-audit-reports
           path: .lighthouseci/
