@@ -35,7 +35,7 @@
   width: 100%;
   aspect-ratio: 1.78;
   overflow: hidden;
-  border: 1px solid #050505;
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 36px 36px 14px 14px;
   background: #fff;
   box-shadow:
