@@ -44,7 +44,15 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-neutral-900 selection:bg-neutral-200">
+    <div className="relative min-h-screen flex flex-col bg-white text-neutral-900 selection:bg-neutral-200 overflow-x-hidden">
+      {/* Ambient background atmosphere gradient matching youlearn.ai */}
+      <div
+        className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[1440px] h-[680px] -z-10 select-none overflow-hidden"
+        aria-hidden="true"
+      >
+        <div className="w-full h-full bg-[radial-gradient(ellipse_at_top,_rgba(219,234,254,0.45)_0%,_rgba(239,246,255,0.25)_45%,_transparent_75%)]" />
+      </div>
+
       {/* Navigation */}
       <Navbar onOpenDemo={handleOpenDemo} />
 

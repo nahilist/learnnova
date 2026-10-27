@@ -140,8 +140,8 @@ export function HeroProductPreview() {
               poster="/landing-page-video-poster.jpg"
               aria-label="LearnNova product tour"
             >
-              <source src={LANDING_PAGE_VIDEO} type="video/mp4" />
               <source src="/landing-page-video.mp4" type="video/mp4" />
+              <source src={LANDING_PAGE_VIDEO} type="video/mp4" />
             </video>
             <div className="yl-demo-lens" aria-hidden="true" />
           </div>

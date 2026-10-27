@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { LearnNovaLogo } from "./Icons";
+import { YouLearnLogo } from "./Icons";
 import { Landmark } from "lucide-react";
 
 interface FooterProps {
@@ -18,11 +18,11 @@ export function Footer({ onOpenDemo }: FooterProps) {
           {/* Left Column: Brand, Copyright & Partner Badge */}
           <div className="md:col-span-6 lg:col-span-5 space-y-5">
             <Link href="/" className="inline-block focus:outline-none">
-              <LearnNovaLogo />
+              <YouLearnLogo />
             </Link>
 
             <p className="text-sm text-neutral-500 font-normal">
-              © Copyright 2026 LearnNova Inc.
+              © Copyright 2026 YouLearn Inc.
             </p>
 
             <div className="pt-2">

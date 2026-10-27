@@ -180,3 +180,69 @@ export function MichiganSeal({ className = "h-10" }: { className?: string }) {
     </div>
   );
 }
+
+export function MichiganBlockM({ className = "h-10" }: { className?: string }) {
+  return (
+    <div className={`flex items-center justify-center ${className}`}>
+      <svg viewBox="0 0 64 52" className="h-full w-auto" fill="none">
+        <path
+          d="M6 48 L6 4 L22 4 L32 24 L42 4 L58 4 L58 48 L44 48 L44 22 L36 38 L28 38 L20 22 L20 48 Z"
+          fill="#FFCB05"
+          stroke="#00274C"
+          strokeWidth="3.5"
+          strokeLinejoin="miter"
+        />
+      </svg>
+    </div>
+  );
+}
+
+export function CornellSeal({ className = "h-10" }: { className?: string }) {
+  return (
+    <div className={`flex items-center justify-center ${className}`}>
+      <svg viewBox="0 0 56 64" className="h-full w-auto" fill="none">
+        <path d="M5 6 C5 6 28 2 28 2 C28 2 51 6 51 6 C51 32 46 52 28 62 C10 52 5 32 5 6 Z" fill="#B31B1B" stroke="#7A0000" strokeWidth="2" />
+        <circle cx="28" cy="24" r="12" fill="#FFFFFF" opacity="0.95" />
+        <rect x="22" y="19" width="12" height="10" rx="1" fill="#B31B1B" />
+        <line x1="28" y1="19" x2="28" y2="29" stroke="#FFFFFF" strokeWidth="1" />
+        <text x="28" y="52" fontSize="4.6" fontWeight="bold" textAnchor="middle" fill="#FFFFFF" letterSpacing="0.06em">CORNELL</text>
+      </svg>
+    </div>
+  );
+}
+
+export function MITSeal({ className = "h-10" }: { className?: string }) {
+  return (
+    <div className={`flex items-center justify-center ${className}`}>
+      <svg viewBox="0 0 74 36" className="h-full w-auto" fill="none">
+        {/* M */}
+        <rect x="2" y="4" width="8" height="28" fill="#A31F34" />
+        <rect x="14" y="4" width="8" height="20" fill="#A31F34" />
+        <rect x="26" y="4" width="8" height="28" fill="#A31F34" />
+        {/* I */}
+        <rect x="38" y="4" width="8" height="28" fill="#A31F34" />
+        {/* T */}
+        <rect x="50" y="4" width="22" height="8" fill="#A31F34" />
+        <rect x="57" y="12" width="8" height="20" fill="#A31F34" />
+      </svg>
+    </div>
+  );
+}
+
+export function MichiganStateSeal({ className = "h-10" }: { className?: string }) {
+  return (
+    <div className={`flex items-center justify-center ${className}`}>
+      <svg viewBox="0 0 54 54" className="h-full w-auto" fill="none">
+        <circle cx="27" cy="27" r="25" fill="#18453B" />
+        {/* Spartan Helmet silhouette */}
+        <path
+          d="M27 9 C20 9 15 14 15 21 C15 25 17 29 20 32 L20 41 L27 45 L34 41 L34 32 C37 29 39 25 39 21 C39 14 34 9 27 9 Z"
+          fill="#FFFFFF"
+        />
+        <path d="M27 9 V45" stroke="#18453B" strokeWidth="2" />
+        <path d="M22 23 H32 V27 H22 Z" fill="#18453B" />
+      </svg>
+    </div>
+  );
+}
+
