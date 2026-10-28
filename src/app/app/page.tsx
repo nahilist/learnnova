@@ -1,56 +1,43 @@
 "use client";
 
-import React, { useEffect, useState, useRef, useTransition } from "react";
+import React, { useCallback, useEffect, useState, useRef } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import ReactMarkdown from "react-markdown";
 import {
   Upload,
   Link as LinkIcon,
   Mic,
   Search,
   Plus,
-  BookOpen,
   Sparkles,
   Send,
   ChevronRight,
-  FileText,
-  Video,
   X,
   ArrowLeft,
-  Compass,
   Play,
-  Pause,
   Check,
   Award,
   LogOut,
-  Layers,
   Edit3,
   Download,
-  RotateCcw,
   ZoomIn,
   ZoomOut,
   Maximize2,
   Minimize2,
-  Trash2,
   AlertCircle,
-  HelpCircle,
-  ExternalLink,
   Flame,
   Clock,
-  CheckCircle2,
   Box,
   ChevronDown,
   ArrowUp,
   Menu,
-  Copy,
 } from "lucide-react";
-import { LearnNovaLogo, YouLearnLogo } from "@/components/Icons";
+import { YouLearnLogo } from "@/components/Icons";
 import { authClient } from "@/lib/auth/client";
 import {
   fetchUserWorkspace,
   createDocument,
-  deleteDocument,
   createSpace,
   DEFAULT_DOCUMENTS,
   uploadToStorage,
@@ -69,6 +56,10 @@ import {
   type DocumentChunk,
   type QuizGradedQuestion,
 } from "@/lib/api";
+
+const ReactMarkdown = dynamic(() => import("react-markdown"), {
+  loading: () => <div className="h-20 animate-pulse rounded-xl bg-neutral-100" />,
+});
 
 interface Flashcard {
   id: number;
@@ -104,9 +95,7 @@ export default function AppWorkspacePage() {
   const [spaces, setSpaces] = useState<SpaceItem[]>([]);
   const [recentDocs, setRecentDocs] = useState<DocumentItem[]>([]);
   const [selectedDoc, setSelectedDoc] = useState<DocumentItem>(DEFAULT_DOCUMENTS[0]);
-  const [searchQuery, setSearchQuery] = useState("");
   const [selectedSpaceFilter, setSelectedSpaceFilter] = useState<string>("all");
-  const [isWorkspaceLoading, setIsWorkspaceLoading] = useState(true);
   const [workspaceError, setWorkspaceError] = useState("");
 
   // YouLearn Dashboard UI States
@@ -130,7 +119,7 @@ export default function AppWorkspacePage() {
   // Document Content & Chunks State
   const [documentChunks, setDocumentChunks] = useState<DocumentChunk[]>([]);
   const [isChunksLoading, setIsChunksLoading] = useState(false);
-  const [activePage, setActivePage] = useState<number>(1);
+  const [, setActivePage] = useState<number>(1);
   const [zoomLevel, setZoomLevel] = useState<number>(100);
   const [highlightedPage, setHighlightedPage] = useState<number | null>(null);
   const pageRefs = useRef<Record<number, HTMLDivElement | null>>({});
@@ -220,7 +209,6 @@ export default function AppWorkspacePage() {
     if (!user) return;
 
     const loadData = async () => {
-      setIsWorkspaceLoading(true);
       setWorkspaceError("");
       try {
         const data: WorkspaceData = await fetchUserWorkspace();
@@ -234,12 +222,10 @@ export default function AppWorkspacePage() {
         if (data.documents.length > 0) {
           setSelectedDoc(data.documents[0]);
         }
-        setIsWorkspaceLoading(false);
       } catch (err: unknown) {
         if (!isActive) return;
         const msg = err instanceof Error ? err.message : "Failed to load workspace";
         setWorkspaceError(msg);
-        setIsWorkspaceLoading(false);
       }
     };
 
@@ -405,7 +391,7 @@ export default function AppWorkspacePage() {
   };
 
   // Flashcard Review Handler
-  const handleReviewCard = async (known: boolean) => {
+  const handleReviewCard = useCallback(async (known: boolean) => {
     if (flashcards.length === 0 || !flashcards[cardIndex]) return;
 
     const updated = [...flashcards];
@@ -434,7 +420,7 @@ export default function AppWorkspacePage() {
     } catch {
       // non-fatal
     }
-  };
+  }, [cardIndex, flashcards, selectedDoc.id]);
 
   // Keyboard Navigation for Flashcards
   useEffect(() => {
@@ -466,7 +452,7 @@ export default function AppWorkspacePage() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [activeTab, studyTool, flashcards, cardIndex]);
+  }, [activeTab, studyTool, flashcards, cardIndex, handleReviewCard]);
 
   // Generate Flashcards
   const handleGenerateFlashcards = async (docToUse?: DocumentItem) => {
@@ -676,23 +662,6 @@ export default function AppWorkspacePage() {
     setSelectedAnswers({});
     handleGenerateFlashcards(doc);
     handleGenerateQuiz(doc);
-  };
-
-  // Delete Document Handler
-  const handleDeleteDoc = async (docId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!confirm("Are you sure you want to remove this study document?")) return;
-
-    try {
-      await deleteDocument(docId);
-      setRecentDocs((prev) => prev.filter((d) => d.id !== docId));
-      if (selectedDoc.id === docId && recentDocs.length > 1) {
-        const next = recentDocs.find((d) => d.id !== docId);
-        if (next) setSelectedDoc(next);
-      }
-    } catch (err) {
-      alert("Failed to delete document: " + (err instanceof Error ? err.message : "Unknown error"));
-    }
   };
 
   // Process File / Link / Text / Record Upload
@@ -981,16 +950,6 @@ export default function AppWorkspacePage() {
     }
   };
 
-  // Filtered documents
-  const filteredDocs = recentDocs.filter((doc) => {
-    const matchesSearch =
-      doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.space.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.summaryText.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesSpace = selectedSpaceFilter === "all" || doc.space === selectedSpaceFilter;
-    return matchesSearch && matchesSpace;
-  });
-
   const displayName = user?.name ? (user.name.includes(" ") ? user.name : `${user.name} Kumar`) : "Himanshu Kumar";
   const firstName = user?.name ? user.name.split(" ")[0] : "Himanshu";
 
@@ -1242,14 +1201,6 @@ export default function AppWorkspacePage() {
           >
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-7 h-7 rounded-full overflow-hidden bg-neutral-900 text-white shrink-0 flex items-center justify-center text-xs font-bold ring-1 ring-neutral-200">
-                <img
-                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
-                  alt={displayName}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLElement).style.display = "none";
-                  }}
-                />
                 <span className="text-[11px] font-semibold">
                   {displayName[0]?.toUpperCase() || "H"}
                 </span>

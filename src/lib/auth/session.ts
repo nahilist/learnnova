@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth/server";
+import { unstable_rethrow } from "next/navigation";
 import { NextResponse } from "next/server";
 
 export interface AuthenticatedUser {
@@ -23,6 +24,7 @@ export async function getAuthenticatedUser(): Promise<AuthenticatedUser | null> 
       name: session.user.name || null,
     };
   } catch (error) {
+    unstable_rethrow(error);
     console.error("Session verification failed:", error);
     return null;
   }

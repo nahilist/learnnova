@@ -4,7 +4,7 @@
  */
 
 // Route all browser calls through the session-aware /api/backend proxy
-export const API_BASE_URL = "/api/backend";
+const API_BASE_URL = "/api/backend";
 
 export interface ChatMessage {
   sender: "user" | "ai";
@@ -133,17 +133,6 @@ export interface DocumentProcessResponse {
   chunks?: DocumentChunk[];
 }
 
-export interface BackendHealthResponse {
-  status: string;
-  app: string;
-  version: string;
-  environment: string;
-  primary_ai_provider: string;
-  groq_configured: boolean;
-  deepseek_configured: boolean;
-  gemini_configured: boolean;
-}
-
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
 
@@ -176,11 +165,6 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   }
 
   return response.json() as Promise<T>;
-}
-
-/** Check health and AI provider status of Python backend */
-export async function getBackendHealth(): Promise<BackendHealthResponse> {
-  return request<BackendHealthResponse>("/health");
 }
 
 /** Ask AI Tutor a question with optional document chunks and citations */

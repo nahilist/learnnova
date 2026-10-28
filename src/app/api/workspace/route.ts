@@ -1,10 +1,13 @@
-import { NextResponse } from "next/server";
+import { connection, NextResponse } from "next/server";
+import { unstable_rethrow } from "next/navigation";
 import { sql } from "@/lib/db";
 import { requireAuthUser } from "@/lib/auth/session";
 import { DEFAULT_SPACES, DEFAULT_DOCUMENTS } from "@/lib/workspace";
 import { getUserDailyUsage } from "@/lib/quotas";
 
 export async function GET() {
+  await connection();
+
   try {
     const authCheck = await requireAuthUser();
     if (authCheck.errorResponse) {
@@ -100,9 +103,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    if ((error as { digest?: string })?.digest?.startsWith?.("NEXT_")) {
-      throw error;
-    }
+    unstable_rethrow(error);
     console.error("Workspace GET error:", error);
     return NextResponse.json({ error: "Failed to load workspace data securely." }, { status: 500 });
   }

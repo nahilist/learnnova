@@ -3,7 +3,7 @@ import { neon } from "files-sdk/neon";
 
 let _storage: Files | null = null;
 
-export function getStorage(): Files {
+function getStorage(): Files {
   if (!_storage) {
     const endpoint = process.env.AWS_ENDPOINT_URL_S3 || "https://storage.neon.tech";
     _storage = new Files({

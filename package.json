@@ -14,11 +14,10 @@
     "backend:test": "uv run --directory backend pytest"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1152.0",
-    "@aws-sdk/s3-presigned-post": "^3.1152.0",
-    "@aws-sdk/s3-request-presigner": "^3.1152.0",
+    "@aws-sdk/client-s3": "^3.1159.0",
+    "@aws-sdk/s3-presigned-post": "^3.1159.0",
+    "@aws-sdk/s3-request-presigner": "^3.1159.0",
     "@neon/config": "^1.9.2",
-    "@neon/env": "^1.6.3",
     "@neondatabase/auth": "^0.6.0-beta",
     "@neondatabase/serverless": "^1.2.0",
     "files-sdk": "^3.1.1",

@@ -11,7 +11,6 @@ export function Testimonials() {
       role: "Software Engineer, Independent",
       avatarBg: "#3B82F6",
       avatarLetter: "R",
-      avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
     },
     {
       quote:
@@ -20,7 +19,6 @@ export function Testimonials() {
       role: "Writer",
       avatarBg: "#111827",
       avatarLetter: "J",
-      avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
     },
     {
       quote:
@@ -29,7 +27,6 @@ export function Testimonials() {
       role: "Medical Student, Johns Hopkins",
       avatarBg: "#EC4899",
       avatarLetter: "K",
-      avatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
     },
     {
       quote:
@@ -38,7 +35,6 @@ export function Testimonials() {
       role: "Product Engineer, Web3",
       avatarBg: "#10B981",
       avatarLetter: "M",
-      avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
     },
   ];
 
@@ -56,22 +52,12 @@ export function Testimonials() {
               </p>
 
               <div className="flex items-center gap-3 pt-4 border-t border-neutral-200/60">
-                <div className="w-10 h-10 rounded-full overflow-hidden bg-neutral-200 shrink-0 border border-neutral-300/80">
-                  <img
-                    src={item.avatarUrl}
-                    alt={item.author}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      // Fallback to letter avatar if network image is unavailable
-                      e.currentTarget.style.display = "none";
-                      if (e.currentTarget.parentElement) {
-                        e.currentTarget.parentElement.style.backgroundColor = item.avatarBg;
-                        e.currentTarget.parentElement.innerText = item.avatarLetter;
-                        e.currentTarget.parentElement.className =
-                          "w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0";
-                      }
-                    }}
-                  />
+                <div
+                  className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center text-white font-bold text-sm"
+                  style={{ backgroundColor: item.avatarBg }}
+                  aria-hidden="true"
+                >
+                  {item.avatarLetter}
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-neutral-900 leading-snug">

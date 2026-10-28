@@ -129,23 +129,6 @@ export async function fetchUserWorkspace(): Promise<WorkspaceData> {
 }
 
 /**
- * Initializes or verifies the authenticated user's workspace.
- */
-export async function initializeUserWorkspace(): Promise<WorkspaceData> {
-  const res = await fetch("/api/workspace/init", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-  });
-  if (!res.ok) {
-    if (res.status === 401) {
-      throw new Error("Session expired. Please sign in again.");
-    }
-    throw new Error(`Failed to initialize workspace: ${res.statusText}`);
-  }
-  return res.json();
-}
-
-/**
  * Creates a new space for the authenticated user.
  */
 export async function createSpace(_userId: string, space: SpaceItem): Promise<SpaceItem> {
@@ -171,19 +154,6 @@ export async function createDocument(_userId: string, documentItem: DocumentItem
   });
   if (!res.ok) {
     throw new Error(`Failed to create document: ${res.statusText}`);
-  }
-  return res.json();
-}
-
-/**
- * Deletes a document owned by the authenticated user.
- */
-export async function deleteDocument(documentId: string): Promise<{ success: boolean; deletedId: string }> {
-  const res = await fetch(`/api/workspace/documents?id=${encodeURIComponent(documentId)}`, {
-    method: "DELETE",
-  });
-  if (!res.ok) {
-    throw new Error(`Failed to delete document: ${res.statusText}`);
   }
   return res.json();
 }

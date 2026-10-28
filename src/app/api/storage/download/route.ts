@@ -1,8 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+import { connection, NextRequest, NextResponse } from "next/server";
+import { unstable_rethrow } from "next/navigation";
 import { storage } from "@/lib/storage";
 import { requireAuthUser } from "@/lib/auth/session";
 
 export async function GET(request: NextRequest) {
+  await connection();
+
   try {
     const authCheck = await requireAuthUser();
     if (authCheck.errorResponse) {
@@ -44,9 +47,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    if ((error as { digest?: string })?.digest?.startsWith?.("NEXT_")) {
-      throw error;
-    }
+    unstable_rethrow(error);
     console.error("Storage download error:", error);
     return NextResponse.json(
       { error: "Failed to download file from storage." },

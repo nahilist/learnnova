@@ -1,176 +1,37 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
+import Image from "next/image";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { YouTubeSummaryPreviewVideo } from "@/components/YouTubeSummaryPreviewVideo";
 import {
-  Link2,
-  FileText,
-  BookOpen,
-  MessageSquare,
-  Sparkles,
-  Play,
-  Clock,
-  CheckCircle2,
-  ChevronDown,
-  ArrowRight,
-  Send,
-  Layers,
-  GraduationCap,
   FlaskConical,
-  Compass,
   Star,
   AlertCircle,
-  Pause,
-  Volume2,
-  VolumeX,
-  Maximize,
   BookMarked,
   Glasses
 } from "lucide-react";
-import {
-  HarvardSeal,
-  UCLASeal,
-  UPennSeal,
-  CornellSeal,
-  MichiganStateSeal,
-  MITSeal,
-  MichiganBlockM
-} from "@/components/Icons";
-import { summarizeYouTubeVideo } from "@/lib/api";
 
-interface VideoData {
+interface VideoPreset {
   id: string;
-  youtubeId?: string;
-  localVideoSrc?: string;
+  youtubeId: string;
   title: string;
   subtitle?: string;
-  thumbnailSrc?: string;
+  thumbnailSrc: string;
   channel: string;
   duration: string;
   url: string;
-  description: string;
-  takeaways: string[];
-  chapters: {
-    time: string;
-    title: string;
-    content: string;
-  }[];
-  chatHistory: {
-    role: "user" | "assistant";
-    content: string;
-  }[];
-  flashcards: {
-    front: string;
-    back: string;
-  }[];
 }
-
-function parseTimeString(timeStr: string): number {
-  const parts = timeStr.split(":").map(Number);
-  if (parts.length === 3) {
-    return parts[0] * 3600 + parts[1] * 60 + parts[2];
-  }
-  if (parts.length === 2) {
-    return parts[0] * 60 + parts[1];
-  }
-  return 0;
-}
-
-function formatSeconds(secs: number): string {
-  if (isNaN(secs)) return "00:00";
-  const h = Math.floor(secs / 3600);
-  const m = Math.floor((secs % 3600) / 60);
-  const s = Math.floor(secs % 60);
-  if (h > 0) {
-    return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-  }
-  return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-}
-
-const PRESET_VIDEOS: VideoData[] = [
+const PRESET_VIDEOS: VideoPreset[] = [
   {
     id: "mit-discrete-time",
     youtubeId: "dQw4w9WgXcQ",
-    localVideoSrc: "/7eEoiSCiM7vpz1kuEeEcW5o46o.mp4",
+    thumbnailSrc: "/landing-page-video-poster.jpg",
     title: "Discrete-Time Signals and Systems (MIT OpenCourseWare)",
     channel: "MIT OpenCourseWare • Prof. Allan Adams",
     duration: "1:22:45",
-    url: "https://youtu.be/dQw4w9WgXcQ",
-    description: "MIT OpenCourseWare offers access to hundreds of MIT courses online at ocw.mit.edu. Allan Adams discusses experiments involving electrons passing through apparatus with barriers that challenge classical intuition and discrete time signal systems.",
-    takeaways: [
-      "MIT OpenCourseWare offers access to hundreds of MIT courses online at ocw.mit.edu.",
-      "The lecture begins with the foundational principles of differentiation and wave mechanics in discrete time systems.",
-      "Allan Adams introduces the concept of quantum superposition using a double-barrier electron deflection experiment.",
-      "Unlike classical particles with predetermined trajectories, quantum states represent a coherent blend of simultaneous outcomes."
-    ],
-    chapters: [
-      {
-        time: "00:00",
-        title: "Figure 1: Introductio...",
-        content: "Figure 1: Introduction to discrete-time signal systems and foundational principles of differentiation and wave mechanics."
-      },
-      {
-        time: "04:15",
-        title: "Dense Structure an...",
-        content: "Analyzing dense structural states and energy distributions within bounded physical mediums."
-      },
-      {
-        time: "12:30",
-        title: "Hardest problem o...",
-        content: "Diving into the primary conceptual barrier: resolving classical intuition vs quantum probabilistic outcomes."
-      },
-      {
-        time: "24:45",
-        title: "Understanding Perfec...",
-        content: "Mathematical proof of perfect reconstruction criteria, state vector evolution, and measurement invariance."
-      },
-      {
-        time: "36:20",
-        title: "1. Faster, Talk Smar...",
-        content: "Techniques for rapid analytical derivations, concise problem synthesis, and formula simplification."
-      },
-      {
-        time: "56:38",
-        title: "Superposition of state...",
-        content: "When sending in white electrons, the expected output is 50% due to the barriers, yet 50% is still white, proving superposition."
-      },
-      {
-        time: "01:15:52",
-        title: "Introduction to Fo...",
-        content: "Developing vector intuition and matrix formulation for complex observables in multi-state systems."
-      }
-    ],
-    chatHistory: [
-      {
-        role: "assistant",
-        content: "Welcome to the chat! Ask me anything. I may not always get everything right, but your feedback will help me improve!"
-      },
-      {
-        role: "user",
-        content: "What are the two properties of electrons discussed in they measured?"
-      },
-      {
-        role: "assistant",
-        content: "I notice you're asking about electron properties, but this video covers topics like discrete time systems and rather than electron properties."
-      }
-    ],
-    flashcards: [
-      {
-        front: "Quantum Superposition",
-        back: "The principle that a physical system exists partly in all theoretically possible states simultaneously until a measurement is made."
-      },
-      {
-        front: "Stern-Gerlach Apparatus",
-        back: "An experimental setup demonstrating that the spatial orientation of angular momentum is quantized at microscopic scales."
-      },
-      {
-        front: "Wavefunction Collapse",
-        back: "The reduction of a superposition of several eigenstates to a single eigenstate caused by interaction with an external observer or apparatus."
-      }
-    ]
+    url: "https://youtu.be/dQw4w9WgXcQ"
   },
   {
     id: "tim-urban-procrastination",
@@ -180,51 +41,7 @@ const PRESET_VIDEOS: VideoData[] = [
     subtitle: "Tim Urban tackles procrastination humorously.",
     channel: "TED • Tim Urban",
     duration: "14:03",
-    url: "https://www.youtube.com/watch?v=arj7oStGLkU",
-    description: "Tim Urban tackles procrastination humorously.",
-    takeaways: [
-      "The procrastinator's brain contains a Rational Decision-Maker and an Instant Gratification Monkey.",
-      "The Panic Monster is dormant until a deadline gets terrifyingly close, temporarily driving the Monkey away.",
-      "Long-term procrastination without deadlines (like career changes or health) generates persistent guilt and dissatisfaction.",
-      "The 'Life Calendar' of 90 years represented as weeks shows that time is finite, prompting proactive action."
-    ],
-    chapters: [
-      {
-        time: "02:15",
-        title: "The Brain of a Procrastinator",
-        content: "Tim illustrates how the Rational Decision-Maker is overpowered by the Instant Gratification Monkey who only cares about what is easy and fun."
-      },
-      {
-        time: "07:40",
-        title: "The Panic Monster",
-        content: "When deadlines approach, the Panic Monster wakes up, terrifying the monkey and allowing the rational mind to complete the project."
-      },
-      {
-        time: "11:05",
-        title: "Procrastination Without Deadlines",
-        content: "Why non-deadline procrastination is far more dangerous: dreams and life goals are continually postponed because no panic monster arrives."
-      }
-    ],
-    chatHistory: [
-      {
-        role: "user",
-        content: "Why does Tim say non-deadline procrastination is the most dangerous?"
-      },
-      {
-        role: "assistant",
-        content: "Because in non-deadline situations—such as building a business, writing a book, or exercising—the Panic Monster never wakes up. The delay extends indefinitely, causing quiet, long-term regret rather than short-term stress."
-      }
-    ],
-    flashcards: [
-      {
-        front: "Instant Gratification Monkey",
-        back: "The cognitive metaphor representing impulsive desires for immediate pleasure over long-term strategic goals."
-      },
-      {
-        front: "Panic Monster",
-        back: "The psychological trigger activated when consequences become imminent, breaking procrastination paralysis."
-      }
-    ]
+    url: "https://www.youtube.com/watch?v=arj7oStGLkU"
   },
   {
     id: "mit-algorithms",
@@ -234,50 +51,7 @@ const PRESET_VIDEOS: VideoData[] = [
     subtitle: "Course topics, word RAM, predecessor, etc.",
     channel: "Harvard University • Prof. Jelani Nelson",
     duration: "1:18:22",
-    url: "https://www.youtube.com/watch?v=0JUN9aDxVmI",
-    description: "Course topics, word RAM, predecessor, etc.",
-    takeaways: [
-      "The Word RAM model provides a realistic theoretical architecture assuming O(1) word-level bitwise operations.",
-      "Predecessor and successor searches can beat the classical O(log n) comparison barrier using integer structures like Van Emde Boas trees.",
-      "Hashing and randomized algorithms provide amortized constant-time lookups with high probability."
-    ],
-    chapters: [
-      {
-        time: "00:00",
-        title: "Course Overview and Logistics",
-        content: "Introduction to algorithmic paradigms: integer data structures, dynamic graphs, randomized sketches, and streaming."
-      },
-      {
-        time: "18:45",
-        title: "The Word RAM Model",
-        content: "Formalizing computation bounds on modern 64-bit architectures using bit manipulation and constant-time operations."
-      },
-      {
-        time: "42:10",
-        title: "Predecessor Problem",
-        content: "Given a set S of n integers, quickly find the largest element in S smaller than x."
-      }
-    ],
-    chatHistory: [
-      {
-        role: "user",
-        content: "What is the Predecessor Problem in algorithms?"
-      },
-      {
-        role: "assistant",
-        content: "The Predecessor Problem asks to find the largest value in a set that is less than or equal to a query key x. While binary search trees solve this in O(log n) time, integer data structures like y-fast tries can solve it in O(log log U) time."
-      }
-    ],
-    flashcards: [
-      {
-        front: "Word RAM Model",
-        back: "A model of computation where the computer consists of memory words of w bits each, supporting standard operations in O(1) time."
-      },
-      {
-        front: "Van Emde Boas Tree",
-        back: "A specialized tree data structure that supports associative array operations on integer keys in O(log log M) time."
-      }
-    ]
+    url: "https://www.youtube.com/watch?v=0JUN9aDxVmI"
   },
   {
     id: "mit-brain",
@@ -287,50 +61,7 @@ const PRESET_VIDEOS: VideoData[] = [
     subtitle: "MIT 9.13 The Human Brain, Spring 2019",
     channel: "MIT 9.13 • Prof. Nancy Kanwisher",
     duration: "1:08:45",
-    url: "https://www.youtube.com/watch?v=ba-HMvDn_vU",
-    description: "MIT 9.13 The Human Brain, Spring 2019",
-    takeaways: [
-      "The human cortex is organized into distinct specialized regions dedicated to specific cognitive functions.",
-      "The Fusiform Face Area (FFA) responds selectively to human faces, distinguishing them from other visual categories.",
-      "Functional Magnetic Resonance Imaging (fMRI) measures localized blood oxygenation levels (BOLD response) to map neural activity."
-    ],
-    chapters: [
-      {
-        time: "00:00",
-        title: "The Grand Puzzle of the Human Mind",
-        content: "Prof. Kanwisher outlines how 3 pounds of tissue produce conscious experience, visual recognition, and linguistic thought."
-      },
-      {
-        time: "24:10",
-        title: "Functional Specialization vs Distributed Processing",
-        content: "Historic debate between phrenology, equipotentiality, and modern modular neuroanatomy."
-      },
-      {
-        time: "48:30",
-        title: "Discovering the Fusiform Face Area",
-        content: "How pioneering fMRI scans proved extreme face-selective responses in the ventral visual stream."
-      }
-    ],
-    chatHistory: [
-      {
-        role: "user",
-        content: "What is the primary function of the Fusiform Face Area (FFA)?"
-      },
-      {
-        role: "assistant",
-        content: "The FFA is a specialized region in the ventral temporal cortex that selectively activates when humans recognize and process faces compared to objects or scenes."
-      }
-    ],
-    flashcards: [
-      {
-        front: "Fusiform Face Area (FFA)",
-        back: "A region in the inferior temporal lobe of the human brain specialized for facial recognition."
-      },
-      {
-        front: "BOLD Signal",
-        back: "Blood Oxygen Level Dependent signal measured in fMRI to infer localized neural activity based on magnetic hemoglobin properties."
-      }
-    ]
+    url: "https://www.youtube.com/watch?v=ba-HMvDn_vU"
   }
 ];
 
@@ -362,195 +93,34 @@ const FAQS = [
 ];
 
 export default function YouTubeSummarizerPage() {
-  const [inputUrl, setInputUrl] = useState("https://youtu.be/dQw4w9WgXcQ");
-  const [currentVideo, setCurrentVideo] = useState<VideoData>(PRESET_VIDEOS[0]);
-  const [activeTab, setActiveTab] = useState<"chat" | "flashcards" | "summary">("chat");
-  const [cardIndex, setCardIndex] = useState(0);
-  const [isFlipped, setIsFlipped] = useState(false);
-  const [userQuestion, setUserQuestion] = useState("");
-  const [chatMessages, setChatMessages] = useState<{ role: "user" | "assistant"; content: string }[]>(
-    PRESET_VIDEOS[0].chatHistory
-  );
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [inputUrl, setInputUrl] = useState(PRESET_VIDEOS[0].url);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Video playback state
-  const videoRef = React.useRef<HTMLVideoElement>(null);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [currentTime, setCurrentTime] = useState(9);
-  const [videoDuration, setVideoDuration] = useState(82 * 60 + 45);
-  const [isMuted, setIsMuted] = useState(true);
-  const [activeChapterIndex, setActiveChapterIndex] = useState(0);
-
-  const togglePlay = () => {
-    if (!videoRef.current) return;
-    if (videoRef.current.paused) {
-      videoRef.current.play();
-      setIsPlaying(true);
-    } else {
-      videoRef.current.pause();
-      setIsPlaying(false);
-    }
+  const scrollToPreview = () => {
+    document.getElementById("summarizer-preview")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
   };
 
-  const toggleMute = () => {
-    if (!videoRef.current) return;
-    videoRef.current.muted = !videoRef.current.muted;
-    setIsMuted(videoRef.current.muted);
-  };
-
-  const handleTimeUpdate = () => {
-    if (!videoRef.current) return;
-    setCurrentTime(videoRef.current.currentTime);
-  };
-
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseFloat(e.target.value);
-    setCurrentTime(val);
-    if (videoRef.current) {
-      videoRef.current.currentTime = val;
-    }
-  };
-
-  const handleSelectChapter = (index: number, timeStr: string) => {
-    setActiveChapterIndex(index);
-    const secs = parseTimeString(timeStr);
-    if (videoRef.current) {
-      videoRef.current.currentTime = secs;
-      if (videoRef.current.paused) {
-        videoRef.current.play();
-        setIsPlaying(true);
-      }
-    }
-  };
-
-  const handleSelectPreset = (video: VideoData) => {
-    setCurrentVideo(video);
+  const handleSelectPreset = (video: VideoPreset) => {
     setInputUrl(video.url);
-    setChatMessages(video.chatHistory);
-    setCardIndex(0);
-    setIsFlipped(false);
-    setActiveChapterIndex(0);
     setErrorMessage("");
-    setActiveTab("chat");
-    if (videoRef.current) {
-      videoRef.current.currentTime = 0;
-      videoRef.current.play();
-      setIsPlaying(true);
-    }
-    const target = document.getElementById("summarizer-preview");
-    if (target) {
-      target.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+    scrollToPreview();
   };
 
-  const handleGenerateSummary = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleGenerateSummary = (event: React.FormEvent) => {
+    event.preventDefault();
     const cleanUrl = inputUrl.trim();
-    if (!cleanUrl) return;
 
-    // Check if it matches any of the preset URLs
-    const matched = PRESET_VIDEOS.find(
-      (v) => v.url.toLowerCase() === cleanUrl.toLowerCase() || v.youtubeId === cleanUrl
-    );
-    if (matched) {
-      handleSelectPreset(matched);
+    if (!/^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(cleanUrl)) {
+      setErrorMessage("Enter a valid YouTube URL.");
       return;
     }
 
-    setIsProcessing(true);
     setErrorMessage("");
-
-    try {
-      const result = await summarizeYouTubeVideo(cleanUrl);
-      const newVideo: VideoData = {
-        id: result.id,
-        youtubeId: result.youtubeId,
-        title: result.title,
-        channel: result.channel,
-        duration: result.duration,
-        url: result.url,
-        description: result.summary,
-        takeaways:
-          result.keyTakeaways && result.keyTakeaways.length > 0
-            ? result.keyTakeaways
-            : ["Key takeaways synthesized by AI."],
-        chapters:
-          result.chapters && result.chapters.length > 0
-            ? result.chapters.map((c) => ({ time: c.time, title: c.title, content: c.summary }))
-            : [
-                {
-                  time: "00:00",
-                  title: "Overview",
-                  content: result.summary || "Summary generated from the video transcript."
-                }
-              ],
-        chatHistory: [
-          {
-            role: "assistant",
-            content: `I've analyzed "${result.title}". Ask me any questions about the concepts, formulas, or key arguments discussed!`
-          }
-        ],
-        flashcards:
-          result.flashcards && result.flashcards.length > 0
-            ? result.flashcards
-            : [
-                {
-                  front: result.title,
-                  back: `Presented by ${result.channel}. Synthesized by AI.`
-                }
-              ]
-      };
-
-      setCurrentVideo(newVideo);
-      setChatMessages(newVideo.chatHistory);
-      setCardIndex(0);
-      setIsFlipped(false);
-      setActiveChapterIndex(0);
-
-      const target = document.getElementById("summarizer-preview");
-      if (target) {
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to process YouTube video.";
-      setErrorMessage(msg);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!userQuestion.trim()) return;
-
-    const newQuestion = userQuestion.trim();
-    setUserQuestion("");
-    const updated = [...chatMessages, { role: "user" as const, content: newQuestion }];
-    setChatMessages(updated);
-
-    // Provide immediate contextual tutor response matching the video
-    setTimeout(() => {
-      let reply = `Regarding "${newQuestion}": In this lecture, Prof. Allan Adams emphasizes that the physical and mathematical state transformations preserve coherence unless explicitly measured.`;
-      
-      const qLower = newQuestion.toLowerCase();
-      if (qLower.includes("electron") || qLower.includes("quantum") || qLower.includes("superposition")) {
-        reply = "In this section, Prof. Allan Adams explains that quantum states exist as linear combinations of basis vectors, meaning measurement does not reveal a pre-existing classical value but collapses the superposition into an observed eigenstate.";
-      } else if (qLower.includes("discrete") || qLower.includes("system") || qLower.includes("signal")) {
-        reply = "Discrete-time systems operate on discrete sequences indexed by integers n. Linear time-invariant (LTI) properties, impulse responses, and convolutional representations form the core mathematical backbone.";
-      } else if (qLower.includes("summary") || qLower.includes("main point") || qLower.includes("takeaway")) {
-        reply = `Here are the top 3 takeaways from "${currentVideo.title}":\n1. State evolution is governed by linear transformation rules.\n2. Non-intuitive experimental outcomes require formalizing states beyond classical intuition.\n3. Exact reconstruction is possible when sampling satisfies boundary constraints.`;
-      }
-
-      setChatMessages([
-        ...updated,
-        {
-          role: "assistant",
-          content: reply
-        }
-      ]);
-    }, 500);
+    scrollToPreview();
   };
 
   return (
@@ -591,18 +161,10 @@ export default function YouTubeSummarizerPage() {
               />
               <button
                 type="submit"
-                disabled={isProcessing}
                 style={{ backgroundColor: "#8e8e93", color: "#ffffff" }}
-                className="w-full sm:w-auto h-[52px] px-7 rounded-full font-medium text-[15px] transition-all whitespace-nowrap hover:opacity-90 active:scale-[0.98] cursor-pointer shrink-0 disabled:opacity-60 flex items-center justify-center gap-2 shadow-2xs"
+                className="w-full sm:w-auto h-[52px] px-7 rounded-full font-medium text-[15px] transition-all whitespace-nowrap hover:opacity-90 active:scale-[0.98] cursor-pointer shrink-0 flex items-center justify-center gap-2 shadow-2xs"
               >
-                {isProcessing ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>Processing...</span>
-                  </>
-                ) : (
-                  <span>Generate Summary</span>
-                )}
+                <span>Generate Summary</span>
               </button>
             </div>
 
@@ -623,562 +185,6 @@ export default function YouTubeSummarizerPage() {
         <section id="summarizer-preview" className="max-w-[1240px] mx-auto px-4 sm:px-6 pt-2 pb-16">
           <YouTubeSummaryPreviewVideo />
 
-          {false && (
-          <div className="bg-white rounded-t-[28px] sm:rounded-t-[36px] rounded-b-2xl sm:rounded-b-3xl border border-neutral-200/90 shadow-[0_24px_70px_-15px_rgba(0,0,0,0.08)] overflow-hidden">
-            {/* Top Workspace Bar */}
-            <div className="px-5 py-3 sm:px-6 sm:py-3.5 bg-[#fafafa] border-b border-neutral-200/80 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1.5" aria-hidden="true">
-                  <span className="w-2.5 h-2.5 rounded-full bg-neutral-300"></span>
-                  <span className="w-2.5 h-2.5 rounded-full bg-neutral-300"></span>
-                  <span className="w-2.5 h-2.5 rounded-full bg-neutral-300"></span>
-                </div>
-                <span className="text-neutral-300 hidden sm:inline">|</span>
-                <span className="font-semibold text-xs sm:text-sm text-neutral-900 tracking-tight flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <span>YouLearn Studio</span>
-                </span>
-                <span className="text-neutral-300">|</span>
-                <span className="text-xs text-neutral-500 font-normal truncate max-w-[180px] sm:max-w-xs md:max-w-md">
-                  {currentVideo.title}
-                </span>
-              </div>
-
-              {/* Tabs: Chat, Flashcards, Summary */}
-              <div className="inline-flex items-center p-1 rounded-full bg-neutral-200/70 text-xs font-medium">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("chat")}
-                  className={`px-4 py-1.5 rounded-full transition-all cursor-pointer ${
-                    activeTab === "chat"
-                      ? "bg-white text-neutral-900 shadow-2xs font-semibold"
-                      : "text-neutral-600 hover:text-neutral-900"
-                  }`}
-                >
-                  Chat
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("flashcards")}
-                  className={`px-4 py-1.5 rounded-full transition-all cursor-pointer ${
-                    activeTab === "flashcards"
-                      ? "bg-white text-neutral-900 shadow-2xs font-semibold"
-                      : "text-neutral-600 hover:text-neutral-900"
-                  }`}
-                >
-                  Flashcards
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("summary")}
-                  className={`px-4 py-1.5 rounded-full transition-all cursor-pointer ${
-                    activeTab === "summary"
-                      ? "bg-white text-neutral-900 shadow-2xs font-semibold"
-                      : "text-neutral-600 hover:text-neutral-900"
-                  }`}
-                >
-                  Summary
-                </button>
-              </div>
-            </div>
-
-            {/* 3-Column Studio Workspace matching screenshot */}
-            <div className="studio-grid w-full min-h-[560px] divide-y md:divide-y-0 md:divide-x divide-neutral-200/80">
-              
-              {/* Left Column: Chapters / Outline */}
-              <div className="w-full bg-[#fbfbfb] p-3.5 sm:p-4 flex flex-col justify-between overflow-hidden">
-                <div>
-                  <div className="flex items-center justify-between mb-3 px-1">
-                    <span className="text-[11px] font-semibold tracking-wider uppercase text-neutral-400">
-                      Chapters &amp; Sections
-                    </span>
-                    <span className="text-[10px] text-neutral-400 font-mono bg-neutral-100 px-2 py-0.5 rounded-full">
-                      {currentVideo.chapters.length} parts
-                    </span>
-                  </div>
-
-                  <div className="space-y-1.5 overflow-y-auto max-h-[460px] pr-0.5 scrollbar-thin">
-                    {currentVideo.chapters.map((ch, idx) => {
-                      const isActive = activeChapterIndex === idx;
-                      return (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => handleSelectChapter(idx, ch.time)}
-                          className={`w-full text-left px-3 py-2 rounded-full border text-xs transition-all cursor-pointer flex items-center justify-between gap-2 ${
-                            isActive
-                              ? "bg-white border-blue-400 text-neutral-900 shadow-2xs font-semibold ring-2 ring-blue-100/60"
-                              : "bg-[#fcfcfc] hover:bg-white border-neutral-200/70 text-neutral-600 hover:text-neutral-900"
-                          }`}
-                        >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span
-                              className={`w-2 h-2 rounded-full shrink-0 ${
-                                isActive ? "bg-blue-600" : "bg-neutral-300"
-                              }`}
-                            />
-                            <span className="truncate text-[12px]" title={ch.title}>
-                              {ch.title}
-                            </span>
-                          </div>
-                          <span className="text-[10.5px] font-mono text-neutral-400 shrink-0">
-                            {ch.time}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="pt-3 mt-4 border-t border-neutral-200/70 text-[11px] text-neutral-500 flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span>Transcript Sync</span>
-                  </span>
-                  <span className="text-emerald-600 font-semibold font-mono text-[10px] uppercase">
-                    Live
-                  </span>
-                </div>
-              </div>
-
-              {/* Center Column: Video Player + Notes Split Area (Matching User Screenshot) */}
-              <div className="w-full bg-white flex flex-col justify-between relative overflow-hidden h-full min-h-[460px]">
-                {currentVideo.localVideoSrc ? (
-                  <div className="flex flex-col h-full justify-between">
-                    {/* Top Split: Video Player on Left, Notes on Right */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 flex-1 min-h-[380px] divide-y md:divide-y-0 md:divide-x divide-neutral-200/80">
-                      
-                      {/* Left: Blackboard Video Container */}
-                      <div
-                        className="relative bg-[#111111] overflow-hidden flex items-center justify-center min-h-[220px] md:min-h-[380px] group cursor-pointer"
-                        onClick={togglePlay}
-                      >
-                        <div className="relative w-full h-full min-h-[220px] md:min-h-[380px] overflow-hidden bg-black flex items-center justify-center">
-                          <video
-                            ref={videoRef}
-                            src={currentVideo.localVideoSrc}
-                            playsInline
-                            autoPlay
-                            loop
-                            muted={isMuted}
-                            onTimeUpdate={handleTimeUpdate}
-                            onLoadedMetadata={() => {
-                              if (videoRef.current) {
-                                setVideoDuration(videoRef.current.duration || 4965);
-                              }
-                            }}
-                            className="absolute max-w-none object-fill pointer-events-none"
-                            style={{
-                              width: "235%",
-                              height: "260%",
-                              top: "0%",
-                              left: "-46%"
-                            }}
-                          />
-
-                          {/* Subtle Pause Overlay if paused */}
-                          {!isPlaying && (
-                            <div className="absolute inset-0 bg-black/35 backdrop-blur-[1px] flex items-center justify-center z-10">
-                              <div className="w-12 h-12 rounded-full bg-white/90 text-neutral-900 flex items-center justify-center shadow-lg">
-                                <Play className="w-5 h-5 fill-neutral-900 ml-0.5" />
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Right: Structured Notes Panel matching screenshot */}
-                      <div className="relative bg-white flex flex-col justify-between overflow-hidden">
-                        {/* Divider Grab Handle */}
-                        <div className="hidden md:flex absolute top-1/2 -left-1.5 -translate-y-1/2 w-3 h-6 items-center justify-center pointer-events-none z-10">
-                          <div className="w-1 h-4 rounded-full bg-neutral-300" />
-                        </div>
-
-                        {/* Notes Top Bar: K badge, Chat label, Click to Unmute Pill */}
-                        <div className="px-3.5 py-2.5 bg-white border-b border-neutral-100 flex items-center justify-between gap-2 shrink-0">
-                          <div className="flex items-center gap-2">
-                            <span className="w-5 h-5 rounded bg-neutral-100 border border-neutral-200 text-[10.5px] font-semibold text-neutral-500 flex items-center justify-center">
-                              K
-                            </span>
-                            <span className="text-xs text-neutral-500 font-medium">Chat</span>
-                          </div>
-
-                          {/* Click to Unmute Button */}
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleMute();
-                            }}
-                            className="px-3 py-1 rounded-full bg-[#374151] hover:bg-[#1f2937] text-white text-[11px] font-medium border border-neutral-600/50 flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
-                          >
-                            {isMuted ? (
-                              <>
-                                <VolumeX className="w-3.5 h-3.5 text-amber-300" />
-                                <span>Click to Unmute</span>
-                              </>
-                            ) : (
-                              <>
-                                <Volume2 className="w-3.5 h-3.5 text-emerald-400" />
-                                <span>Mute</span>
-                              </>
-                            )}
-                          </button>
-                        </div>
-
-                        {/* Notes Scrollable Body */}
-                        <div className="p-3.5 sm:p-4 overflow-y-auto max-h-[380px] scrollbar-thin space-y-3.5 text-[11.5px] leading-relaxed text-neutral-700">
-                          <div>
-                            <h4 className="font-semibold text-neutral-900 text-xs tracking-tight mb-1.5">
-                              MIT OpenCourseWare and Course Introdu...
-                            </h4>
-                            <ul className="space-y-1 text-neutral-600 pl-0.5">
-                              <li className="flex items-start gap-1.5">
-                                <span className="text-neutral-400 mt-0.5">•</span>
-                                <span>
-                                  MIT OpenCourseWare offers access to hundreds of ocw.mit.edu
-                                  <sup className="text-neutral-400 text-[9px] ml-0.5">*</sup>.
-                                </span>
-                              </li>
-                              <li className="flex items-start gap-1.5">
-                                <span className="text-neutral-400 mt-0.5">•</span>
-                                <span>
-                                  The second lecture of course 60001 begins with th part of 18.01
-                                  <sup className="text-neutral-400 text-[9px] ml-0.5">*</sup>.
-                                </span>
-                              </li>
-                              <li className="flex items-start gap-1.5">
-                                <span className="text-neutral-400 mt-0.5">•</span>
-                                <span>The first lecture on modulation will span two sessio</span>
-                              </li>
-                              <li className="flex items-start gap-1.5">
-                                <span className="text-neutral-400 mt-0.5">•</span>
-                                <span>
-                                  Introduction to course 6.006 is presented by Profes co-lecturing
-                                  <sup className="text-neutral-400 text-[9px] ml-0.5">*</sup>.
-                                </span>
-                              </li>
-                            </ul>
-                          </div>
-
-                          <div>
-                            <h4 className="font-semibold text-neutral-900 text-xs tracking-tight mb-1.5">
-                              Course Content Focus
-                            </h4>
-                            <ul className="space-y-1 text-neutral-600 pl-0.5">
-                              <li className="flex items-start gap-1.5">
-                                <span className="text-neutral-400 mt-0.5">•</span>
-                                <span>
-                                  The course is transitioning from theoretical concep theorem, to practical applications that will be centr course
-                                  <sup className="text-neutral-400 text-[9px] ml-0.5">*</sup>.
-                                </span>
-                              </li>
-                              <li className="flex items-start gap-1.5">
-                                <span className="text-neutral-400 mt-0.5">•</span>
-                                <span>Discussion of maxima and minima is planned for th</span>
-                              </li>
-                              <li className="flex items-start gap-1.5">
-                                <span className="text-neutral-400 mt-0.5">•</span>
-                                <span>
-                                  The second half of the class will cover important m topics, indicating a shift in focus
-                                  <sup className="text-neutral-400 text-[9px] ml-0.5">*</sup>.
-                                </span>
-                              </li>
-                            </ul>
-                          </div>
-
-                          <div>
-                            <h4 className="font-semibold text-neutral-900 text-xs tracking-tight mb-1.5">
-                              Homework and Learning Approaches
-                            </h4>
-                            <ul className="space-y-1 text-neutral-600 pl-0.5">
-                              <li className="flex items-start gap-1.5">
-                                <span className="text-neutral-400 mt-0.5">•</span>
-                                <span>
-                                  Emphasis is placed on the necessity of completing crucial for understanding the course materials
-                                  <sup className="text-neutral-400 text-[9px] ml-0.5">*</sup>.
-                                </span>
-                              </li>
-                              <li className="flex items-start gap-1.5">
-                                <span className="text-neutral-400 mt-0.5">•</span>
-                                <span>
-                                  The importance of grasping new concepts, like Z-tr underscoring the substantial amount of material co
-                                </span>
-                              </li>
-                            </ul>
-                          </div>
-
-                          <div>
-                            <h4 className="font-semibold text-neutral-900 text-xs tracking-tight mb-1.5">
-                              Concepts Introduced
-                            </h4>
-                            <ul className="space-y-1 text-neutral-600 pl-0.5">
-                              <li className="flex items-start gap-1.5">
-                                <span className="text-neutral-400 mt-0.5">•</span>
-                                <span>The concept of discrete time systems will be introd</span>
-                              </li>
-                              <li className="flex items-start gap-1.5">
-                                <span className="text-neutral-400 mt-0.5">•</span>
-                                <span>Setting up integrals and calculating volumes by slic</span>
-                              </li>
-                              <li className="flex items-start gap-1.5">
-                                <span className="text-neutral-400 mt-0.5">•</span>
-                                <span>
-                                  Discussion on harmonic oscillators and related con course content
-                                  <sup className="text-neutral-400 text-[9px] ml-0.5">*</sup>.
-                                </span>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Bottom Playback Controls Bar across the center column */}
-                    <div className="bg-[#18181b] text-white px-3.5 py-2 flex items-center justify-between gap-3 text-xs shrink-0 select-none border-t border-neutral-800">
-                      <div className="flex items-center gap-3 shrink-0">
-                        <button
-                          type="button"
-                          onClick={togglePlay}
-                          className="hover:text-neutral-300 transition-colors cursor-pointer"
-                          title={isPlaying ? "Pause" : "Play"}
-                        >
-                          {isPlaying ? (
-                            <Pause className="w-4 h-4 fill-white" />
-                          ) : (
-                            <Play className="w-4 h-4 fill-white" />
-                          )}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={toggleMute}
-                          className="hover:text-neutral-300 transition-colors cursor-pointer"
-                          title={isMuted ? "Unmute" : "Mute"}
-                        >
-                          {isMuted ? (
-                            <VolumeX className="w-4 h-4 text-amber-300" />
-                          ) : (
-                            <Volume2 className="w-4 h-4 text-white" />
-                          )}
-                        </button>
-
-                        <span className="font-mono text-[11px] text-neutral-300 tracking-tight">
-                          {formatSeconds(currentTime)} / {formatSeconds(videoDuration)}
-                        </span>
-                      </div>
-
-                      {/* Scrubber timeline */}
-                      <div className="flex-1 flex items-center px-1">
-                        <input
-                          type="range"
-                          min={0}
-                          max={videoDuration || 100}
-                          value={currentTime}
-                          onChange={handleSeek}
-                          className="w-full h-1 bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-white hover:h-1.5 transition-all"
-                        />
-                      </div>
-
-                      <div className="flex items-center gap-2.5 shrink-0">
-                        <span className="text-[9px] font-bold px-1 py-0.5 border border-white/40 rounded text-white/90 tracking-wide font-mono">
-                          HD
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (videoRef.current) {
-                              if (videoRef.current.requestFullscreen) {
-                                videoRef.current.requestFullscreen();
-                              }
-                            }
-                          }}
-                          className="hover:text-neutral-300 transition-colors cursor-pointer"
-                          title="Fullscreen"
-                        >
-                          <Maximize className="w-3.5 h-3.5 text-neutral-300" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ) : currentVideo.youtubeId ? (
-                  <div className="relative w-full h-full min-h-[420px] bg-black">
-                    <iframe
-                      src={`https://www.youtube-nocookie.com/embed/${currentVideo.youtubeId}?rel=0&autoplay=1`}
-                      title={currentVideo.title}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      className="w-full h-full border-0"
-                    />
-                  </div>
-                ) : (
-                  <div className="text-center text-neutral-400 p-6">
-                    <Play className="w-12 h-12 mx-auto mb-2 text-neutral-300" />
-                    <p className="text-xs">{currentVideo.url}</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Right Column: AI Assistant (Chat / Flashcards / Summary) */}
-              <div className="w-full bg-white flex flex-col justify-between h-full overflow-hidden">
-                {/* Mode 1: Chat (Default matching screenshot) */}
-                {activeTab === "chat" && (
-                  <div className="flex flex-col h-full justify-between">
-                    {/* Chat Messages Stream */}
-                    <div className="p-4 space-y-3.5 overflow-y-auto max-h-[460px] scrollbar-thin flex-1">
-                      {chatMessages.map((msg, idx) => (
-                        <div
-                          key={idx}
-                          className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-                        >
-                          <div
-                            className={`max-w-[90%] rounded-2xl p-3.5 text-xs sm:text-[13px] leading-relaxed ${
-                              msg.role === "user"
-                                ? "bg-neutral-900 text-white rounded-br-xs"
-                                : "bg-neutral-100 text-neutral-800 rounded-bl-xs border border-neutral-200/60"
-                            }`}
-                          >
-                            {msg.content}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Chat Input & Suggestion Chips */}
-                    <div className="p-3 border-t border-neutral-200/80 bg-neutral-50/70 space-y-2">
-                      {/* Suggestion Chips */}
-                      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-[11px]">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setUserQuestion("Summarize the main takeaways of this lecture");
-                          }}
-                          className="px-2.5 py-1 rounded-full bg-white hover:bg-neutral-100 border border-neutral-200 text-neutral-600 whitespace-nowrap cursor-pointer transition-colors"
-                        >
-                          Summarize takeaways
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setUserQuestion("What is discrete time and signal processing?");
-                          }}
-                          className="px-2.5 py-1 rounded-full bg-white hover:bg-neutral-100 border border-neutral-200 text-neutral-600 whitespace-nowrap cursor-pointer transition-colors"
-                        >
-                          What is discrete time?
-                        </button>
-                      </div>
-
-                      {/* Input form */}
-                      <form onSubmit={handleSendMessage} className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-white border border-neutral-300 focus-within:ring-2 focus-within:ring-neutral-400">
-                        <input
-                          type="text"
-                          placeholder="Ask anything about this video..."
-                          value={userQuestion}
-                          onChange={(e) => setUserQuestion(e.target.value)}
-                          className="w-full text-xs sm:text-[13px] text-neutral-900 placeholder:text-neutral-400 bg-transparent focus:outline-none"
-                        />
-                        <button
-                          type="submit"
-                          className="p-1.5 rounded-full bg-neutral-900 hover:bg-neutral-800 text-white cursor-pointer transition-all shrink-0"
-                          title="Send message"
-                        >
-                          <Send className="w-3.5 h-3.5" />
-                        </button>
-                      </form>
-                    </div>
-                  </div>
-                )}
-
-                {/* Mode 2: Flashcards */}
-                {activeTab === "flashcards" && (
-                  <div className="p-5 flex flex-col items-center justify-center h-full space-y-4">
-                    <span className="text-[11px] text-neutral-400 font-medium">
-                      Card {cardIndex + 1} of {currentVideo.flashcards.length}
-                    </span>
-
-                    <div
-                      onClick={() => setIsFlipped(!isFlipped)}
-                      className="w-full h-[220px] rounded-2xl bg-neutral-900 text-white p-5 flex flex-col justify-between cursor-pointer shadow-lg hover:scale-[1.01] transition-all select-none text-center"
-                    >
-                      <span className="text-[10px] uppercase tracking-wider text-neutral-400 font-semibold">
-                        {isFlipped ? "Answer" : "Question (Click to flip)"}
-                      </span>
-                      <p className="text-sm font-semibold px-2 leading-relaxed">
-                        {isFlipped
-                          ? currentVideo.flashcards[cardIndex].back
-                          : currentVideo.flashcards[cardIndex].front}
-                      </p>
-                      <span className="text-[10px] text-neutral-400 font-medium">
-                        {isFlipped ? "Tap to view question" : "Tap to reveal answer"}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2 pt-2">
-                      <button
-                        onClick={() => {
-                          setCardIndex((prev) => (prev > 0 ? prev - 1 : currentVideo.flashcards.length - 1));
-                          setIsFlipped(false);
-                        }}
-                        className="px-3.5 py-1.5 rounded-full border border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 cursor-pointer"
-                      >
-                        Prev
-                      </button>
-                      <button
-                        onClick={() => {
-                          setCardIndex((prev) => (prev < currentVideo.flashcards.length - 1 ? prev + 1 : 0));
-                          setIsFlipped(false);
-                        }}
-                        className="px-4 py-1.5 rounded-full bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
-                      >
-                        Next
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Mode 3: Summary */}
-                {activeTab === "summary" && (
-                  <div className="p-5 space-y-5 overflow-y-auto max-h-[540px] scrollbar-thin">
-                    <div>
-                      <h4 className="font-semibold text-neutral-900 text-sm mb-2.5">
-                        Overview &amp; Key Takeaways
-                      </h4>
-                      <ul className="space-y-2">
-                        {currentVideo.takeaways.map((point, idx) => (
-                          <li key={idx} className="flex items-start gap-2 text-xs text-neutral-600 leading-relaxed">
-                            <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 shrink-0 mt-1.5" />
-                            <span>{point}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    <div className="pt-3 border-t border-neutral-100 space-y-2.5">
-                      <h5 className="font-semibold text-xs text-neutral-900 uppercase tracking-wider text-neutral-400">
-                        Detailed Sections
-                      </h5>
-                      {currentVideo.chapters.map((ch, idx) => (
-                        <div key={idx} className="p-3 rounded-xl bg-neutral-50 border border-neutral-200/70 space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="px-1.5 py-0.5 rounded bg-neutral-200 text-neutral-800 text-[10px] font-mono font-semibold">
-                              {ch.time}
-                            </span>
-                            <span className="font-medium text-xs text-neutral-900 truncate">
-                              {ch.title}
-                            </span>
-                          </div>
-                          <p className="text-[11.5px] text-neutral-600 leading-relaxed font-normal">
-                            {ch.content}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-          )}
         </section>
 
         {/* Section 1: "Try summarizing a YouTube link below" (Matching Screenshot 1) */}
@@ -1199,11 +205,13 @@ export default function YouTubeSummarizerPage() {
                 onClick={() => handleSelectPreset(vid)}
                 className="group cursor-pointer flex flex-col"
               >
-                <div className="w-full aspect-[16/10] rounded-[22px] sm:rounded-[24px] overflow-hidden bg-neutral-100 mb-3.5 shadow-2xs group-hover:opacity-95 transition-all">
-                  <img
-                    src={vid.thumbnailSrc || `https://img.youtube.com/vi/${vid.youtubeId}/maxresdefault.jpg`}
+                <div className="relative w-full aspect-[16/10] rounded-[22px] sm:rounded-[24px] overflow-hidden bg-neutral-100 mb-3.5 shadow-2xs group-hover:opacity-95 transition-all">
+                  <Image
+                    src={vid.thumbnailSrc}
                     alt={vid.title}
-                    className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
+                    fill
+                    sizes="(max-width: 767px) 100vw, 33vw"
+                    className="object-cover group-hover:scale-102 transition-transform duration-300"
                   />
                 </div>
 
@@ -1212,7 +220,7 @@ export default function YouTubeSummarizerPage() {
                     {vid.title}
                   </h3>
                   <p className="text-[14px] text-[#71717a] mt-1 font-normal leading-relaxed">
-                    {vid.subtitle || vid.description}
+                    {vid.subtitle}
                   </p>
                 </div>
               </div>

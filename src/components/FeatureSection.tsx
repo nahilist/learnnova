@@ -8,7 +8,6 @@ import {
   Sparkles, 
   Mic, 
   Play, 
-  Pause, 
   Menu, 
   FileText, 
   Video, 
@@ -101,11 +100,11 @@ export function FeatureSection({ onOpenDemo }: FeatureSectionProps) {
             <div className="grid grid-cols-1 md:grid-cols-12 min-h-[360px]">
               {/* Video Screen Area */}
               <div className="md:col-span-7 relative flex flex-col justify-between bg-black p-4 sm:p-5">
-                {/* Real Video Player using /7eEoiSCiM7vpz1kuEeEcW5o46o.mp4 */}
+                {/* Product walkthrough video */}
                 <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black flex flex-col items-center justify-center border border-neutral-800/80 group">
                   <video
                     ref={videoRef}
-                    src="/7eEoiSCiM7vpz1kuEeEcW5o46o.mp4"
+                    src="/yoytube_summary.mp4"
                     playsInline
                     loop
                     muted
