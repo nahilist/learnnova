@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { YouTubeSummaryPreviewVideo } from "@/components/YouTubeSummaryPreviewVideo";
 import {
   Link2,
   FileText,
@@ -108,7 +109,7 @@ const PRESET_VIDEOS: VideoData[] = [
     chapters: [
       {
         time: "00:00",
-        title: "Figure 1: Introduction ...",
+        title: "Figure 1: Introductio...",
         content: "Figure 1: Introduction to discrete-time signal systems and foundational principles of differentiation and wave mechanics."
       },
       {
@@ -123,7 +124,7 @@ const PRESET_VIDEOS: VideoData[] = [
       },
       {
         time: "24:45",
-        title: "Understanding Perfect...",
+        title: "Understanding Perfec...",
         content: "Mathematical proof of perfect reconstruction criteria, state vector evolution, and measurement invariance."
       },
       {
@@ -133,12 +134,12 @@ const PRESET_VIDEOS: VideoData[] = [
       },
       {
         time: "56:38",
-        title: "Superposition of states...",
+        title: "Superposition of state...",
         content: "When sending in white electrons, the expected output is 50% due to the barriers, yet 50% is still white, proving superposition."
       },
       {
         time: "01:15:52",
-        title: "Introduction to Formalism...",
+        title: "Introduction to Fo...",
         content: "Developing vector intuition and matrix formulation for complex observables in multi-state systems."
       }
     ],
@@ -377,7 +378,7 @@ export default function YouTubeSummarizerPage() {
   // Video playback state
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(true);
-  const [currentTime, setCurrentTime] = useState(14);
+  const [currentTime, setCurrentTime] = useState(9);
   const [videoDuration, setVideoDuration] = useState(82 * 60 + 45);
   const [isMuted, setIsMuted] = useState(true);
   const [activeChapterIndex, setActiveChapterIndex] = useState(0);
@@ -620,6 +621,9 @@ export default function YouTubeSummarizerPage() {
 
         {/* Interactive Summarizer Preview Card (Live Split Studio Viewer) */}
         <section id="summarizer-preview" className="max-w-[1240px] mx-auto px-4 sm:px-6 pt-2 pb-16">
+          <YouTubeSummaryPreviewVideo />
+
+          {false && (
           <div className="bg-white rounded-t-[28px] sm:rounded-t-[36px] rounded-b-2xl sm:rounded-b-3xl border border-neutral-200/90 shadow-[0_24px_70px_-15px_rgba(0,0,0,0.08)] overflow-hidden">
             {/* Top Workspace Bar */}
             <div className="px-5 py-3 sm:px-6 sm:py-3.5 bg-[#fafafa] border-b border-neutral-200/80 flex items-center justify-between gap-4">
@@ -701,10 +705,10 @@ export default function YouTubeSummarizerPage() {
                           key={idx}
                           type="button"
                           onClick={() => handleSelectChapter(idx, ch.time)}
-                          className={`w-full text-left p-2.5 rounded-xl border text-xs transition-all cursor-pointer flex items-center justify-between gap-2 ${
+                          className={`w-full text-left px-3 py-2 rounded-full border text-xs transition-all cursor-pointer flex items-center justify-between gap-2 ${
                             isActive
-                              ? "bg-white border-blue-200/90 text-neutral-900 shadow-xs font-semibold ring-1 ring-blue-100"
-                              : "bg-white/70 hover:bg-white border-neutral-200/70 text-neutral-600 hover:text-neutral-900"
+                              ? "bg-white border-blue-400 text-neutral-900 shadow-2xs font-semibold ring-2 ring-blue-100/60"
+                              : "bg-[#fcfcfc] hover:bg-white border-neutral-200/70 text-neutral-600 hover:text-neutral-900"
                           }`}
                         >
                           <div className="flex items-center gap-2 min-w-0">
@@ -713,7 +717,7 @@ export default function YouTubeSummarizerPage() {
                                 isActive ? "bg-blue-600" : "bg-neutral-300"
                               }`}
                             />
-                            <span className="truncate text-[12.5px]" title={ch.title}>
+                            <span className="truncate text-[12px]" title={ch.title}>
                               {ch.title}
                             </span>
                           </div>
@@ -737,27 +741,268 @@ export default function YouTubeSummarizerPage() {
                 </div>
               </div>
 
-              {/* Center Column: Video Player Area */}
-              <div className="w-full bg-black flex flex-col justify-between relative group overflow-hidden">
-                <div className="relative w-full aspect-video min-h-[340px] md:h-full md:min-h-[480px] flex items-center justify-center bg-black">
-                  {currentVideo.localVideoSrc ? (
-                    <video
-                      ref={videoRef}
-                      src={currentVideo.localVideoSrc}
-                      playsInline
-                      autoPlay
-                      loop
-                      muted={isMuted}
-                      onTimeUpdate={handleTimeUpdate}
-                      onLoadedMetadata={() => {
-                        if (videoRef.current) {
-                          setVideoDuration(videoRef.current.duration);
-                        }
-                      }}
-                      onClick={togglePlay}
-                      className="w-full h-full object-cover cursor-pointer"
-                    />
-                  ) : currentVideo.youtubeId ? (
+              {/* Center Column: Video Player + Notes Split Area (Matching User Screenshot) */}
+              <div className="w-full bg-white flex flex-col justify-between relative overflow-hidden h-full min-h-[460px]">
+                {currentVideo.localVideoSrc ? (
+                  <div className="flex flex-col h-full justify-between">
+                    {/* Top Split: Video Player on Left, Notes on Right */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 flex-1 min-h-[380px] divide-y md:divide-y-0 md:divide-x divide-neutral-200/80">
+                      
+                      {/* Left: Blackboard Video Container */}
+                      <div
+                        className="relative bg-[#111111] overflow-hidden flex items-center justify-center min-h-[220px] md:min-h-[380px] group cursor-pointer"
+                        onClick={togglePlay}
+                      >
+                        <div className="relative w-full h-full min-h-[220px] md:min-h-[380px] overflow-hidden bg-black flex items-center justify-center">
+                          <video
+                            ref={videoRef}
+                            src={currentVideo.localVideoSrc}
+                            playsInline
+                            autoPlay
+                            loop
+                            muted={isMuted}
+                            onTimeUpdate={handleTimeUpdate}
+                            onLoadedMetadata={() => {
+                              if (videoRef.current) {
+                                setVideoDuration(videoRef.current.duration || 4965);
+                              }
+                            }}
+                            className="absolute max-w-none object-fill pointer-events-none"
+                            style={{
+                              width: "235%",
+                              height: "260%",
+                              top: "0%",
+                              left: "-46%"
+                            }}
+                          />
+
+                          {/* Subtle Pause Overlay if paused */}
+                          {!isPlaying && (
+                            <div className="absolute inset-0 bg-black/35 backdrop-blur-[1px] flex items-center justify-center z-10">
+                              <div className="w-12 h-12 rounded-full bg-white/90 text-neutral-900 flex items-center justify-center shadow-lg">
+                                <Play className="w-5 h-5 fill-neutral-900 ml-0.5" />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Right: Structured Notes Panel matching screenshot */}
+                      <div className="relative bg-white flex flex-col justify-between overflow-hidden">
+                        {/* Divider Grab Handle */}
+                        <div className="hidden md:flex absolute top-1/2 -left-1.5 -translate-y-1/2 w-3 h-6 items-center justify-center pointer-events-none z-10">
+                          <div className="w-1 h-4 rounded-full bg-neutral-300" />
+                        </div>
+
+                        {/* Notes Top Bar: K badge, Chat label, Click to Unmute Pill */}
+                        <div className="px-3.5 py-2.5 bg-white border-b border-neutral-100 flex items-center justify-between gap-2 shrink-0">
+                          <div className="flex items-center gap-2">
+                            <span className="w-5 h-5 rounded bg-neutral-100 border border-neutral-200 text-[10.5px] font-semibold text-neutral-500 flex items-center justify-center">
+                              K
+                            </span>
+                            <span className="text-xs text-neutral-500 font-medium">Chat</span>
+                          </div>
+
+                          {/* Click to Unmute Button */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleMute();
+                            }}
+                            className="px-3 py-1 rounded-full bg-[#374151] hover:bg-[#1f2937] text-white text-[11px] font-medium border border-neutral-600/50 flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+                          >
+                            {isMuted ? (
+                              <>
+                                <VolumeX className="w-3.5 h-3.5 text-amber-300" />
+                                <span>Click to Unmute</span>
+                              </>
+                            ) : (
+                              <>
+                                <Volume2 className="w-3.5 h-3.5 text-emerald-400" />
+                                <span>Mute</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+
+                        {/* Notes Scrollable Body */}
+                        <div className="p-3.5 sm:p-4 overflow-y-auto max-h-[380px] scrollbar-thin space-y-3.5 text-[11.5px] leading-relaxed text-neutral-700">
+                          <div>
+                            <h4 className="font-semibold text-neutral-900 text-xs tracking-tight mb-1.5">
+                              MIT OpenCourseWare and Course Introdu...
+                            </h4>
+                            <ul className="space-y-1 text-neutral-600 pl-0.5">
+                              <li className="flex items-start gap-1.5">
+                                <span className="text-neutral-400 mt-0.5">•</span>
+                                <span>
+                                  MIT OpenCourseWare offers access to hundreds of ocw.mit.edu
+                                  <sup className="text-neutral-400 text-[9px] ml-0.5">*</sup>.
+                                </span>
+                              </li>
+                              <li className="flex items-start gap-1.5">
+                                <span className="text-neutral-400 mt-0.5">•</span>
+                                <span>
+                                  The second lecture of course 60001 begins with th part of 18.01
+                                  <sup className="text-neutral-400 text-[9px] ml-0.5">*</sup>.
+                                </span>
+                              </li>
+                              <li className="flex items-start gap-1.5">
+                                <span className="text-neutral-400 mt-0.5">•</span>
+                                <span>The first lecture on modulation will span two sessio</span>
+                              </li>
+                              <li className="flex items-start gap-1.5">
+                                <span className="text-neutral-400 mt-0.5">•</span>
+                                <span>
+                                  Introduction to course 6.006 is presented by Profes co-lecturing
+                                  <sup className="text-neutral-400 text-[9px] ml-0.5">*</sup>.
+                                </span>
+                              </li>
+                            </ul>
+                          </div>
+
+                          <div>
+                            <h4 className="font-semibold text-neutral-900 text-xs tracking-tight mb-1.5">
+                              Course Content Focus
+                            </h4>
+                            <ul className="space-y-1 text-neutral-600 pl-0.5">
+                              <li className="flex items-start gap-1.5">
+                                <span className="text-neutral-400 mt-0.5">•</span>
+                                <span>
+                                  The course is transitioning from theoretical concep theorem, to practical applications that will be centr course
+                                  <sup className="text-neutral-400 text-[9px] ml-0.5">*</sup>.
+                                </span>
+                              </li>
+                              <li className="flex items-start gap-1.5">
+                                <span className="text-neutral-400 mt-0.5">•</span>
+                                <span>Discussion of maxima and minima is planned for th</span>
+                              </li>
+                              <li className="flex items-start gap-1.5">
+                                <span className="text-neutral-400 mt-0.5">•</span>
+                                <span>
+                                  The second half of the class will cover important m topics, indicating a shift in focus
+                                  <sup className="text-neutral-400 text-[9px] ml-0.5">*</sup>.
+                                </span>
+                              </li>
+                            </ul>
+                          </div>
+
+                          <div>
+                            <h4 className="font-semibold text-neutral-900 text-xs tracking-tight mb-1.5">
+                              Homework and Learning Approaches
+                            </h4>
+                            <ul className="space-y-1 text-neutral-600 pl-0.5">
+                              <li className="flex items-start gap-1.5">
+                                <span className="text-neutral-400 mt-0.5">•</span>
+                                <span>
+                                  Emphasis is placed on the necessity of completing crucial for understanding the course materials
+                                  <sup className="text-neutral-400 text-[9px] ml-0.5">*</sup>.
+                                </span>
+                              </li>
+                              <li className="flex items-start gap-1.5">
+                                <span className="text-neutral-400 mt-0.5">•</span>
+                                <span>
+                                  The importance of grasping new concepts, like Z-tr underscoring the substantial amount of material co
+                                </span>
+                              </li>
+                            </ul>
+                          </div>
+
+                          <div>
+                            <h4 className="font-semibold text-neutral-900 text-xs tracking-tight mb-1.5">
+                              Concepts Introduced
+                            </h4>
+                            <ul className="space-y-1 text-neutral-600 pl-0.5">
+                              <li className="flex items-start gap-1.5">
+                                <span className="text-neutral-400 mt-0.5">•</span>
+                                <span>The concept of discrete time systems will be introd</span>
+                              </li>
+                              <li className="flex items-start gap-1.5">
+                                <span className="text-neutral-400 mt-0.5">•</span>
+                                <span>Setting up integrals and calculating volumes by slic</span>
+                              </li>
+                              <li className="flex items-start gap-1.5">
+                                <span className="text-neutral-400 mt-0.5">•</span>
+                                <span>
+                                  Discussion on harmonic oscillators and related con course content
+                                  <sup className="text-neutral-400 text-[9px] ml-0.5">*</sup>.
+                                </span>
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Bottom Playback Controls Bar across the center column */}
+                    <div className="bg-[#18181b] text-white px-3.5 py-2 flex items-center justify-between gap-3 text-xs shrink-0 select-none border-t border-neutral-800">
+                      <div className="flex items-center gap-3 shrink-0">
+                        <button
+                          type="button"
+                          onClick={togglePlay}
+                          className="hover:text-neutral-300 transition-colors cursor-pointer"
+                          title={isPlaying ? "Pause" : "Play"}
+                        >
+                          {isPlaying ? (
+                            <Pause className="w-4 h-4 fill-white" />
+                          ) : (
+                            <Play className="w-4 h-4 fill-white" />
+                          )}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={toggleMute}
+                          className="hover:text-neutral-300 transition-colors cursor-pointer"
+                          title={isMuted ? "Unmute" : "Mute"}
+                        >
+                          {isMuted ? (
+                            <VolumeX className="w-4 h-4 text-amber-300" />
+                          ) : (
+                            <Volume2 className="w-4 h-4 text-white" />
+                          )}
+                        </button>
+
+                        <span className="font-mono text-[11px] text-neutral-300 tracking-tight">
+                          {formatSeconds(currentTime)} / {formatSeconds(videoDuration)}
+                        </span>
+                      </div>
+
+                      {/* Scrubber timeline */}
+                      <div className="flex-1 flex items-center px-1">
+                        <input
+                          type="range"
+                          min={0}
+                          max={videoDuration || 100}
+                          value={currentTime}
+                          onChange={handleSeek}
+                          className="w-full h-1 bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-white hover:h-1.5 transition-all"
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-2.5 shrink-0">
+                        <span className="text-[9px] font-bold px-1 py-0.5 border border-white/40 rounded text-white/90 tracking-wide font-mono">
+                          HD
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (videoRef.current) {
+                              if (videoRef.current.requestFullscreen) {
+                                videoRef.current.requestFullscreen();
+                              }
+                            }
+                          }}
+                          className="hover:text-neutral-300 transition-colors cursor-pointer"
+                          title="Fullscreen"
+                        >
+                          <Maximize className="w-3.5 h-3.5 text-neutral-300" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : currentVideo.youtubeId ? (
+                  <div className="relative w-full h-full min-h-[420px] bg-black">
                     <iframe
                       src={`https://www.youtube-nocookie.com/embed/${currentVideo.youtubeId}?rel=0&autoplay=1`}
                       title={currentVideo.title}
@@ -765,103 +1010,13 @@ export default function YouTubeSummarizerPage() {
                       allowFullScreen
                       className="w-full h-full border-0"
                     />
-                  ) : (
-                    <div className="text-center text-white/70 p-6">
-                      <Play className="w-12 h-12 mx-auto mb-2 text-white/50" />
-                      <p className="text-xs">{currentVideo.url}</p>
-                    </div>
-                  )}
-
-                  {/* Play Overlay if paused */}
-                  {currentVideo.localVideoSrc && !isPlaying && (
-                    <div
-                      onClick={togglePlay}
-                      className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center cursor-pointer transition-opacity"
-                    >
-                      <div className="w-16 h-16 rounded-full bg-white/95 text-neutral-900 flex items-center justify-center shadow-2xl hover:scale-105 active:scale-95 transition-all">
-                        <Play className="w-6 h-6 fill-neutral-900 ml-1" />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Unmute prompt banner if playing muted */}
-                  {currentVideo.localVideoSrc && isMuted && isPlaying && (
-                    <button
-                      type="button"
-                      onClick={toggleMute}
-                      className="absolute top-3 right-3 px-3 py-1.5 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-md text-white text-xs font-medium border border-white/20 flex items-center gap-1.5 transition-all cursor-pointer z-10"
-                    >
-                      <VolumeX className="w-3.5 h-3.5 text-amber-300" />
-                      <span>Click to Unmute</span>
-                    </button>
-                  )}
-
-                  {/* Video Floating Controls for local video */}
-                  {currentVideo.localVideoSrc && (
-                    <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/85 via-black/40 to-transparent text-white transition-opacity duration-200">
-                      {/* Progress Scrubber */}
-                      <div className="relative mb-2 w-full flex items-center">
-                        <input
-                          type="range"
-                          min={0}
-                          max={videoDuration || 100}
-                          step={0.1}
-                          value={currentTime}
-                          onChange={handleSeek}
-                          className="w-full h-1 bg-white/30 rounded-lg appearance-none cursor-pointer accent-white"
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-3">
-                          <button
-                            type="button"
-                            onClick={togglePlay}
-                            className="p-1 hover:text-white text-white/90 transition-colors cursor-pointer"
-                            title={isPlaying ? "Pause" : "Play"}
-                          >
-                            {isPlaying ? <Pause className="w-4 h-4 fill-white" /> : <Play className="w-4 h-4 fill-white" />}
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={toggleMute}
-                            className="p-1 hover:text-white text-white/90 transition-colors cursor-pointer"
-                            title={isMuted ? "Unmute" : "Mute"}
-                          >
-                            {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                          </button>
-
-                          <span className="text-[11px] font-mono text-white/80">
-                            {formatSeconds(currentTime)} / {currentVideo.duration}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <span className="px-1.5 py-0.5 rounded bg-white/20 text-[10px] font-mono tracking-wider">
-                            HD
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (videoRef.current) {
-                                if (document.fullscreenElement) {
-                                  document.exitFullscreen();
-                                } else {
-                                  videoRef.current.requestFullscreen();
-                                }
-                              }
-                            }}
-                            className="p-1 hover:text-white text-white/90 cursor-pointer"
-                            title="Fullscreen"
-                          >
-                            <Maximize className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <div className="text-center text-neutral-400 p-6">
+                    <Play className="w-12 h-12 mx-auto mb-2 text-neutral-300" />
+                    <p className="text-xs">{currentVideo.url}</p>
+                  </div>
+                )}
               </div>
 
               {/* Right Column: AI Assistant (Chat / Flashcards / Summary) */}
@@ -1023,6 +1178,7 @@ export default function YouTubeSummarizerPage() {
               </div>
             </div>
           </div>
+          )}
         </section>
 
         {/* Section 1: "Try summarizing a YouTube link below" (Matching Screenshot 1) */}
