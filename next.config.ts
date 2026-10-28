@@ -12,6 +12,18 @@ const nextConfig: NextConfig = {
       },
     },
   },
+  async rewrites() {
+    return [
+      {
+        source: "/youtube-video-summarizer",
+        destination: "/youtube-summarizer",
+      },
+      {
+        source: "/youtube-summaries",
+        destination: "/youtube-summarizer",
+      },
+    ];
+  },
 };
 
 export default nextConfig;

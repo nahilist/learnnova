@@ -61,3 +61,15 @@
 .animate-marquee:hover {
   animation-play-state: paused;
 }
+
+.studio-grid {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 768px) {
+  .studio-grid {
+    display: grid;
+    grid-template-columns: 240px 1fr 340px;
+  }
+}

@@ -154,6 +154,8 @@ export function UPennSeal({ className = "h-10" }: { className?: string }) {
   );
 }
 
+export const PennSeal = UPennSeal;
+
 export function UChicagoSeal({ className = "h-10" }: { className?: string }) {
   return (
     <div className={`flex items-center justify-center ${className}`}>

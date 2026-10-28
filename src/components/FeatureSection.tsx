@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
+import Link from "next/link";
 import { 
   MessageSquare, 
   Upload, 
@@ -23,6 +24,18 @@ export function FeatureSection({ onOpenDemo }: FeatureSectionProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeTab, setActiveTab] = useState<"chat" | "flashcards">("chat");
   const [activeSubTab, setActiveSubTab] = useState<"transcript" | "chapters">("transcript");
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const toggleVideoPlay = () => {
+    if (!videoRef.current) return;
+    if (videoRef.current.paused) {
+      videoRef.current.play();
+      setIsPlaying(true);
+    } else {
+      videoRef.current.pause();
+      setIsPlaying(false);
+    }
+  };
 
   return (
     <section id="features" className="w-full max-w-[1240px] mx-auto px-4 sm:px-6 py-16 md:py-24">
@@ -55,13 +68,13 @@ export function FeatureSection({ onOpenDemo }: FeatureSectionProps) {
             </p>
 
             <div className="pt-2">
-              <button
-                onClick={() => onOpenDemo("Summary & Quizzes", "Generate comprehensive study guides, audio podcasts, and flashcard decks instantly.")}
+              <Link
+                href="/youtube-summarizer"
                 className="inline-flex items-center gap-2 text-sm font-medium text-neutral-900 hover:text-black underline underline-offset-4 cursor-pointer"
               >
                 <span>Learn more about video summaries</span>
                 <span>→</span>
-              </button>
+              </Link>
             </div>
           </div>
 
@@ -75,47 +88,44 @@ export function FeatureSection({ onOpenDemo }: FeatureSectionProps) {
                 <div className="flex items-center gap-1.5 font-semibold text-white">
                   <span className="w-3.5 h-3.5 rounded-sm bg-white flex items-center justify-center text-[8px] text-black font-bold">LN</span>
                   <span className="truncate max-w-[240px] sm:max-w-md font-sans text-[13px]">
-                    Justice: What&apos;s The Right Thing To Do? Episode 01 &quot;THE MORAL SIDE OF MURDER&quot;
+                    Discrete-Time Systems &amp; Signal Processing (MIT 8.04)
                   </span>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-[11px] text-neutral-400 font-mono hidden sm:inline">Harvard Lecture</span>
+                <span className="text-[11px] text-neutral-400 font-mono hidden sm:inline">MIT OpenCourseWare</span>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-12 min-h-[360px]">
               {/* Video Screen Area */}
               <div className="md:col-span-7 relative flex flex-col justify-between bg-black p-4 sm:p-5">
-                {/* Professor Sandel Lecture Visual Recreation */}
-                <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-gradient-to-b from-neutral-900 to-neutral-950 flex flex-col items-center justify-center border border-neutral-800/80 group">
-                  
-                  {/* Subtle video background art representing the Harvard lecture hall */}
-                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-amber-950/20 via-neutral-950 to-black opacity-90"></div>
-                  
-                  {/* Lecturer Avatar / Figure Graphic */}
-                  <div className="relative z-10 flex flex-col items-center">
-                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-neutral-800 border-2 border-neutral-600 flex items-center justify-center shadow-xl overflow-hidden relative">
-                      <div className="w-full h-full bg-linear-to-b from-neutral-300 to-neutral-400 flex items-center justify-center text-neutral-800 font-serif font-bold text-2xl">
-                        PS
-                      </div>
-                    </div>
-                    <span className="mt-2 text-xs font-medium text-neutral-300 tracking-wide">Prof. Michael Sandel</span>
-                    <span className="text-[10px] text-neutral-500">Harvard University</span>
-                  </div>
+                {/* Real Video Player using /7eEoiSCiM7vpz1kuEeEcW5o46o.mp4 */}
+                <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black flex flex-col items-center justify-center border border-neutral-800/80 group">
+                  <video
+                    ref={videoRef}
+                    src="/7eEoiSCiM7vpz1kuEeEcW5o46o.mp4"
+                    playsInline
+                    loop
+                    muted
+                    onClick={toggleVideoPlay}
+                    className="w-full h-full object-cover cursor-pointer"
+                  />
 
                   {/* Play / Pause button overlay */}
-                  <button
-                    onClick={() => setIsPlaying(!isPlaying)}
-                    className="absolute inset-0 m-auto w-12 h-12 rounded-full bg-white/20 backdrop-blur-md hover:bg-white/30 border border-white/40 flex items-center justify-center text-white transition-transform active:scale-90 z-20 cursor-pointer"
-                    aria-label={isPlaying ? "Pause video" : "Play video"}
-                  >
-                    {isPlaying ? <Pause className="w-5 h-5 fill-white" /> : <Play className="w-5 h-5 fill-white ml-0.5" />}
-                  </button>
+                  {!isPlaying && (
+                    <button
+                      onClick={toggleVideoPlay}
+                      className="absolute inset-0 m-auto w-14 h-14 rounded-full bg-white/30 backdrop-blur-md hover:bg-white/40 border border-white/50 flex items-center justify-center text-white transition-transform active:scale-90 z-20 cursor-pointer shadow-xl"
+                      aria-label="Play video"
+                    >
+                      <Play className="w-6 h-6 fill-white ml-0.5" />
+                    </button>
+                  )}
 
-                  <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between text-[11px] text-neutral-400 font-mono z-10">
-                    <span>{isPlaying ? "04:12" : "00:00"} / 54:56</span>
+                  <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between text-[11px] text-neutral-400 font-mono z-10 pointer-events-none">
+                    <span>{isPlaying ? "04:12" : "00:00"} / 1:22:45</span>
                     <span className="bg-red-600 text-white px-1.5 py-0.5 rounded text-[9px] font-bold">HD</span>
                   </div>
                 </div>
