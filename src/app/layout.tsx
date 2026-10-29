@@ -18,11 +18,17 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "LearnNova AI - An AI tutor made for you",
+  title: "Learnnova AI",
   description:
     "An AI tutor made for you. Learn from an AI tutor that understands your pdfs, youtube videos, and recorded lectures.",
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/favicon-light.png", media: "(prefers-color-scheme: light)" },
+      { url: "/favicon-dark.png", media: "(prefers-color-scheme: dark)" },
+      { url: "/favicon.ico" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
   },
 };
 
