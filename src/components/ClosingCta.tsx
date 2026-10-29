@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 export interface ClosingCtaProps {
   onOpenDemo?: (title: string, subtitle: string) => void;
@@ -13,12 +13,6 @@ export function ClosingCta(props?: ClosingCtaProps) {
   return (
     <section id="closing-cta" className="w-full max-w-[1240px] mx-auto px-4 sm:px-6 pb-20 pt-8">
       <div className="w-full bg-[#f8f9fa] rounded-3xl sm:rounded-[40px] border border-neutral-200/90 py-16 sm:py-20 md:py-24 px-6 text-center shadow-xs">
-        {/* Top pill badge */}
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-neutral-200 text-xs font-semibold text-neutral-800 mb-6 shadow-2xs">
-          <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-          <span>Start studying in seconds</span>
-        </div>
-
         {/* Headline */}
         <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-[54px] font-semibold text-neutral-900 tracking-[-0.035em] mb-4">
           Learn smarter, retain more, test better.
