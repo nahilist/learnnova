@@ -159,6 +159,26 @@ export async function createDocument(_userId: string, documentItem: DocumentItem
 }
 
 /**
+ * Deletes a document for the authenticated user.
+ */
+export async function deleteDocument(documentId: string): Promise<boolean> {
+  const res = await fetch(`/api/workspace/documents?id=${encodeURIComponent(documentId)}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) {
+    let errMessage = `Failed to delete document (${res.statusText})`;
+    try {
+      const err = await res.json();
+      if (err.error) errMessage = err.error;
+    } catch {
+      // fallback
+    }
+    throw new Error(errMessage);
+  }
+  return true;
+}
+
+/**
  * Uploads file to secure user-scoped storage with quota validation.
  */
 export async function uploadToStorage(file: File): Promise<{ key: string; url: string; quotaRemaining?: number }> {

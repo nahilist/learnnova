@@ -32,6 +32,8 @@ import {
   ChevronDown,
   ArrowUp,
   Menu,
+  MoreVertical,
+  Trash2,
 } from "lucide-react";
 import { YouLearnLogo } from "@/components/Icons";
 import { authClient } from "@/lib/auth/client";
@@ -106,6 +108,8 @@ export default function AppWorkspacePage() {
   const [selectedSort, setSelectedSort] = useState<"Newest" | "Oldest" | "A-Z">("Newest");
   const [helpModalOpen, setHelpModalOpen] = useState(false);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [activeMenuDocId, setActiveMenuDocId] = useState<string | null>(null);
+  const [expandedRecents, setExpandedRecents] = useState(false);
   const learnInputRef = useRef<HTMLInputElement>(null);
 
   // Usage Quotas State
@@ -664,6 +668,31 @@ export default function AppWorkspacePage() {
     handleGenerateQuiz(doc);
   };
 
+  // Delete Document Handler
+  const handleDeleteDoc = async (docId: string, docTitle?: string) => {
+    // Optimistically update recentDocs state
+    const remaining = recentDocs.filter((d) => d.id !== docId);
+    setRecentDocs(remaining);
+
+    // If currently selected doc was deleted, pick next available
+    if (selectedDoc?.id === docId) {
+      if (remaining.length > 0) {
+        setSelectedDoc(remaining[0]);
+      } else {
+        setSelectedDoc(DEFAULT_DOCUMENTS[0]);
+        setActiveTab("dashboard");
+      }
+    }
+
+    try {
+      await fetch(`/api/workspace/documents?id=${encodeURIComponent(docId)}`, {
+        method: "DELETE",
+      });
+    } catch (err) {
+      console.error("Failed to delete document from backend:", err);
+    }
+  };
+
   // Process File / Link / Text / Record Upload
   const handleProcessUpload = async (recordSource?: "mic" | "tab") => {
     if (!user) {
@@ -978,17 +1007,7 @@ export default function AppWorkspacePage() {
     return b.id.localeCompare(a.id);
   });
 
-  const orderedRecents = [...recentDocs].sort((a, b) => {
-    if (a.title.startsWith("1.")) return -1;
-    if (b.title.startsWith("1.")) return 1;
-    if (a.title.startsWith("Positional")) return -1;
-    if (b.title.startsWith("Positional")) return 1;
-    if (a.title.startsWith("What is")) return -1;
-    if (b.title.startsWith("What is")) return 1;
-    if (a.title.startsWith("Why is")) return -1;
-    if (b.title.startsWith("Why is")) return 1;
-    return 0;
-  });
+  const orderedRecents = [...recentDocs];
 
   return (
     <div className="h-screen w-full bg-white flex overflow-hidden font-sans text-neutral-900 selection:bg-neutral-200">
@@ -1054,36 +1073,84 @@ export default function AppWorkspacePage() {
             </button>
           </div>
 
-          {/* Recents Section */}
+          {/* Recents Section with Three-Dot Menu */}
           <div className="mt-5">
             <span className="text-[11px] font-normal text-neutral-400 px-3 mb-1.5 block">
               Recents
             </span>
             <div className="space-y-0.5">
-              {orderedRecents.slice(0, 5).map((doc) => (
-                <button
+              {(expandedRecents ? orderedRecents : orderedRecents.slice(0, 6)).map((doc) => (
+                <div
                   key={doc.id}
-                  onClick={() => {
-                    handleOpenDoc(doc);
-                    setSidebarOpen(false);
-                  }}
-                  title={doc.title}
-                  className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs text-neutral-700 hover:text-neutral-950 hover:bg-[#f0f0f0] transition-colors cursor-pointer text-left group"
+                  className={`group/item relative flex items-center justify-between rounded-lg transition-colors ${
+                    selectedDoc?.id === doc.id
+                      ? "bg-[#ebebeb] text-neutral-950 font-medium"
+                      : "hover:bg-[#f0f0f0] text-neutral-700"
+                  }`}
                 >
-                  <Play className="w-3 h-3 text-neutral-400 group-hover:text-neutral-700 shrink-0 fill-transparent stroke-[1.8]" />
-                  <span className="truncate">{doc.title}</span>
-                </button>
+                  <button
+                    onClick={() => {
+                      handleOpenDoc(doc);
+                      setSidebarOpen(false);
+                    }}
+                    title={doc.title}
+                    className="flex-1 flex items-center gap-2 px-2.5 py-1.5 text-xs text-left truncate cursor-pointer min-w-0"
+                  >
+                    <Play className="w-3 h-3 text-neutral-400 group-hover/item:text-neutral-700 shrink-0 fill-transparent stroke-[1.8]" />
+                    <span className="truncate">{doc.title}</span>
+                  </button>
+
+                  {/* Three Dot Menu Trigger */}
+                  <div className="relative shrink-0 pr-1">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveMenuDocId(activeMenuDocId === doc.id ? null : doc.id);
+                      }}
+                      className="p-1 rounded-md text-neutral-400 hover:text-neutral-900 hover:bg-neutral-200/70 opacity-0 group-hover/item:opacity-100 transition-opacity focus:opacity-100 cursor-pointer"
+                      title="Options"
+                      aria-label={`Options for ${doc.title}`}
+                    >
+                      <MoreVertical className="w-3.5 h-3.5" />
+                    </button>
+
+                    {/* Floating Dropdown Menu */}
+                    {activeMenuDocId === doc.id && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-40"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveMenuDocId(null);
+                          }}
+                        />
+                        <div className="absolute right-0 top-full mt-1 w-28 bg-white border border-neutral-200/90 rounded-xl shadow-lg py-1 z-50 animate-in fade-in zoom-in-95 duration-100 text-xs">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveMenuDocId(null);
+                              handleDeleteDoc(doc.id, doc.title);
+                            }}
+                            className="w-full flex items-center gap-2 px-3 py-1.5 text-red-600 hover:bg-red-50 text-left transition-colors cursor-pointer font-medium"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                            <span>Delete</span>
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
               ))}
 
-              <button
-                onClick={() => {
-                  setActiveTab("dashboard");
-                  setSelectedSpaceFilter("all");
-                }}
-                className="w-full text-left px-3 py-1 text-xs text-neutral-400 hover:text-neutral-700 transition-colors cursor-pointer"
-              >
-                ... More
-              </button>
+              {orderedRecents.length > 6 && (
+                <button
+                  onClick={() => setExpandedRecents(!expandedRecents)}
+                  className="w-full text-left px-3 py-1 text-xs text-neutral-400 hover:text-neutral-700 transition-colors cursor-pointer"
+                >
+                  {expandedRecents ? "Show less" : `... More (${orderedRecents.length})`}
+                </button>
+              )}
             </div>
           </div>
 
@@ -2505,19 +2572,41 @@ export default function AppWorkspacePage() {
               {recentDocs.map((doc) => (
                 <div
                   key={doc.id}
-                  onClick={() => {
-                    handleOpenDoc(doc);
-                    setHistoryModalOpen(false);
-                  }}
-                  className="p-3 rounded-xl border border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50 transition-all cursor-pointer flex items-center justify-between"
+                  className="p-3 rounded-xl border border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50 transition-all cursor-pointer flex items-center justify-between group"
                 >
-                  <div className="min-w-0 pr-3">
+                  <div
+                    onClick={() => {
+                      handleOpenDoc(doc);
+                      setHistoryModalOpen(false);
+                    }}
+                    className="min-w-0 pr-3 flex-1"
+                  >
                     <p className="text-xs font-semibold text-neutral-900 truncate">{doc.title}</p>
                     <p className="text-[11px] text-neutral-400 mt-0.5">
                       {doc.space} • {doc.pagesOrDuration} • {doc.date}
                     </p>
                   </div>
-                  <span className="text-xs font-medium text-emerald-700 shrink-0">Open →</span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => {
+                        handleOpenDoc(doc);
+                        setHistoryModalOpen(false);
+                      }}
+                      className="text-xs font-medium text-emerald-700 hover:text-emerald-800"
+                    >
+                      Open →
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteDoc(doc.id, doc.title);
+                      }}
+                      className="p-1 rounded-md text-neutral-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                      title="Delete document"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
