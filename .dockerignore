@@ -12,5 +12,6 @@ tests
 *.md
 .env*.local
 .lighthouseci
+backend
 Dockerfile*
 .dockerignore

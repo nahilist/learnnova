@@ -4,7 +4,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: learnnova-backend
-    restart: always
+    restart: unless-stopped
     ports:
       - "8000:8000"
     env_file:
@@ -19,3 +19,30 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+    networks:
+      - learnnova-net
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: learnnova-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.local
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+      - BACKEND_URL=http://backend:8000
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - learnnova-net
+
+networks:
+  learnnova-net:
+    driver: bridge
