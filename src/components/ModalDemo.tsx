@@ -15,7 +15,7 @@ export function ModalDemo({ isOpen, onClose, title, subtitle }: ModalDemoProps) 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
       <div 
         className="bg-white rounded-3xl max-w-md w-full p-7 shadow-2xl border border-neutral-100 relative transition-all scale-100 animate-in zoom-in-95 duration-200"
         role="dialog"

@@ -12,6 +12,16 @@ interface NavbarProps {
 export function Navbar({ onOpenDemo }: NavbarProps) {
   const [featuresOpen, setFeaturesOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 8);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     if (!mobileMenuOpen) return;
@@ -25,7 +35,17 @@ export function Navbar({ onOpenDemo }: NavbarProps) {
   }, [mobileMenuOpen]);
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/85 backdrop-blur-md border-b border-neutral-100/80 transition-all">
+    <header
+      className={`sticky top-0 z-50 w-full transition-all duration-200 ${
+        scrolled
+          ? "bg-white/70 backdrop-blur-2xl backdrop-saturate-180 border-b border-black/[0.06] shadow-[0_4px_30px_rgba(0,0,0,0.04)]"
+          : "bg-white/60 backdrop-blur-xl backdrop-saturate-150 border-b border-black/[0.04]"
+      }`}
+      style={{
+        WebkitBackdropFilter: scrolled ? "blur(24px) saturate(180%)" : "blur(18px) saturate(150%)",
+        backdropFilter: scrolled ? "blur(24px) saturate(180%)" : "blur(18px) saturate(150%)",
+      }}
+    >
       <div className="w-full max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-12 h-18 sm:h-20 flex items-center justify-between">
         {/* Left: Logo & Navigation Links */}
         <div className="flex items-center gap-8 lg:gap-11">
@@ -57,7 +77,7 @@ export function Navbar({ onOpenDemo }: NavbarProps) {
               {/* Dropdown Menu */}
               {featuresOpen && (
                 <div className="absolute top-full -left-2 w-56 pt-2 z-50">
-                  <div className="rounded-2xl border border-neutral-200/80 bg-white/95 p-2 py-2.5 shadow-[0_18px_50px_rgba(15,23,42,0.12)] backdrop-blur-2xl animate-in fade-in slide-in-from-top-2 duration-150">
+                  <div className="rounded-2xl border border-neutral-200/70 bg-white/80 p-2 py-2.5 shadow-[0_18px_50px_rgba(15,23,42,0.12)] backdrop-blur-2xl backdrop-saturate-150 animate-in fade-in slide-in-from-top-2 duration-150">
                     <button
                       onClick={() => {
                         setFeaturesOpen(false);
@@ -143,7 +163,7 @@ export function Navbar({ onOpenDemo }: NavbarProps) {
       {mobileMenuOpen && (
         <div
           id="mobile-navigation"
-          className="absolute inset-x-0 top-full z-50 flex min-h-[calc(100dvh-72px)] flex-col items-center space-y-6 overflow-y-auto border-t border-neutral-100 bg-white px-6 py-8 text-center shadow-[0_22px_50px_rgba(15,23,42,0.12)] animate-in fade-in slide-in-from-top-2 duration-200 md:hidden"
+          className="absolute inset-x-0 top-full z-50 flex min-h-[calc(100dvh-72px)] flex-col items-center space-y-6 overflow-y-auto border-t border-black/[0.06] bg-white/85 backdrop-blur-2xl backdrop-saturate-150 px-6 py-8 text-center shadow-[0_22px_50px_rgba(15,23,42,0.12)] animate-in fade-in slide-in-from-top-2 duration-200 md:hidden"
         >
           <div className="w-full flex flex-col items-center space-y-5 text-[17px] font-medium text-neutral-800">
             {/* Features accordion */}

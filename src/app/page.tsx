@@ -44,7 +44,7 @@ export default function Home() {
   };
 
   return (
-    <div className="relative min-h-screen flex flex-col bg-white text-neutral-900 selection:bg-neutral-200 overflow-x-hidden">
+    <div className="relative min-h-screen flex flex-col bg-white text-neutral-900 selection:bg-neutral-200 overflow-x-clip">
       {/* Ambient background atmosphere gradient matching youlearn.ai */}
       <div
         className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[1440px] h-[680px] -z-10 select-none overflow-hidden"

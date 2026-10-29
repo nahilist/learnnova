@@ -124,7 +124,7 @@ export default function YouTubeSummarizerPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-neutral-900 flex flex-col font-sans selection:bg-neutral-900 selection:text-white relative overflow-x-hidden">
+    <div className="min-h-screen bg-white text-neutral-900 flex flex-col font-sans selection:bg-neutral-900 selection:text-white relative overflow-x-clip">
       {/* Top Ambient Glow matching screenshot */}
       <div
         className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 w-[980px] max-w-[95vw] h-[480px] -z-10 select-none overflow-hidden"
