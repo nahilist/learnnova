@@ -4,6 +4,9 @@ import { useLayoutEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
+const YOUTUBE_SUMMARY_VIDEO =
+  "https://learnnova.s3.us-east-1.amazonaws.com/yoytube_summary.mp4";
+
 export function YouTubeSummaryPreviewVideo() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
@@ -130,6 +133,7 @@ export function YouTubeSummaryPreviewVideo() {
           preload="auto"
           aria-label="YouTube summaries walkthrough"
         >
+          <source src={YOUTUBE_SUMMARY_VIDEO} type="video/mp4" />
           <source src="/yoytube_summary.mp4" type="video/mp4" />
         </video>
       </div>

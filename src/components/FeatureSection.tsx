@@ -15,6 +15,9 @@ import {
   Headphones 
 } from "lucide-react";
 
+const YOUTUBE_SUMMARY_VIDEO =
+  "https://learnnova.s3.us-east-1.amazonaws.com/yoytube_summary.mp4";
+
 interface FeatureSectionProps {
   onOpenDemo: (title: string, subtitle: string) => void;
 }
@@ -104,13 +107,15 @@ export function FeatureSection({ onOpenDemo }: FeatureSectionProps) {
                 <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black flex flex-col items-center justify-center border border-neutral-800/80 group">
                   <video
                     ref={videoRef}
-                    src="/yoytube_summary.mp4"
                     playsInline
                     loop
                     muted
                     onClick={toggleVideoPlay}
                     className="w-full h-full object-cover cursor-pointer"
-                  />
+                  >
+                    <source src={YOUTUBE_SUMMARY_VIDEO} type="video/mp4" />
+                    <source src="/yoytube_summary.mp4" type="video/mp4" />
+                  </video>
 
                   {/* Play / Pause button overlay */}
                   {!isPlaying && (
