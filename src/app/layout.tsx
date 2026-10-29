@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     "An AI tutor made for you. Learn from an AI tutor that understands your pdfs, youtube videos, and recorded lectures.",
   icons: {
     icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
       { url: "/favicon-light.png", media: "(prefers-color-scheme: light)" },
       { url: "/favicon-dark.png", media: "(prefers-color-scheme: dark)" },
       { url: "/favicon.ico" },
