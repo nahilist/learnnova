@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Learnnova AI Side Panel</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="sidepanel-body">
+  <div class="sidepanel-container">
+    <!-- Header -->
+    <header class="sidepanel-header">
+      <div class="header-left">
+        <div class="logo-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M5.2 4.5C6.3 4.5 7.2 5.4 7.2 6.5V11.8C7.2 14.5 9.4 16.7 12.1 16.7C13.2 16.7 14.1 17.6 14.1 18.7C14.1 19.8 13.2 20.7 12.1 20.7C7.2 20.7 3.2 16.7 3.2 11.8V6.5C3.2 5.4 4.1 4.5 5.2 4.5Z" />
+            <path d="M18.8 3.3C19.9 3.3 20.8 4.2 20.8 5.3V12.7C20.8 13.8 19.9 14.7 18.8 14.7C17.7 14.7 16.8 13.8 16.8 12.7V5.3C16.8 4.2 17.7 3.3 18.8 3.3Z" />
+          </svg>
+        </div>
+        <span class="logo-text">Learnnova AI</span>
+      </div>
+
+      <div class="header-right">
+        <button class="icon-button" id="btn-sync-tab" title="Re-sync with current tab">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+          </svg>
+        </button>
+        <button class="icon-button" id="btn-open-fullapp" title="Open full Learnnova Web App">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+            <polyline points="15 3 21 3 21 9"/>
+            <line x1="10" y1="14" x2="21" y2="3"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Current Tab Bar -->
+    <div class="tab-context-strip">
+      <div class="strip-icon" id="strip-icon">🌐</div>
+      <div class="strip-info">
+        <span class="strip-type" id="strip-type">Active Page</span>
+        <span class="strip-title" id="strip-title">Detecting page...</span>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="nav-tab active" data-tab="summary">
+        <span>📝 Notes</span>
+      </button>
+      <button class="nav-tab" data-tab="chat">
+        <span>💬 AI Chat</span>
+      </button>
+      <button class="nav-tab" data-tab="practice">
+        <span>🎯 Practice</span>
+      </button>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="sidepanel-content">
+      <!-- ============================================== -->
+      <!-- TAB 1: SUMMARY & NOTES                        -->
+      <!-- ============================================== -->
+      <section class="tab-panel active" id="panel-summary">
+        <!-- Initial Empty / Trigger State -->
+        <div class="panel-hero" id="summary-hero">
+          <div class="hero-badge" id="summary-badge">⚡ Instant AI Notes</div>
+          <h2 class="hero-title" id="summary-hero-title">Ready to study this content?</h2>
+          <p class="hero-desc" id="summary-hero-desc">
+            Get structured notes, key takeaways, and timestamps in seconds.
+          </p>
+          <button class="btn btn-primary btn-large" id="btn-generate-summary">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
+            <span id="btn-generate-text">Generate Notes & Summary</span>
+          </button>
+        </div>
+
+        <!-- Loading State -->
+        <div class="loading-state hidden" id="summary-loading">
+          <div class="spinner"></div>
+          <p class="loading-text" id="summary-loading-text">Analyzing transcript & generating notes...</p>
+        </div>
+
+        <!-- Error State -->
+        <div class="error-banner hidden" id="summary-error">
+          <span class="error-icon">⚠️</span>
+          <span class="error-text" id="summary-error-text">Failed to summarize.</span>
+          <button class="btn-small btn-secondary" id="btn-retry-summary">Retry</button>
+        </div>
+
+        <!-- Result View -->
+        <div class="summary-result hidden" id="summary-result">
+          <!-- Overview Card -->
+          <div class="summary-card">
+            <div class="card-header-row">
+              <span class="card-label">EXECUTIVE SUMMARY</span>
+              <button class="btn-copy" id="btn-copy-summary" title="Copy to clipboard">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+                <span>Copy</span>
+              </button>
+            </div>
+            <p class="summary-text" id="summary-text"></p>
+          </div>
+
+          <!-- Key Takeaways -->
+          <div class="takeaways-section">
+            <h3 class="section-heading">Key Takeaways</h3>
+            <ul class="takeaways-list" id="takeaways-list"></ul>
+          </div>
+
+          <!-- Chapters / Timestamps (YouTube specific) -->
+          <div class="chapters-section hidden" id="chapters-section">
+            <h3 class="section-heading">Video Chapters</h3>
+            <div class="chapters-list" id="chapters-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================== -->
+      <!-- TAB 2: AI TUTOR CHAT                          -->
+      <!-- ============================================== -->
+      <section class="tab-panel" id="panel-chat">
+        <div class="chat-messages" id="chat-messages">
+          <div class="chat-bubble ai-bubble">
+            <div class="bubble-avatar">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M5.2 4.5C6.3 4.5 7.2 5.4 7.2 6.5V11.8C7.2 14.5 9.4 16.7 12.1 16.7C13.2 16.7 14.1 17.6 14.1 18.7C14.1 19.8 13.2 20.7 12.1 20.7C7.2 20.7 3.2 16.7 3.2 11.8V6.5C3.2 5.4 4.1 4.5 5.2 4.5Z" />
+                <path d="M18.8 3.3C19.9 3.3 20.8 4.2 20.8 5.3V12.7C20.8 13.8 19.9 14.7 18.8 14.7C17.7 14.7 16.8 13.8 16.8 12.7V5.3C16.8 4.2 17.7 3.3 18.8 3.3Z" />
+              </svg>
+            </div>
+            <div class="bubble-body">
+              <p>Hi! I'm your Learnnova AI Tutor. Ask me anything about this page or video, or try one of the suggestions below.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Suggestions -->
+        <div class="chat-suggestions" id="chat-suggestions">
+          <button class="suggestion-chip" data-prompt="Explain the key idea in simple terms.">
+            💡 Explain simply
+          </button>
+          <button class="suggestion-chip" data-prompt="What are the most important takeaways?">
+            🎯 Key takeaways
+          </button>
+          <button class="suggestion-chip" data-prompt="Give me a real-world example of this concept.">
+            🌍 Real example
+          </button>
+        </div>
+
+        <!-- Chat Input Bar -->
+        <form class="chat-form" id="chat-form">
+          <input
+            type="text"
+            id="chat-input"
+            class="chat-input"
+            placeholder="Ask your AI tutor anything..."
+            autocomplete="off"
+          />
+          <button type="submit" class="chat-send-btn" id="chat-send-btn" title="Send message">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </form>
+      </section>
+
+      <!-- ============================================== -->
+      <!-- TAB 3: PRACTICE (QUIZ & FLASHCARDS)            -->
+      <!-- ============================================== -->
+      <section class="tab-panel" id="panel-practice">
+        <!-- Sub Mode Toggle -->
+        <div class="sub-toggle">
+          <button class="sub-toggle-btn active" id="btn-toggle-quiz">Quiz</button>
+          <button class="sub-toggle-btn" id="btn-toggle-flashcards">Flashcards</button>
+        </div>
+
+        <!-- Quiz Container -->
+        <div class="practice-container" id="quiz-container">
+          <div class="practice-empty" id="quiz-empty">
+            <span class="empty-emoji">🎯</span>
+            <h3>Test Your Knowledge</h3>
+            <p>Generate practice questions based on this video or article.</p>
+            <button class="btn btn-primary" id="btn-generate-quiz">Generate Quiz</button>
+          </div>
+
+          <div class="practice-content hidden" id="quiz-content">
+            <div class="quiz-progress-bar">
+              <span id="quiz-counter">Question 1 of 4</span>
+              <span id="quiz-score">Score: 0</span>
+            </div>
+            <div id="quiz-card-wrapper"></div>
+          </div>
+        </div>
+
+        <!-- Flashcards Container -->
+        <div class="practice-container hidden" id="flashcards-container">
+          <div class="practice-empty" id="flashcards-empty">
+            <span class="empty-emoji">🃏</span>
+            <h3>Active Recall Cards</h3>
+            <p>Review key terms and definitions to prepare for exams.</p>
+            <button class="btn btn-primary" id="btn-generate-flashcards">Generate Flashcards</button>
+          </div>
+
+          <div class="practice-content hidden" id="flashcards-content">
+            <div class="flashcard-wrapper">
+              <div class="flashcard" id="flashcard-element">
+                <div class="card-face card-front">
+                  <span class="card-tag">QUESTION</span>
+                  <p class="card-text" id="fc-front-text">Front</p>
+                  <span class="card-hint">Click card to reveal answer</span>
+                </div>
+                <div class="card-face card-back">
+                  <span class="card-tag">ANSWER</span>
+                  <p class="card-text" id="fc-back-text">Back</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="flashcard-controls">
+              <button class="btn-small btn-secondary" id="fc-prev">← Prev</button>
+              <span class="fc-counter" id="fc-counter">1 / 5</span>
+              <button class="btn-small btn-secondary" id="fc-next">Next →</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="sidepanel.js"></script>
+</body>
+</html>
