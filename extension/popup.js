@@ -14,27 +14,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   const btnSummarize = document.getElementById("btn-quick-summarize");
   const summarizeBtnText = document.getElementById("summarize-btn-text");
   const btnOpenWebApp = document.getElementById("btn-open-webapp");
-  const btnToggleSettings = document.getElementById("btn-toggle-settings");
-  const settingsDrawer = document.getElementById("settings-drawer");
-  const inputApiUrl = document.getElementById("setting-api-url");
-  const btnSaveSettings = document.getElementById("btn-save-settings");
-  const btnResetSettings = document.getElementById("btn-reset-settings");
 
-  // Load configured settings - defaults to AWS EC2 instance and Vercel web app
-  let { apiUrl = "http://13.196.187.230", webAppUrl = "https://learnnova-taupe.vercel.app" } =
-    await chrome.storage.local.get(["apiUrl", "webAppUrl"]);
-
-  if (!apiUrl || apiUrl === "http://localhost:8000") {
-    apiUrl = "http://13.196.187.230";
-    await chrome.storage.local.set({ apiUrl });
-  }
-
-  if (!webAppUrl || webAppUrl === "http://localhost:3000" || webAppUrl === "http://127.0.0.1:3000") {
-    webAppUrl = "https://learnnova-taupe.vercel.app";
-    await chrome.storage.local.set({ webAppUrl });
-  }
-
-  inputApiUrl.value = apiUrl;
+  // Fixed backend & web app endpoints
+  const apiUrl = "http://13.196.187.230";
+  const webAppUrl = "https://learnnova-taupe.vercel.app";
 
   // Query Active Tab
   const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -80,8 +63,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   } catch (e) {
     statusBadge.classList.add("status-offline");
-    statusLabel.textContent = "Server Offline";
-    statusBadge.title = `Cannot reach backend at ${apiUrl}. Make sure Docker or FastAPI is running.`;
+    statusLabel.textContent = "Offline";
+    statusBadge.title = "AI Tutor is temporarily offline.";
   }
 
   // Open in Side Panel
@@ -115,39 +98,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   btnOpenWebApp.addEventListener("click", async () => {
     await chrome.tabs.create({ url: `${webAppUrl}/app` });
     window.close();
-  });
-
-  // Toggle Settings Drawer
-  btnToggleSettings.addEventListener("click", () => {
-    settingsDrawer.classList.toggle("hidden");
-  });
-
-  // Save Settings
-  btnSaveSettings.addEventListener("click", async () => {
-    const newUrl = inputApiUrl.value.trim().replace(/\/$/, "");
-    if (newUrl) {
-      await chrome.storage.local.set({ apiUrl: newUrl });
-      btnSaveSettings.textContent = "Saved!";
-      setTimeout(() => {
-        btnSaveSettings.textContent = "Save";
-        settingsDrawer.classList.add("hidden");
-        window.location.reload();
-      }, 700);
-    }
-  });
-
-  // Reset Settings
-  btnResetSettings.addEventListener("click", async () => {
-    inputApiUrl.value = "http://13.196.187.230";
-    await chrome.storage.local.set({
-      apiUrl: "http://13.196.187.230",
-      webAppUrl: "https://learnnova-taupe.vercel.app"
-    });
-    btnResetSettings.textContent = "Reset!";
-    setTimeout(() => {
-      btnResetSettings.textContent = "Reset";
-      window.location.reload();
-    }, 700);
   });
 });
 

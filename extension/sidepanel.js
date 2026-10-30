@@ -77,64 +77,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   let currentQuizScore = 0;
   let currentFlashcardIndex = 0;
 
-  // Settings - defaults to live AWS EC2 backend & Vercel web workspace
-  let { apiUrl = "http://13.196.187.230", webAppUrl = "https://learnnova-taupe.vercel.app" } =
-    await chrome.storage.local.get(["apiUrl", "webAppUrl"]);
-
-  if (!apiUrl || apiUrl === "http://localhost:8000") {
-    apiUrl = "http://13.196.187.230";
-    await chrome.storage.local.set({ apiUrl });
-  }
-
-  if (!webAppUrl || webAppUrl === "http://localhost:3000" || webAppUrl === "http://127.0.0.1:3000") {
-    webAppUrl = "https://learnnova-taupe.vercel.app";
-    await chrome.storage.local.set({ webAppUrl });
-  }
-
-  // Sidepanel Settings Elements
-  const btnSidepanelSettings = document.getElementById("btn-sidepanel-settings");
-  const sidepanelSettingsDrawer = document.getElementById("sidepanel-settings-drawer");
-  const spSettingApiUrl = document.getElementById("sp-setting-api-url");
-  const btnSpSaveSettings = document.getElementById("btn-sp-save-settings");
-  const btnSpResetSettings = document.getElementById("btn-sp-reset-settings");
-
-  if (spSettingApiUrl) spSettingApiUrl.value = apiUrl;
-
-  if (btnSidepanelSettings && sidepanelSettingsDrawer) {
-    btnSidepanelSettings.addEventListener("click", () => {
-      sidepanelSettingsDrawer.classList.toggle("hidden");
-    });
-  }
-
-  if (btnSpSaveSettings && spSettingApiUrl) {
-    btnSpSaveSettings.addEventListener("click", async () => {
-      const newUrl = spSettingApiUrl.value.trim().replace(/\/$/, "");
-      if (newUrl) {
-        apiUrl = newUrl;
-        await chrome.storage.local.set({ apiUrl });
-        btnSpSaveSettings.textContent = "Saved!";
-        setTimeout(async () => {
-          btnSpSaveSettings.textContent = "Save Server";
-          sidepanelSettingsDrawer.classList.add("hidden");
-          await checkServerHealth();
-        }, 600);
-      }
-    });
-  }
-
-  if (btnSpResetSettings && spSettingApiUrl) {
-    btnSpResetSettings.addEventListener("click", async () => {
-      apiUrl = "http://13.196.187.230";
-      webAppUrl = "https://learnnova-taupe.vercel.app";
-      spSettingApiUrl.value = apiUrl;
-      await chrome.storage.local.set({ apiUrl, webAppUrl });
-      btnSpResetSettings.textContent = "Reset to EC2!";
-      setTimeout(async () => {
-        btnSpResetSettings.textContent = "Reset to EC2";
-        await checkServerHealth();
-      }, 600);
-    });
-  }
+  // Internal backend & web workspace endpoints
+  const apiUrl = "http://13.196.187.230";
+  const webAppUrl = "https://learnnova-taupe.vercel.app";
 
   async function checkServerHealth() {
     if (!sidepanelStatus) return;
@@ -146,13 +91,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (res.ok) {
         sidepanelStatus.className = "status-badge status-online";
         sidepanelStatus.querySelector(".status-label").textContent = "AI Online";
-        sidepanelStatus.title = `Connected to AWS EC2: ${apiUrl}`;
+        sidepanelStatus.title = "Learnnova AI Tutor is Online";
         return true;
       }
     } catch {}
     sidepanelStatus.className = "status-badge status-offline";
     sidepanelStatus.querySelector(".status-label").textContent = "Offline";
-    sidepanelStatus.title = `Cannot reach server at ${apiUrl}.`;
+    sidepanelStatus.title = "AI Tutor is temporarily offline.";
     return false;
   }
 
@@ -353,7 +298,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       summaryLoading.classList.add("hidden");
       summaryError.classList.remove("hidden");
       if (err.message && (err.message.includes("Failed to fetch") || err.message.includes("NetworkError"))) {
-        summaryErrorText.innerHTML = `<strong>Backend Offline:</strong> Cannot reach AI server at <code>${apiUrl}</code>.<br><span style="font-size:11px;opacity:0.85;">Please start the backend server on port 8000 (FastAPI or Docker).</span>`;
+        summaryErrorText.innerHTML = `<strong>AI Tutor Offline:</strong> Unable to connect to the AI service. Please check your network connection and try again.`;
       } else {
         summaryErrorText.textContent = err.message || "Failed to analyze page.";
       }
@@ -487,7 +432,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (loadingBubble) {
         if (err.message && err.message.includes("Failed to fetch")) {
           loadingBubble.querySelector(".bubble-body p").innerHTML =
-            `⚠️ <strong>Backend Offline:</strong> Could not connect to <code>${apiUrl}</code>. Please start the Python backend on port 8000.`;
+            `⚠️ <strong>AI Tutor Offline:</strong> Unable to connect to the AI service. Please check your network and try again.`;
         } else {
           loadingBubble.querySelector(".bubble-body p").textContent =
             "⚠️ Error: " + (err.message || "Failed to contact AI Tutor.");

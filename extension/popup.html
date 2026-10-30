@@ -62,22 +62,10 @@
       </button>
     </div>
 
-    <!-- Footer with Settings Toggle -->
+    <!-- Footer -->
     <footer class="popup-footer">
       <span class="shortcut-tip">Shortcut: <code>Ctrl+Shift+L</code></span>
-      <button class="settings-toggle" id="btn-toggle-settings" title="Settings">⚙️</button>
     </footer>
-
-    <!-- Collapsible Settings Panel -->
-    <div class="settings-drawer hidden" id="settings-drawer">
-      <label class="settings-label" for="setting-api-url">Backend API Server</label>
-      <input type="text" id="setting-api-url" class="settings-input" placeholder="http://13.196.187.230">
-      <div class="settings-actions">
-        <button class="btn-small btn-primary" id="btn-save-settings">Save</button>
-        <button class="btn-small btn-secondary" id="btn-reset-settings">Reset</button>
-      </div>
-      <p class="settings-hint">Connected to AWS EC2: <code>http://13.196.187.230</code> (or your custom server).</p>
-    </div>
   </div>
 
   <script src="popup.js"></script>
