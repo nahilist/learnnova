@@ -221,10 +221,6 @@ export default function AppWorkspacePage() {
 
     let isActive = true;
 
-    setQuizQuestions([]);
-    setQuizResults(null);
-    setSelectedAnswers({});
-
     // 1. Fetch chunks for citations and reader
     const loadChunks = async () => {
       setIsChunksLoading(true);
@@ -409,7 +405,7 @@ export default function AppWorkspacePage() {
     } catch {
       // non-fatal
     }
-  }, [cardIndex, flashcards, selectedDoc?.id]);
+  }, [cardIndex, flashcards, selectedDoc]);
 
   // Keyboard Navigation for Flashcards
   useEffect(() => {
@@ -649,6 +645,7 @@ export default function AppWorkspacePage() {
     setActiveTab("study");
     setStudyTool("reader");
     setActivePage(1);
+    setQuizQuestions([]);
     setQuizResults(null);
     setSelectedAnswers({});
     handleGenerateFlashcards(doc);
@@ -656,13 +653,16 @@ export default function AppWorkspacePage() {
   };
 
   // Delete Document Handler
-  const handleDeleteDoc = async (docId: string, docTitle?: string) => {
+  const handleDeleteDoc = async (docId: string) => {
     // Optimistically update recentDocs state
     const remaining = recentDocs.filter((d) => d.id !== docId);
     setRecentDocs(remaining);
 
     // If currently selected doc was deleted, pick next available
     if (selectedDoc?.id === docId) {
+      setQuizQuestions([]);
+      setQuizResults(null);
+      setSelectedAnswers({});
       if (remaining.length > 0) {
         setSelectedDoc(remaining[0]);
       } else {
@@ -890,6 +890,9 @@ export default function AppWorkspacePage() {
       // 3. Update local state
       setRecentDocs((prev) => [newDoc, ...prev.filter((d) => d.id !== newDoc.id)]);
       setSelectedDoc(newDoc);
+      setQuizQuestions([]);
+      setQuizResults(null);
+      setSelectedAnswers({});
       setUsage((prev) => ({
         ...prev,
         uploadsUsed: Math.min(prev.uploadsLimit, prev.uploadsUsed + 1),
@@ -1121,7 +1124,7 @@ export default function AppWorkspacePage() {
                             onClick={(e) => {
                               e.stopPropagation();
                               setActiveMenuDocId(null);
-                              handleDeleteDoc(doc.id, doc.title);
+                              handleDeleteDoc(doc.id);
                             }}
                             className="w-full flex items-center gap-2 px-3 py-1.5 text-red-600 hover:bg-red-50 text-left transition-colors cursor-pointer font-medium"
                           >
@@ -2612,7 +2615,7 @@ export default function AppWorkspacePage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDeleteDoc(doc.id, doc.title);
+                          handleDeleteDoc(doc.id);
                         }}
                         className="p-1 rounded-md text-neutral-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
                         title="Delete document"

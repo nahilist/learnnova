@@ -34,7 +34,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Chat Elements
   const chatMessages = document.getElementById("chat-messages");
-  const chatSuggestions = document.getElementById("chat-suggestions");
   const chatForm = document.getElementById("chat-form");
   const chatInput = document.getElementById("chat-input");
   const chatSendBtn = document.getElementById("chat-send-btn");
@@ -73,7 +72,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     pageText: "",
   };
   let chatHistory = [];
-  let currentQuizIndex = 0;
   let currentQuizScore = 0;
   let currentFlashcardIndex = 0;
 
@@ -535,7 +533,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     quizEmpty.classList.add("hidden");
     quizContent.classList.remove("hidden");
 
-    currentQuizIndex = index;
     const q = qList[index];
 
     quizCounter.textContent = `Question ${index + 1} of ${qList.length}`;

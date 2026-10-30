@@ -2,7 +2,6 @@ import { connection, NextResponse } from "next/server";
 import { unstable_rethrow } from "next/navigation";
 import { sql } from "@/lib/db";
 import { requireAuthUser } from "@/lib/auth/session";
-import { DEFAULT_SPACES, DEFAULT_DOCUMENTS } from "@/lib/workspace";
 import { getUserDailyUsage } from "@/lib/quotas";
 
 export async function GET() {

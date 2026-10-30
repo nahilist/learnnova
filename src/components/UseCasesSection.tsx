@@ -1,16 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import { ArrowUpRight, Play } from "lucide-react";
 
-interface UseCasesSectionProps {
-  onOpenDemo?: (title: string, subtitle: string) => void;
-}
-
-export function UseCasesSection({ onOpenDemo }: UseCasesSectionProps) {
-  const [activeItem, setActiveItem] = useState<number | null>(null);
-
+export function UseCasesSection() {
   const useCases = [
     {
       id: 1,

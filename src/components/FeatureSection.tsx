@@ -18,11 +18,7 @@ import {
 const YOUTUBE_SUMMARY_VIDEO =
   "https://learnnova.s3.us-east-1.amazonaws.com/yoytube_summary.mp4";
 
-interface FeatureSectionProps {
-  onOpenDemo?: (title: string, subtitle: string) => void;
-}
-
-export function FeatureSection({ onOpenDemo }: FeatureSectionProps) {
+export function FeatureSection() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeTab, setActiveTab] = useState<"chat" | "flashcards">("chat");
   const [activeSubTab, setActiveSubTab] = useState<"transcript" | "chapters">("transcript");

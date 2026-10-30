@@ -3,8 +3,6 @@
  */
 
 (function () {
-  let injected = false;
-
   function tryInjectYouTubeButton() {
     if (!window.location.href.includes("watch?v=")) return;
     if (document.getElementById("learnnova-yt-btn")) return;

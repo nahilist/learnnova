@@ -4,7 +4,6 @@
 
 document.addEventListener("DOMContentLoaded", async () => {
   const statusBadge = document.getElementById("backend-status");
-  const statusDot = statusBadge.querySelector(".status-dot");
   const statusLabel = statusBadge.querySelector(".status-label");
   const pillIcon = document.getElementById("context-pill-icon");
   const pillText = document.getElementById("context-pill-text");
@@ -61,7 +60,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     } else {
       throw new Error("HTTP error " + res.status);
     }
-  } catch (e) {
+  } catch {
     statusBadge.classList.add("status-offline");
     statusLabel.textContent = "Offline";
     statusBadge.title = "AI Tutor is temporarily offline.";

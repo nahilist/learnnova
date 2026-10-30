@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { requireAuthUser } from "@/lib/auth/session";
-import { DEFAULT_SPACES, DEFAULT_DOCUMENTS } from "@/lib/workspace";
 
 export async function POST() {
   try {
