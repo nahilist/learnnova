@@ -77,9 +77,58 @@ document.addEventListener("DOMContentLoaded", async () => {
   let currentQuizScore = 0;
   let currentFlashcardIndex = 0;
 
-  // Settings
-  let { apiUrl = "http://localhost:8000", webAppUrl = "http://localhost:3000" } =
+  // Settings - defaults to live AWS EC2 backend
+  let { apiUrl = "http://13.196.187.230", webAppUrl = "http://localhost:3000" } =
     await chrome.storage.local.get(["apiUrl", "webAppUrl"]);
+
+  if (!apiUrl || apiUrl === "http://localhost:8000") {
+    apiUrl = "http://13.196.187.230";
+    await chrome.storage.local.set({ apiUrl });
+  }
+
+  // Sidepanel Settings Elements
+  const btnSidepanelSettings = document.getElementById("btn-sidepanel-settings");
+  const sidepanelSettingsDrawer = document.getElementById("sidepanel-settings-drawer");
+  const spSettingApiUrl = document.getElementById("sp-setting-api-url");
+  const btnSpSaveSettings = document.getElementById("btn-sp-save-settings");
+  const btnSpResetSettings = document.getElementById("btn-sp-reset-settings");
+
+  if (spSettingApiUrl) spSettingApiUrl.value = apiUrl;
+
+  if (btnSidepanelSettings && sidepanelSettingsDrawer) {
+    btnSidepanelSettings.addEventListener("click", () => {
+      sidepanelSettingsDrawer.classList.toggle("hidden");
+    });
+  }
+
+  if (btnSpSaveSettings && spSettingApiUrl) {
+    btnSpSaveSettings.addEventListener("click", async () => {
+      const newUrl = spSettingApiUrl.value.trim().replace(/\/$/, "");
+      if (newUrl) {
+        apiUrl = newUrl;
+        await chrome.storage.local.set({ apiUrl });
+        btnSpSaveSettings.textContent = "Saved!";
+        setTimeout(async () => {
+          btnSpSaveSettings.textContent = "Save Server";
+          sidepanelSettingsDrawer.classList.add("hidden");
+          await checkServerHealth();
+        }, 600);
+      }
+    });
+  }
+
+  if (btnSpResetSettings && spSettingApiUrl) {
+    btnSpResetSettings.addEventListener("click", async () => {
+      apiUrl = "http://13.196.187.230";
+      spSettingApiUrl.value = apiUrl;
+      await chrome.storage.local.set({ apiUrl });
+      btnSpResetSettings.textContent = "Reset to EC2!";
+      setTimeout(async () => {
+        btnSpResetSettings.textContent = "Reset to EC2";
+        await checkServerHealth();
+      }, 600);
+    });
+  }
 
   async function checkServerHealth() {
     if (!sidepanelStatus) return;
@@ -91,13 +140,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (res.ok) {
         sidepanelStatus.className = "status-badge status-online";
         sidepanelStatus.querySelector(".status-label").textContent = "AI Online";
-        sidepanelStatus.title = `Connected to ${apiUrl}`;
+        sidepanelStatus.title = `Connected to AWS EC2: ${apiUrl}`;
         return true;
       }
     } catch {}
     sidepanelStatus.className = "status-badge status-offline";
     sidepanelStatus.querySelector(".status-label").textContent = "Offline";
-    sidepanelStatus.title = `Cannot reach backend at ${apiUrl}. Make sure Python FastAPI or Docker is running on port 8000.`;
+    sidepanelStatus.title = `Cannot reach server at ${apiUrl}.`;
     return false;
   }
 

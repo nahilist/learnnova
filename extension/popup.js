@@ -20,9 +20,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   const btnSaveSettings = document.getElementById("btn-save-settings");
   const btnResetSettings = document.getElementById("btn-reset-settings");
 
-  // Load configured settings
-  const { apiUrl = "http://localhost:8000", webAppUrl = "http://localhost:3000" } =
+  // Load configured settings - defaults to AWS EC2 instance
+  let { apiUrl = "http://13.196.187.230", webAppUrl = "http://localhost:3000" } =
     await chrome.storage.local.get(["apiUrl", "webAppUrl"]);
+
+  if (!apiUrl || apiUrl === "http://localhost:8000") {
+    apiUrl = "http://13.196.187.230";
+    await chrome.storage.local.set({ apiUrl });
+  }
 
   inputApiUrl.value = apiUrl;
 

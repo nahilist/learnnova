@@ -22,10 +22,10 @@ chrome.runtime.onInstalled.addListener(() => {
     contexts: ["all"],
   });
 
-  // Default settings
+  // Default settings pointing to live AWS EC2 backend
   chrome.storage.local.get(["apiUrl", "webAppUrl"], (data) => {
-    if (!data.apiUrl) {
-      chrome.storage.local.set({ apiUrl: "http://localhost:8000" });
+    if (!data.apiUrl || data.apiUrl === "http://localhost:8000") {
+      chrome.storage.local.set({ apiUrl: "http://13.196.187.230" });
     }
     if (!data.webAppUrl) {
       chrome.storage.local.set({ webAppUrl: "http://localhost:3000" });
