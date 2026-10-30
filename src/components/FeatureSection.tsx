@@ -110,6 +110,7 @@ export function FeatureSection({ onOpenDemo }: FeatureSectionProps) {
                     playsInline
                     loop
                     muted
+                    preload="none"
                     onClick={toggleVideoPlay}
                     className="w-full h-full object-cover cursor-pointer"
                   >

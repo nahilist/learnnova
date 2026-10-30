@@ -11,7 +11,12 @@ import { Testimonials } from "@/components/Testimonials";
 import { FaqSection } from "@/components/FaqSection";
 import { ClosingCta } from "@/components/ClosingCta";
 import { Footer } from "@/components/Footer";
-import { ModalDemo } from "@/components/ModalDemo";
+import dynamic from "next/dynamic";
+
+const ModalDemo = dynamic(
+  () => import("@/components/ModalDemo").then((mod) => mod.ModalDemo),
+  { ssr: false }
+);
 
 export default function Home() {
   const [modalState, setModalState] = useState<{
