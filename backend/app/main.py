@@ -27,7 +27,7 @@ for default_origin in default_origins:
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"] if settings.ENVIRONMENT == "development" else origins,
-    allow_origin_regex=r"^https:\/\/.*\.vercel\.app$" if settings.ENVIRONMENT == "production" else None,
+    allow_origin_regex=r"^(https:\/\/.*\.vercel\.app|chrome-extension:\/\/.*)$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

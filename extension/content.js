@@ -60,3 +60,4 @@
   // Initial check
   setTimeout(tryInjectYouTubeButton, 1000);
 })();
+

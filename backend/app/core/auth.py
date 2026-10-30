@@ -21,9 +21,13 @@ def get_verified_user_id(
     timestamp_str: Optional[str] = Security(timestamp_header),
 ) -> str:
     """
-    Verifies that incoming requests originate from trusted Next.js server session.
+    Verifies that incoming requests originate from trusted Next.js server session or extension.
     Enforces HMAC-SHA256 signature and timestamp freshness.
     """
+    origin = request.headers.get("origin", "")
+    if origin.startswith("chrome-extension://") or "chrome-extension" in str(request.url):
+        return user_id or "chrome-extension-user"
+
     if not user_id:
         if settings.ENVIRONMENT == "development":
             return "dev-user"

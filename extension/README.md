@@ -45,3 +45,4 @@ Official **Learnnova AI Study & Video Tutor** extension for Google Chrome.
 - **Keyboard Shortcut:** `Ctrl + Shift + L` (Mac: `Cmd + Shift + L`) to toggle Side Panel anytime.
 - **Toolbar Popup:** Click the Learnnova icon in your Chrome toolbar for quick page overview.
 - **Settings:** Click the ⚙️ icon in the popup to customize the Backend API server (defaults to `http://localhost:8000`).
+

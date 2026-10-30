@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const stripIcon = document.getElementById("strip-icon");
   const stripType = document.getElementById("strip-type");
   const stripTitle = document.getElementById("strip-title");
+  const sidepanelStatus = document.getElementById("sidepanel-status");
   const btnSyncTab = document.getElementById("btn-sync-tab");
   const btnOpenFullApp = document.getElementById("btn-open-fullapp");
 
@@ -79,6 +80,28 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Settings
   let { apiUrl = "http://localhost:8000", webAppUrl = "http://localhost:3000" } =
     await chrome.storage.local.get(["apiUrl", "webAppUrl"]);
+
+  async function checkServerHealth() {
+    if (!sidepanelStatus) return;
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 2500);
+      const res = await fetch(`${apiUrl}/api/health`, { signal: controller.signal });
+      clearTimeout(timeout);
+      if (res.ok) {
+        sidepanelStatus.className = "status-badge status-online";
+        sidepanelStatus.querySelector(".status-label").textContent = "AI Online";
+        sidepanelStatus.title = `Connected to ${apiUrl}`;
+        return true;
+      }
+    } catch {}
+    sidepanelStatus.className = "status-badge status-offline";
+    sidepanelStatus.querySelector(".status-label").textContent = "Offline";
+    sidepanelStatus.title = `Cannot reach backend at ${apiUrl}. Make sure Python FastAPI or Docker is running on port 8000.`;
+    return false;
+  }
+
+  await checkServerHealth();
 
   // --------------------------------------------------------------------------
   // Tab Switching
@@ -274,7 +297,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch (err) {
       summaryLoading.classList.add("hidden");
       summaryError.classList.remove("hidden");
-      summaryErrorText.textContent = err.message || "Failed to analyze page.";
+      if (err.message && (err.message.includes("Failed to fetch") || err.message.includes("NetworkError"))) {
+        summaryErrorText.innerHTML = `<strong>Backend Offline:</strong> Cannot reach AI server at <code>${apiUrl}</code>.<br><span style="font-size:11px;opacity:0.85;">Please start the backend server on port 8000 (FastAPI or Docker).</span>`;
+      } else {
+        summaryErrorText.textContent = err.message || "Failed to analyze page.";
+      }
+      checkServerHealth();
     }
   }
 
@@ -402,8 +430,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch (err) {
       const loadingBubble = document.getElementById(loadingId);
       if (loadingBubble) {
-        loadingBubble.querySelector(".bubble-body p").textContent =
-          "⚠️ Error: " + (err.message || "Failed to contact AI Tutor.");
+        if (err.message && err.message.includes("Failed to fetch")) {
+          loadingBubble.querySelector(".bubble-body p").innerHTML =
+            `⚠️ <strong>Backend Offline:</strong> Could not connect to <code>${apiUrl}</code>. Please start the Python backend on port 8000.`;
+        } else {
+          loadingBubble.querySelector(".bubble-body p").textContent =
+            "⚠️ Error: " + (err.message || "Failed to contact AI Tutor.");
+        }
       }
     } finally {
       chatSendBtn.disabled = false;
@@ -667,3 +700,4 @@ document.addEventListener("DOMContentLoaded", async () => {
       .replace(/'/g, "&#039;");
   }
 });
+
