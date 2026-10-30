@@ -91,43 +91,56 @@ export async function DELETE(request: NextRequest) {
     }
     const { user } = authCheck;
 
-    // Verify ownership before deleting
-    const existing = await sql`
-      SELECT id, space FROM documents WHERE id = ${documentId} AND user_id = ${user.id}
+    // Verify ownership before deleting - match exact ID or user-scoped variant
+    const userSuffix = user.id.slice(0, 8);
+    let existing = await sql`
+      SELECT id, space FROM documents 
+      WHERE user_id = ${user.id} 
+        AND (id = ${documentId} OR id = ${`${documentId}-${userSuffix}`})
     `;
 
     if (existing.length === 0) {
-      // Document may be a default/in-memory item; succeed gracefully
+      existing = await sql`
+        SELECT id, space FROM documents 
+        WHERE user_id = ${user.id} AND id LIKE ${`${documentId}%`}
+      `;
+    }
+
+    if (existing.length === 0) {
+      // Document may be an in-memory/guest item; succeed gracefully
       return NextResponse.json({ success: true, deletedId: documentId, notInDb: true });
     }
 
-    // Clean up related items
-    try {
-      await sql`DELETE FROM document_chunks WHERE document_id = ${documentId} AND user_id = ${user.id}`;
-    } catch {}
-    try {
-      await sql`DELETE FROM notes WHERE document_id = ${documentId} AND user_id = ${user.id}`;
-    } catch {}
-    try {
-      await sql`DELETE FROM chat_messages WHERE document_id = ${documentId} AND user_id = ${user.id}`;
-    } catch {}
-    try {
-      await sql`DELETE FROM flashcards WHERE document_id = ${documentId} AND user_id = ${user.id}`;
-    } catch {}
-
-    await sql`
-      DELETE FROM documents WHERE id = ${documentId} AND user_id = ${user.id}
-    `;
-
-    // Decrement space count if space exists
-    if (existing[0]?.space) {
+    for (const item of existing) {
+      const targetId = item.id;
+      // Clean up related items
       try {
-        await sql`
-          UPDATE spaces
-          SET count = GREATEST(0, count - 1), updated_at = NOW()
-          WHERE user_id = ${user.id} AND title = ${existing[0].space};
-        `;
+        await sql`DELETE FROM document_chunks WHERE document_id = ${targetId} AND user_id = ${user.id}`;
       } catch {}
+      try {
+        await sql`DELETE FROM notes WHERE document_id = ${targetId} AND user_id = ${user.id}`;
+      } catch {}
+      try {
+        await sql`DELETE FROM chat_messages WHERE document_id = ${targetId} AND user_id = ${user.id}`;
+      } catch {}
+      try {
+        await sql`DELETE FROM flashcards WHERE document_id = ${targetId} AND user_id = ${user.id}`;
+      } catch {}
+
+      await sql`
+        DELETE FROM documents WHERE id = ${targetId} AND user_id = ${user.id}
+      `;
+
+      // Decrement space count if space exists
+      if (item.space) {
+        try {
+          await sql`
+            UPDATE spaces
+            SET count = GREATEST(0, count - 1), updated_at = NOW()
+            WHERE user_id = ${user.id} AND title = ${item.space};
+          `;
+        } catch {}
+      }
     }
 
     return NextResponse.json({ success: true, deletedId: documentId });

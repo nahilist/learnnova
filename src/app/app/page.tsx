@@ -1079,15 +1079,20 @@ export default function AppWorkspacePage() {
               Recents
             </span>
             <div className="space-y-0.5">
-              {(expandedRecents ? orderedRecents : orderedRecents.slice(0, 6)).map((doc) => (
-                <div
-                  key={doc.id}
-                  className={`group/item relative flex items-center justify-between rounded-lg transition-colors ${
-                    selectedDoc?.id === doc.id
-                      ? "bg-[#ebebeb] text-neutral-950 font-medium"
-                      : "hover:bg-[#f0f0f0] text-neutral-700"
-                  }`}
-                >
+              {orderedRecents.length === 0 ? (
+                <div className="px-3 py-2 text-[11px] text-neutral-400 italic select-none">
+                  No recent items
+                </div>
+              ) : (
+                (expandedRecents ? orderedRecents : orderedRecents.slice(0, 6)).map((doc) => (
+                  <div
+                    key={doc.id}
+                    className={`group/item relative flex items-center justify-between rounded-lg transition-colors ${
+                      selectedDoc?.id === doc.id
+                        ? "bg-[#ebebeb] text-neutral-950 font-medium"
+                        : "hover:bg-[#f0f0f0] text-neutral-700"
+                    }`}
+                  >
                   <button
                     onClick={() => {
                       handleOpenDoc(doc);
@@ -1141,7 +1146,8 @@ export default function AppWorkspacePage() {
                     )}
                   </div>
                 </div>
-              ))}
+              ))
+            )}
 
               {orderedRecents.length > 6 && (
                 <button
@@ -2569,46 +2575,52 @@ export default function AppWorkspacePage() {
             </p>
 
             <div className="max-h-72 overflow-y-auto space-y-2 pr-1">
-              {recentDocs.map((doc) => (
-                <div
-                  key={doc.id}
-                  className="p-3 rounded-xl border border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50 transition-all cursor-pointer flex items-center justify-between group"
-                >
+              {recentDocs.length === 0 ? (
+                <div className="py-8 text-center text-xs text-neutral-400 italic">
+                  No documents in history
+                </div>
+              ) : (
+                recentDocs.map((doc) => (
                   <div
-                    onClick={() => {
-                      handleOpenDoc(doc);
-                      setHistoryModalOpen(false);
-                    }}
-                    className="min-w-0 pr-3 flex-1"
+                    key={doc.id}
+                    className="p-3 rounded-xl border border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50 transition-all cursor-pointer flex items-center justify-between group"
                   >
-                    <p className="text-xs font-semibold text-neutral-900 truncate">{doc.title}</p>
-                    <p className="text-[11px] text-neutral-400 mt-0.5">
-                      {doc.space} • {doc.pagesOrDuration} • {doc.date}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
+                    <div
                       onClick={() => {
                         handleOpenDoc(doc);
                         setHistoryModalOpen(false);
                       }}
-                      className="text-xs font-medium text-emerald-700 hover:text-emerald-800"
+                      className="min-w-0 pr-3 flex-1"
                     >
-                      Open →
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteDoc(doc.id, doc.title);
-                      }}
-                      className="p-1 rounded-md text-neutral-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
-                      title="Delete document"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                      <p className="text-xs font-semibold text-neutral-900 truncate">{doc.title}</p>
+                      <p className="text-[11px] text-neutral-400 mt-0.5">
+                        {doc.space} • {doc.pagesOrDuration} • {doc.date}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={() => {
+                          handleOpenDoc(doc);
+                          setHistoryModalOpen(false);
+                        }}
+                        className="text-xs font-medium text-emerald-700 hover:text-emerald-800"
+                      >
+                        Open →
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteDoc(doc.id, doc.title);
+                        }}
+                        className="p-1 rounded-md text-neutral-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                        title="Delete document"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
 
             <button

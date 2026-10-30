@@ -39,7 +39,10 @@ export async function GET() {
       ORDER BY created_at DESC
     `;
 
-    // If new user, seed default starter space & documents owned by this user
+    // If brand-new user with NO spaces, seed default starter space & documents
+    let finalSpaces = spacesResult;
+    let finalDocs = documentsResult;
+
     if (spacesResult.length === 0) {
       for (const space of DEFAULT_SPACES) {
         const spaceId = `${space.id}-${user.id.slice(0, 8)}`;
@@ -49,9 +52,7 @@ export async function GET() {
           ON CONFLICT (id) DO NOTHING
         `;
       }
-    }
 
-    if (documentsResult.length === 0) {
       for (const doc of DEFAULT_DOCUMENTS) {
         const docId = `${doc.id}-${user.id.slice(0, 8)}`;
         await sql`
@@ -67,28 +68,22 @@ export async function GET() {
           ON CONFLICT (id) DO NOTHING
         `;
       }
+
+      finalSpaces = await sql`
+        SELECT id, title, count, bg_gradient as "bgGradient", description
+        FROM spaces
+        WHERE user_id = ${user.id}
+        ORDER BY created_at ASC
+      `;
+
+      finalDocs = await sql`
+        SELECT id, title, type, space, date, pages_or_duration as "pagesOrDuration",
+               summary_text as "summaryText", file_url as "fileUrl", status, failure_reason as "failureReason"
+        FROM documents
+        WHERE user_id = ${user.id}
+        ORDER BY created_at DESC
+      `;
     }
-
-    const finalSpaces =
-      spacesResult.length > 0
-        ? spacesResult
-        : await sql`
-            SELECT id, title, count, bg_gradient as "bgGradient", description
-            FROM spaces
-            WHERE user_id = ${user.id}
-            ORDER BY created_at ASC
-          `;
-
-    const finalDocs =
-      documentsResult.length > 0
-        ? documentsResult
-        : await sql`
-            SELECT id, title, type, space, date, pages_or_duration as "pagesOrDuration",
-                   summary_text as "summaryText", file_url as "fileUrl", status, failure_reason as "failureReason"
-            FROM documents
-            WHERE user_id = ${user.id}
-            ORDER BY created_at DESC
-          `;
 
     const usage = await getUserDailyUsage(user.id);
 
