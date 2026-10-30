@@ -6,10 +6,11 @@ import { ChevronDown, Menu, X } from "lucide-react";
 import { YouLearnLogo } from "./Icons";
 
 interface NavbarProps {
-  onOpenDemo: (title: string, subtitle: string) => void;
+  onOpenDemo?: (title: string, subtitle: string) => void;
 }
 
-export function Navbar({ onOpenDemo }: NavbarProps) {
+export function Navbar(props?: NavbarProps) {
+  void props;
   const [featuresOpen, setFeaturesOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -78,30 +79,20 @@ export function Navbar({ onOpenDemo }: NavbarProps) {
               {featuresOpen && (
                 <div className="absolute top-full -left-2 w-56 pt-2 z-50">
                   <div className="rounded-2xl border border-neutral-200/70 bg-white/80 p-2 py-2.5 shadow-[0_18px_50px_rgba(15,23,42,0.12)] backdrop-blur-2xl backdrop-saturate-150 animate-in fade-in slide-in-from-top-2 duration-150">
-                    <button
-                      onClick={() => {
-                        setFeaturesOpen(false);
-                        onOpenDemo(
-                          "All Features",
-                          "Explore the complete AI tutoring suite, note generation, quizzes, and chat."
-                        );
-                      }}
-                      className="w-full text-left px-3.5 py-2 rounded-xl text-[14px] text-neutral-700 hover:text-neutral-950 hover:bg-neutral-50 font-medium transition-colors cursor-pointer"
+                    <Link
+                      href="/#features"
+                      onClick={() => setFeaturesOpen(false)}
+                      className="block w-full text-left px-3.5 py-2 rounded-xl text-[14px] text-neutral-700 hover:text-neutral-950 hover:bg-neutral-50 font-medium transition-colors cursor-pointer"
                     >
                       All Features
-                    </button>
-                    <button
-                      onClick={() => {
-                        setFeaturesOpen(false);
-                        onOpenDemo(
-                          "Mobile App",
-                          "Take your AI tutor anywhere with iOS and Android applications."
-                        );
-                      }}
-                      className="w-full text-left px-3.5 py-2 rounded-xl text-[14px] text-neutral-700 hover:text-neutral-950 hover:bg-neutral-50 font-medium transition-colors cursor-pointer"
+                    </Link>
+                    <Link
+                      href="/app"
+                      onClick={() => setFeaturesOpen(false)}
+                      className="block w-full text-left px-3.5 py-2 rounded-xl text-[14px] text-neutral-700 hover:text-neutral-950 hover:bg-neutral-50 font-medium transition-colors cursor-pointer"
                     >
-                      Mobile
-                    </button>
+                      Web Workspace
+                    </Link>
                     <Link
                       href="/youtube-summarizer"
                       onClick={() => setFeaturesOpen(false)}
@@ -182,24 +173,20 @@ export function Navbar({ onOpenDemo }: NavbarProps) {
 
               {featuresOpen && (
                 <div className="flex flex-col space-y-3 pt-3 text-[15px] text-neutral-600">
-                  <button
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      onOpenDemo("All Features", "Explore the complete AI tutoring suite.");
-                    }}
+                  <Link
+                    href="/#features"
+                    onClick={() => setMobileMenuOpen(false)}
                     className="hover:text-black py-1 cursor-pointer"
                   >
                     All Features
-                  </button>
-                  <button
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      onOpenDemo("Mobile", "Study on iOS and Android.");
-                    }}
+                  </Link>
+                  <Link
+                    href="/app"
+                    onClick={() => setMobileMenuOpen(false)}
                     className="hover:text-black py-1 cursor-pointer"
                   >
-                    Mobile
-                  </button>
+                    Web Workspace
+                  </Link>
                   <Link
                     href="/youtube-summarizer"
                     onClick={() => setMobileMenuOpen(false)}

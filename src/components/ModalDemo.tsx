@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { X, Sparkles, CheckCircle2 } from "lucide-react";
+import React, { useState } from "react";
+import { X, Sparkles, CheckCircle2, ArrowRight } from "lucide-react";
 import { LearnNovaLogo } from "./Icons";
 
 interface ModalDemoProps {
@@ -12,7 +12,17 @@ interface ModalDemoProps {
 }
 
 export function ModalDemo({ isOpen, onClose, title, subtitle }: ModalDemoProps) {
+  const [email, setEmail] = useState("");
+  const [joined, setJoined] = useState(false);
+
   if (!isOpen) return null;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email.trim()) {
+      setJoined(true);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
@@ -34,33 +44,48 @@ export function ModalDemo({ isOpen, onClose, title, subtitle }: ModalDemoProps) 
             <LearnNovaLogo />
           </div>
 
-          <div className="w-12 h-12 rounded-2xl bg-orange-50 border border-orange-200 flex items-center justify-center text-[#ff6600] mb-4">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 mb-4">
             <Sparkles className="w-6 h-6" />
           </div>
 
           <h3 className="text-xl font-bold text-neutral-900 mb-2">{title}</h3>
           <p className="text-sm text-neutral-600 mb-6 leading-relaxed">{subtitle}</p>
 
-          <div className="w-full bg-neutral-50 rounded-2xl p-4 border border-neutral-100 text-left mb-6 space-y-2.5">
-            <div className="flex items-center gap-2.5 text-xs text-neutral-700">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>Full interactive demo mode enabled</span>
+          {joined ? (
+            <div className="w-full bg-emerald-50 rounded-2xl p-5 border border-emerald-200 text-center space-y-2 mb-4 animate-in fade-in">
+              <div className="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center mx-auto">
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
+              <h4 className="font-semibold text-emerald-950 text-sm">You&apos;re on the priority list!</h4>
+              <p className="text-xs text-emerald-800">
+                We will email you at <strong>{email}</strong> the moment Pro tier launches with unlimited quotas.
+              </p>
             </div>
-            <div className="flex items-center gap-2.5 text-xs text-neutral-700">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>AI Tutor & quiz generation ready</span>
-            </div>
-            <div className="flex items-center gap-2.5 text-xs text-neutral-700">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>Multi-format uploads (PDF, YouTube, Audio)</span>
-            </div>
-          </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="w-full space-y-3 mb-4">
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                className="w-full px-4 py-3 rounded-2xl border border-neutral-200 text-sm focus:outline-none focus:border-neutral-900 text-neutral-900"
+              />
+              <button
+                type="submit"
+                className="w-full py-3 px-6 rounded-full bg-neutral-950 hover:bg-neutral-800 text-white font-medium text-sm transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>Notify Me</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </form>
+          )}
 
           <button
             onClick={onClose}
-            className="w-full py-3 px-6 rounded-full bg-neutral-950 hover:bg-neutral-800 text-white font-medium text-sm transition-all shadow-md active:scale-[0.98]"
+            className="text-xs text-neutral-500 hover:text-neutral-800 transition-colors cursor-pointer"
           >
-            Explore Interactive Demo
+            Close
           </button>
         </div>
       </div>

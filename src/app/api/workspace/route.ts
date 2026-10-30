@@ -44,30 +44,13 @@ export async function GET() {
     let finalDocs = documentsResult;
 
     if (spacesResult.length === 0) {
-      for (const space of DEFAULT_SPACES) {
-        const spaceId = `${space.id}-${user.id.slice(0, 8)}`;
-        await sql`
-          INSERT INTO spaces (id, user_id, title, count, bg_gradient, description)
-          VALUES (${spaceId}, ${user.id}, ${space.title}, ${space.count}, ${space.bgGradient}, ${space.description})
-          ON CONFLICT (id) DO NOTHING
-        `;
-      }
-
-      for (const doc of DEFAULT_DOCUMENTS) {
-        const docId = `${doc.id}-${user.id.slice(0, 8)}`;
-        await sql`
-          INSERT INTO documents (id, user_id, title, type, space, date, pages_or_duration, summary_text, status)
-          VALUES (${docId}, ${user.id}, ${doc.title}, ${doc.type}, ${doc.space}, ${doc.date}, ${doc.pagesOrDuration}, ${doc.summaryText}, 'ready')
-          ON CONFLICT (id) DO NOTHING
-        `;
-
-        // Also seed initial chunk for grounding demo
-        await sql`
-          INSERT INTO document_chunks (id, document_id, user_id, page_number, chunk_index, content)
-          VALUES (${`chunk-${docId}-1`}, ${docId}, ${user.id}, 1, 0, ${doc.summaryText})
-          ON CONFLICT (id) DO NOTHING
-        `;
-      }
+      const spaceTitle = user.name ? `${user.name}'s Workspace` : "Personal Workspace";
+      const spaceId = `personal-space-${user.id.slice(0, 8)}`;
+      await sql`
+        INSERT INTO spaces (id, user_id, title, count, bg_gradient, description)
+        VALUES (${spaceId}, ${user.id}, ${spaceTitle}, 0, 'from-neutral-200 via-neutral-100 to-stone-200', 'Personal study workspace, lectures, flashcards, and notes.')
+        ON CONFLICT (id) DO NOTHING
+      `;
 
       finalSpaces = await sql`
         SELECT id, title, count, bg_gradient as "bgGradient", description
@@ -76,13 +59,7 @@ export async function GET() {
         ORDER BY created_at ASC
       `;
 
-      finalDocs = await sql`
-        SELECT id, title, type, space, date, pages_or_duration as "pagesOrDuration",
-               summary_text as "summaryText", file_url as "fileUrl", status, failure_reason as "failureReason"
-        FROM documents
-        WHERE user_id = ${user.id}
-        ORDER BY created_at DESC
-      `;
+      finalDocs = [];
     }
 
     const usage = await getUserDailyUsage(user.id);

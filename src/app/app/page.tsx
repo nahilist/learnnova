@@ -41,7 +41,6 @@ import {
   fetchUserWorkspace,
   createDocument,
   createSpace,
-  DEFAULT_DOCUMENTS,
   uploadToStorage,
   type DocumentItem,
   type SpaceItem,
@@ -96,7 +95,7 @@ export default function AppWorkspacePage() {
   const [studyTool, setStudyTool] = useState<"reader" | "summary" | "notes" | "flashcards" | "quiz">("reader");
   const [spaces, setSpaces] = useState<SpaceItem[]>([]);
   const [recentDocs, setRecentDocs] = useState<DocumentItem[]>([]);
-  const [selectedDoc, setSelectedDoc] = useState<DocumentItem>(DEFAULT_DOCUMENTS[0]);
+  const [selectedDoc, setSelectedDoc] = useState<DocumentItem | null>(null);
   const [selectedSpaceFilter, setSelectedSpaceFilter] = useState<string>("all");
   const [workspaceError, setWorkspaceError] = useState("");
 
@@ -140,38 +139,13 @@ export default function AppWorkspacePage() {
   const chatBottomRef = useRef<HTMLDivElement>(null);
 
   // Flashcards State
-  const [flashcards, setFlashcards] = useState<Flashcard[]>([
-    {
-      id: 1,
-      front: "Core Concept Overview",
-      back: DEFAULT_DOCUMENTS[0].summaryText,
-      sourceRef: "Page 1",
-      known: null,
-      mastery: 0,
-    },
-    {
-      id: 2,
-      front: "Active Recall Principle",
-      back: "Testing retrieval of concepts from memory produces dramatically higher exam retention than passive re-reading.",
-      sourceRef: "Study Guide",
-      known: null,
-      mastery: 1,
-    },
-  ]);
+  const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [cardIndex, setCardIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isFlashcardsLoading, setIsFlashcardsLoading] = useState(false);
 
   // Practice Quiz State
-  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([
-    {
-      id: 1,
-      question: `Which curriculum domain covers "${DEFAULT_DOCUMENTS[0].title}"?`,
-      options: [DEFAULT_DOCUMENTS[0].space, "Organic Chemistry", "Macroeconomics", "World History"],
-      correctIndex: 0,
-      explanation: `This document is categorized under the ${DEFAULT_DOCUMENTS[0].space} space.`,
-    },
-  ]);
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
   const [isQuizLoading, setIsQuizLoading] = useState(false);
   const [isSubmittingQuiz, setIsSubmittingQuiz] = useState(false);
@@ -225,6 +199,8 @@ export default function AppWorkspacePage() {
         }
         if (data.documents.length > 0) {
           setSelectedDoc(data.documents[0]);
+        } else {
+          setSelectedDoc(null);
         }
       } catch (err: unknown) {
         if (!isActive) return;
@@ -244,6 +220,10 @@ export default function AppWorkspacePage() {
     if (!selectedDoc || !user) return;
 
     let isActive = true;
+
+    setQuizQuestions([]);
+    setQuizResults(null);
+    setSelectedAnswers({});
 
     // 1. Fetch chunks for citations and reader
     const loadChunks = async () => {
@@ -340,6 +320,10 @@ export default function AppWorkspacePage() {
             );
             setCardIndex(0);
             setIsFlipped(false);
+          } else if (isActive) {
+            setFlashcards([]);
+            setCardIndex(0);
+            setIsFlipped(false);
           }
         }
       } catch {
@@ -372,6 +356,7 @@ export default function AppWorkspacePage() {
     }
 
     saveTimeoutRef.current = setTimeout(async () => {
+      if (!selectedDoc) return;
       setNoteSaveStatus("saving");
       try {
         const res = await fetch("/api/notes", {
@@ -396,7 +381,7 @@ export default function AppWorkspacePage() {
 
   // Flashcard Review Handler
   const handleReviewCard = useCallback(async (known: boolean) => {
-    if (flashcards.length === 0 || !flashcards[cardIndex]) return;
+    if (flashcards.length === 0 || !flashcards[cardIndex] || !selectedDoc) return;
 
     const updated = [...flashcards];
     updated[cardIndex].known = known;
@@ -424,7 +409,7 @@ export default function AppWorkspacePage() {
     } catch {
       // non-fatal
     }
-  }, [cardIndex, flashcards, selectedDoc.id]);
+  }, [cardIndex, flashcards, selectedDoc?.id]);
 
   // Keyboard Navigation for Flashcards
   useEffect(() => {
@@ -461,6 +446,7 @@ export default function AppWorkspacePage() {
   // Generate Flashcards
   const handleGenerateFlashcards = async (docToUse?: DocumentItem) => {
     const doc = docToUse || selectedDoc;
+    if (!doc) return;
     setIsFlashcardsLoading(true);
     try {
       const res = await generateStudyFlashcards({
@@ -499,6 +485,7 @@ export default function AppWorkspacePage() {
   // Generate Quiz
   const handleGenerateQuiz = async (docToUse?: DocumentItem) => {
     const doc = docToUse || selectedDoc;
+    if (!doc) return;
     setIsQuizLoading(true);
     setQuizResults(null);
     setSelectedAnswers({});
@@ -521,7 +508,7 @@ export default function AppWorkspacePage() {
 
   // Submit Quiz for Server-Side Grading
   const handleSubmitQuiz = async () => {
-    if (quizQuestions.length === 0) return;
+    if (quizQuestions.length === 0 || !selectedDoc) return;
     setIsSubmittingQuiz(true);
 
     try {
@@ -573,7 +560,7 @@ export default function AppWorkspacePage() {
   const handleSendMessage = async (e?: React.FormEvent, customMsg?: string) => {
     if (e) e.preventDefault();
     const messageToSend = customMsg || inputMessage;
-    if (!messageToSend.trim()) return;
+    if (!messageToSend.trim() || !selectedDoc) return;
 
     setInputMessage("");
     setChatMessages((prev) => [...prev, { sender: "user", text: messageToSend }]);
@@ -679,7 +666,7 @@ export default function AppWorkspacePage() {
       if (remaining.length > 0) {
         setSelectedDoc(remaining[0]);
       } else {
-        setSelectedDoc(DEFAULT_DOCUMENTS[0]);
+        setSelectedDoc(null);
         setActiveTab("dashboard");
       }
     }
@@ -1581,7 +1568,7 @@ export default function AppWorkspacePage() {
         )}
 
         {/* VIEW 2: SPLIT STUDY WORKSPACE (READER + AI TUTOR) */}
-        {activeTab === "study" && (
+        {activeTab === "study" && selectedDoc && (
           <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
             {/* Center/Left Main Content Study Panel */}
             <div
@@ -1985,100 +1972,115 @@ export default function AppWorkspacePage() {
                     )}
 
                     {/* Questions List */}
-                    <div className="space-y-6">
-                      {quizQuestions.map((q, qIndex) => {
-                        const gradedItem = quizResults?.graded.find((r) => r.id === q.id);
-
-                        return (
-                          <div
-                            key={q.id}
-                            className="p-5 sm:p-6 rounded-2xl bg-white border border-neutral-200/90 shadow-2xs space-y-4"
-                          >
-                            <div className="flex items-start justify-between gap-3">
-                              <span className="font-mono text-xs font-semibold text-neutral-400">
-                                Question {qIndex + 1}
-                              </span>
-                              {gradedItem && (
-                                <span
-                                  className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
-                                    gradedItem.isCorrect
-                                      ? "bg-emerald-100 text-emerald-800"
-                                      : "bg-rose-100 text-rose-800"
-                                  }`}
-                                >
-                                  {gradedItem.isCorrect ? "✓ Correct" : "✕ Incorrect"}
-                                </span>
-                              )}
-                            </div>
-
-                            <p className="text-sm font-semibold text-neutral-900 leading-snug">
-                              {q.question}
-                            </p>
-
-                            <div className="space-y-2">
-                              {q.options.map((opt, optIndex) => {
-                                const isSelected = selectedAnswers[q.id] === optIndex;
-                                const isCorrectChoice = gradedItem && gradedItem.correctAnswer === optIndex;
-                                const isWrongChoice = gradedItem && !gradedItem.isCorrect && isSelected;
-
-                                return (
-                                  <button
-                                    key={optIndex}
-                                    disabled={Boolean(quizResults)}
-                                    onClick={() =>
-                                      setSelectedAnswers((prev) => ({
-                                        ...prev,
-                                        [q.id]: optIndex,
-                                      }))
-                                    }
-                                    className={`w-full text-left p-3 rounded-xl border text-xs sm:text-[13px] transition-all cursor-pointer flex items-center justify-between ${
-                                      isCorrectChoice
-                                        ? "bg-emerald-50 border-emerald-500 text-emerald-950 font-semibold"
-                                        : isWrongChoice
-                                        ? "bg-rose-50 border-rose-400 text-rose-950"
-                                        : isSelected
-                                        ? "bg-neutral-900 text-white border-neutral-900 shadow-2xs font-medium"
-                                        : "bg-white hover:bg-neutral-50 border-neutral-200/90 text-neutral-800"
-                                    }`}
-                                  >
-                                    <span className="leading-relaxed">{opt}</span>
-                                    {isCorrectChoice && <Check className="w-4 h-4 text-emerald-700 shrink-0" />}
-                                  </button>
-                                );
-                              })}
-                            </div>
-
-                            {/* Explanation Reveal after submission */}
-                            {gradedItem && (
-                              <div className="pt-3 mt-3 border-t border-neutral-100 text-xs text-neutral-600 bg-neutral-50/80 p-3 rounded-xl leading-relaxed space-y-1">
-                                <span className="font-bold text-neutral-800 block">Explanation:</span>
-                                <p>{gradedItem.explanation}</p>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* Submit Button */}
-                    {!quizResults ? (
-                      <button
-                        onClick={handleSubmitQuiz}
-                        disabled={isSubmittingQuiz || Object.keys(selectedAnswers).length === 0}
-                        className="w-full py-3.5 rounded-full bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-semibold shadow-md active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
-                      >
-                        {isSubmittingQuiz ? "Evaluating Answers..." : "Submit Exam For Evaluation"}
-                      </button>
+                    {quizQuestions.length === 0 ? (
+                      <div className="w-full h-72 rounded-3xl border border-dashed border-neutral-300 bg-neutral-50 flex flex-col items-center justify-center p-8 text-neutral-500 space-y-3">
+                        <p className="text-xs">No practice questions yet for this document.</p>
+                        <button
+                          onClick={() => handleGenerateQuiz()}
+                          disabled={isQuizLoading}
+                          className="px-4 py-2 rounded-xl bg-neutral-900 text-white text-xs font-semibold hover:bg-black cursor-pointer disabled:opacity-50"
+                        >
+                          {isQuizLoading ? "Generating..." : "Generate AI Quiz"}
+                        </button>
+                      </div>
                     ) : (
-                      <button
-                        onClick={() => {
-                          setQuizResults(null);
-                          setSelectedAnswers({});
-                        }}
-                        className="w-full py-3.5 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-900 text-xs font-semibold transition-all cursor-pointer"
-                      >
-                        Retake Exam
-                      </button>
+                      <>
+                        <div className="space-y-6">
+                          {quizQuestions.map((q, qIndex) => {
+                            const gradedItem = quizResults?.graded.find((r) => r.id === q.id);
+
+                            return (
+                              <div
+                                key={q.id}
+                                className="p-5 sm:p-6 rounded-2xl bg-white border border-neutral-200/90 shadow-2xs space-y-4"
+                              >
+                                <div className="flex items-start justify-between gap-3">
+                                  <span className="font-mono text-xs font-semibold text-neutral-400">
+                                    Question {qIndex + 1}
+                                  </span>
+                                  {gradedItem && (
+                                    <span
+                                      className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                                        gradedItem.isCorrect
+                                          ? "bg-emerald-100 text-emerald-800"
+                                          : "bg-rose-100 text-rose-800"
+                                      }`}
+                                    >
+                                      {gradedItem.isCorrect ? "✓ Correct" : "✕ Incorrect"}
+                                    </span>
+                                  )}
+                                </div>
+
+                                <p className="text-sm font-semibold text-neutral-900 leading-snug">
+                                  {q.question}
+                                </p>
+
+                                <div className="space-y-2">
+                                  {q.options.map((opt, optIndex) => {
+                                    const isSelected = selectedAnswers[q.id] === optIndex;
+                                    const isCorrectChoice = gradedItem && gradedItem.correctAnswer === optIndex;
+                                    const isWrongChoice = gradedItem && !gradedItem.isCorrect && isSelected;
+
+                                    return (
+                                      <button
+                                        key={optIndex}
+                                        disabled={Boolean(quizResults)}
+                                        onClick={() =>
+                                          setSelectedAnswers((prev) => ({
+                                            ...prev,
+                                            [q.id]: optIndex,
+                                          }))
+                                        }
+                                        className={`w-full text-left p-3 rounded-xl border text-xs sm:text-[13px] transition-all cursor-pointer flex items-center justify-between ${
+                                          isCorrectChoice
+                                            ? "bg-emerald-50 border-emerald-500 text-emerald-950 font-semibold"
+                                            : isWrongChoice
+                                            ? "bg-rose-50 border-rose-400 text-rose-950"
+                                            : isSelected
+                                            ? "bg-neutral-900 text-white border-neutral-900 shadow-2xs font-medium"
+                                            : "bg-white hover:bg-neutral-50 border-neutral-200/90 text-neutral-800"
+                                        }`}
+                                      >
+                                        <span className="leading-relaxed">{opt}</span>
+                                        {isCorrectChoice && <Check className="w-4 h-4 text-emerald-700 shrink-0" />}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+
+                                {/* Explanation Reveal after submission */}
+                                {gradedItem && (
+                                  <div className="pt-3 mt-3 border-t border-neutral-100 text-xs text-neutral-600 bg-neutral-50/80 p-3 rounded-xl leading-relaxed space-y-1">
+                                    <span className="font-bold text-neutral-800 block">Explanation:</span>
+                                    <p>{gradedItem.explanation}</p>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Submit Button */}
+                        {!quizResults ? (
+                          <button
+                            onClick={handleSubmitQuiz}
+                            disabled={isSubmittingQuiz || Object.keys(selectedAnswers).length === 0}
+                            className="w-full py-3.5 rounded-full bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-semibold shadow-md active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
+                          >
+                            {isSubmittingQuiz ? "Evaluating Answers..." : "Submit Exam For Evaluation"}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              setQuizResults(null);
+                              setSelectedAnswers({});
+                            }}
+                            className="w-full py-3.5 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-900 text-xs font-semibold transition-all cursor-pointer"
+                          >
+                            Retake Exam
+                          </button>
+                        )}
+                      </>
                     )}
                   </div>
                 )}

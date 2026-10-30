@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { ArrowUpRight, Play } from "lucide-react";
 
 interface UseCasesSectionProps {
-  onOpenDemo: (title: string, subtitle: string) => void;
+  onOpenDemo?: (title: string, subtitle: string) => void;
 }
 
 export function UseCasesSection({ onOpenDemo }: UseCasesSectionProps) {
@@ -113,15 +114,10 @@ export function UseCasesSection({ onOpenDemo }: UseCasesSectionProps) {
       {/* 3 Use Case Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-7">
         {useCases.map((item) => (
-          <div
+          <Link
             key={item.id}
-            onClick={() => {
-              setActiveItem(item.id);
-              onOpenDemo(item.title, `Explore the interactive study notes, quizzes, and AI tutor for ${item.title}.`);
-            }}
-            className={`group bg-white rounded-3xl border overflow-hidden shadow-xs hover:shadow-xl hover:border-neutral-300 transition-all duration-300 flex flex-col justify-between cursor-pointer ${
-              activeItem === item.id ? "ring-2 ring-neutral-900 border-transparent" : "border-neutral-200/90"
-            }`}
+            href="/app"
+            className="group bg-white rounded-3xl border border-neutral-200/90 overflow-hidden shadow-xs hover:shadow-xl hover:border-neutral-300 transition-all duration-300 flex flex-col justify-between cursor-pointer"
           >
             {/* Thumbnail Preview Area */}
             {item.renderThumbnail()}
@@ -141,7 +137,7 @@ export function UseCasesSection({ onOpenDemo }: UseCasesSectionProps) {
                 {item.subtitle}
               </p>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </section>

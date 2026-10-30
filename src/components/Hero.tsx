@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 interface HeroProps {
-  onOpenDemo: (title: string, subtitle: string) => void;
+  onOpenDemo?: (title: string, subtitle: string) => void;
   onScrollToFeatures: () => void;
 }
 

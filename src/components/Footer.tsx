@@ -6,10 +6,11 @@ import { YouLearnLogo } from "./Icons";
 import { Landmark } from "lucide-react";
 
 interface FooterProps {
-  onOpenDemo: (title: string, subtitle: string) => void;
+  onOpenDemo?: (title: string, subtitle: string) => void;
 }
 
 export function Footer({ onOpenDemo }: FooterProps) {
+  void onOpenDemo;
   return (
     <footer className="w-full bg-white border-t border-neutral-100 pt-16 pb-20">
       <div className="max-w-[1240px] mx-auto px-6">
@@ -58,12 +59,12 @@ export function Footer({ onOpenDemo }: FooterProps) {
               </div>
 
               <div>
-                <button
-                  onClick={() => onOpenDemo("Invite & Earn", "Invite classmates to LearnNova and earn free months of Unlimited Pro access.")}
+                <Link
+                  href="/app"
                   className="hover:text-neutral-950 transition-colors text-left cursor-pointer"
                 >
                   Invite &amp; Earn
-                </button>
+                </Link>
               </div>
 
               <div>
@@ -97,12 +98,12 @@ export function Footer({ onOpenDemo }: FooterProps) {
               </div>
 
               <div>
-                <button
-                  onClick={() => onOpenDemo("Contact Us", "Reach our support team anytime at support@learnnova.ai")}
+                <a
+                  href="mailto:support@learnnova.ai"
                   className="hover:text-neutral-950 transition-colors text-left cursor-pointer"
                 >
                   Contact Us
-                </button>
+                </a>
               </div>
             </div>
 

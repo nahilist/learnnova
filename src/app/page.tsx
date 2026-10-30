@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { Navbar } from "@/components/Navbar";
 import { Hero } from "@/components/Hero";
 import { HeroProductPreview } from "@/components/HeroProductPreview";
@@ -11,36 +11,8 @@ import { Testimonials } from "@/components/Testimonials";
 import { FaqSection } from "@/components/FaqSection";
 import { ClosingCta } from "@/components/ClosingCta";
 import { Footer } from "@/components/Footer";
-import dynamic from "next/dynamic";
-
-const ModalDemo = dynamic(
-  () => import("@/components/ModalDemo").then((mod) => mod.ModalDemo),
-  { ssr: false }
-);
 
 export default function Home() {
-  const [modalState, setModalState] = useState<{
-    isOpen: boolean;
-    title: string;
-    subtitle: string;
-  }>({
-    isOpen: false,
-    title: "",
-    subtitle: "",
-  });
-
-  const handleOpenDemo = (title: string, subtitle: string) => {
-    setModalState({
-      isOpen: true,
-      title,
-      subtitle,
-    });
-  };
-
-  const handleCloseModal = () => {
-    setModalState((prev) => ({ ...prev, isOpen: false }));
-  };
-
   const handleScrollToFeatures = () => {
     const el = document.getElementById("features");
     if (el) {
@@ -59,12 +31,12 @@ export default function Home() {
       </div>
 
       {/* Navigation */}
-      <Navbar onOpenDemo={handleOpenDemo} />
+      <Navbar />
 
       <main className="flex-1 w-full">
         {/* 1. Hero Section */}
         <Hero
-          onOpenDemo={handleOpenDemo}
+          onOpenDemo={() => {}}
           onScrollToFeatures={handleScrollToFeatures}
         />
 
@@ -75,10 +47,10 @@ export default function Home() {
         <TrustedBy />
 
         {/* 4. Main Feature Section (Video Player + 3 subcards) */}
-        <FeatureSection onOpenDemo={handleOpenDemo} />
+        <FeatureSection />
 
         {/* 5. Built For Any Use Case Section */}
-        <UseCasesSection onOpenDemo={handleOpenDemo} />
+        <UseCasesSection />
 
         {/* 6. Testimonials Section */}
         <Testimonials />
@@ -87,19 +59,11 @@ export default function Home() {
         <FaqSection />
 
         {/* 8. Closing CTA with App Store Badges */}
-        <ClosingCta onOpenDemo={handleOpenDemo} />
+        <ClosingCta />
       </main>
 
       {/* 9. Complete Footer */}
-      <Footer onOpenDemo={handleOpenDemo} />
-
-      {/* Global Interactive Demo Modal */}
-      <ModalDemo
-        isOpen={modalState.isOpen}
-        onClose={handleCloseModal}
-        title={modalState.title}
-        subtitle={modalState.subtitle}
-      />
+      <Footer />
     </div>
   );
 }

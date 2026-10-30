@@ -19,7 +19,7 @@ const YOUTUBE_SUMMARY_VIDEO =
   "https://learnnova.s3.us-east-1.amazonaws.com/yoytube_summary.mp4";
 
 interface FeatureSectionProps {
-  onOpenDemo: (title: string, subtitle: string) => void;
+  onOpenDemo?: (title: string, subtitle: string) => void;
 }
 
 export function FeatureSection({ onOpenDemo }: FeatureSectionProps) {
@@ -288,8 +288,8 @@ export function FeatureSection({ onOpenDemo }: FeatureSectionProps) {
       {/* 3 Grid Sub-cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Card 1: Upload any content */}
-        <div 
-          onClick={() => onOpenDemo("Upload Any Content", "LearnNova accepts PDF textbooks, lecture slides, YouTube links, audio recordings, and photos.")}
+        <Link 
+          href="/app"
           className="bg-[#f3f4f6] rounded-3xl sm:rounded-[32px] border border-neutral-200/90 p-7 sm:p-8 flex flex-col justify-between hover:border-neutral-300 transition-all hover:shadow-md cursor-pointer group"
         >
           <div>
@@ -320,11 +320,11 @@ export function FeatureSection({ onOpenDemo }: FeatureSectionProps) {
               <FileSpreadsheet className="w-3 h-3 text-amber-500" /> Slides
             </span>
           </div>
-        </div>
+        </Link>
 
         {/* Card 2: Test your knowledge */}
-        <div 
-          onClick={() => onOpenDemo("Test Your Knowledge", "Generate adaptive mock exams, spaced repetition flashcards, and instant rationale breakdowns.")}
+        <Link 
+          href="/app"
           className="bg-[#f3f4f6] rounded-3xl sm:rounded-[32px] border border-neutral-200/90 p-7 sm:p-8 flex flex-col justify-between hover:border-neutral-300 transition-all hover:shadow-md cursor-pointer group"
         >
           <div>
@@ -350,11 +350,11 @@ export function FeatureSection({ onOpenDemo }: FeatureSectionProps) {
               <div className="w-[94%] h-full bg-emerald-500 rounded-full"></div>
             </div>
           </div>
-        </div>
+        </Link>
 
         {/* Card 3: Talk with an AI Tutor */}
-        <div 
-          onClick={() => onOpenDemo("Talk With an AI Tutor", "Speak naturally to your AI tutor in real time. Ask for simplified analogies, step-by-step logic, or oral exam drills.")}
+        <Link 
+          href="/app"
           className="bg-[#f3f4f6] rounded-3xl sm:rounded-[32px] border border-neutral-200/90 p-7 sm:p-8 flex flex-col justify-between hover:border-neutral-300 transition-all hover:shadow-md cursor-pointer group"
         >
           <div>
@@ -380,7 +380,7 @@ export function FeatureSection({ onOpenDemo }: FeatureSectionProps) {
               <div className="text-neutral-400 text-[11px]">&quot;Explain utilitarianism simply&quot;</div>
             </div>
           </div>
-        </div>
+        </Link>
 
       </div>
     </section>
