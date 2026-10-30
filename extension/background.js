@@ -22,13 +22,13 @@ chrome.runtime.onInstalled.addListener(() => {
     contexts: ["all"],
   });
 
-  // Default settings pointing to live AWS EC2 backend
+  // Default settings pointing to live AWS EC2 backend and Vercel web app
   chrome.storage.local.get(["apiUrl", "webAppUrl"], (data) => {
     if (!data.apiUrl || data.apiUrl === "http://localhost:8000") {
       chrome.storage.local.set({ apiUrl: "http://13.196.187.230" });
     }
-    if (!data.webAppUrl) {
-      chrome.storage.local.set({ webAppUrl: "http://localhost:3000" });
+    if (!data.webAppUrl || data.webAppUrl === "http://localhost:3000" || data.webAppUrl === "http://127.0.0.1:3000") {
+      chrome.storage.local.set({ webAppUrl: "https://learnnova-taupe.vercel.app" });
     }
   });
 });

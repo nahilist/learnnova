@@ -77,13 +77,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   let currentQuizScore = 0;
   let currentFlashcardIndex = 0;
 
-  // Settings - defaults to live AWS EC2 backend
-  let { apiUrl = "http://13.196.187.230", webAppUrl = "http://localhost:3000" } =
+  // Settings - defaults to live AWS EC2 backend & Vercel web workspace
+  let { apiUrl = "http://13.196.187.230", webAppUrl = "https://learnnova-taupe.vercel.app" } =
     await chrome.storage.local.get(["apiUrl", "webAppUrl"]);
 
   if (!apiUrl || apiUrl === "http://localhost:8000") {
     apiUrl = "http://13.196.187.230";
     await chrome.storage.local.set({ apiUrl });
+  }
+
+  if (!webAppUrl || webAppUrl === "http://localhost:3000" || webAppUrl === "http://127.0.0.1:3000") {
+    webAppUrl = "https://learnnova-taupe.vercel.app";
+    await chrome.storage.local.set({ webAppUrl });
   }
 
   // Sidepanel Settings Elements
@@ -120,8 +125,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (btnSpResetSettings && spSettingApiUrl) {
     btnSpResetSettings.addEventListener("click", async () => {
       apiUrl = "http://13.196.187.230";
+      webAppUrl = "https://learnnova-taupe.vercel.app";
       spSettingApiUrl.value = apiUrl;
-      await chrome.storage.local.set({ apiUrl });
+      await chrome.storage.local.set({ apiUrl, webAppUrl });
       btnSpResetSettings.textContent = "Reset to EC2!";
       setTimeout(async () => {
         btnSpResetSettings.textContent = "Reset to EC2";

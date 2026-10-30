@@ -20,13 +20,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   const btnSaveSettings = document.getElementById("btn-save-settings");
   const btnResetSettings = document.getElementById("btn-reset-settings");
 
-  // Load configured settings - defaults to AWS EC2 instance
-  let { apiUrl = "http://13.196.187.230", webAppUrl = "http://localhost:3000" } =
+  // Load configured settings - defaults to AWS EC2 instance and Vercel web app
+  let { apiUrl = "http://13.196.187.230", webAppUrl = "https://learnnova-taupe.vercel.app" } =
     await chrome.storage.local.get(["apiUrl", "webAppUrl"]);
 
   if (!apiUrl || apiUrl === "http://localhost:8000") {
     apiUrl = "http://13.196.187.230";
     await chrome.storage.local.set({ apiUrl });
+  }
+
+  if (!webAppUrl || webAppUrl === "http://localhost:3000" || webAppUrl === "http://127.0.0.1:3000") {
+    webAppUrl = "https://learnnova-taupe.vercel.app";
+    await chrome.storage.local.set({ webAppUrl });
   }
 
   inputApiUrl.value = apiUrl;
@@ -133,8 +138,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Reset Settings
   btnResetSettings.addEventListener("click", async () => {
-    inputApiUrl.value = "http://localhost:8000";
-    await chrome.storage.local.set({ apiUrl: "http://localhost:8000" });
+    inputApiUrl.value = "http://13.196.187.230";
+    await chrome.storage.local.set({
+      apiUrl: "http://13.196.187.230",
+      webAppUrl: "https://learnnova-taupe.vercel.app"
+    });
     btnResetSettings.textContent = "Reset!";
     setTimeout(() => {
       btnResetSettings.textContent = "Reset";
