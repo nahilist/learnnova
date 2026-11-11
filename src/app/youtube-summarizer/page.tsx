@@ -99,13 +99,6 @@ export default function YouTubeSummarizerPage() {
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const scrollToPreview = () => {
-    document.getElementById("summarizer-preview")?.scrollIntoView({
-      behavior: "smooth",
-      block: "start"
-    });
-  };
-
   const handleSelectPreset = (video: VideoPreset) => {
     setInputUrl(video.url);
     setErrorMessage("");

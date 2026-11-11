@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, use } from "react";
+import React, { useState, useRef, useEffect, use, Suspense } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -25,7 +25,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
-  Copy,
   FolderOpen
 } from "lucide-react";
 import { YouLearnLogo } from "@/components/Icons";
@@ -340,6 +339,21 @@ const PRESETS: Record<string, ContentPreset> = {
 };
 
 export default function ContentStudyPage({ params }: { params: Promise<{ id: string }> }) {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-white flex flex-col items-center justify-center space-y-3 font-sans">
+          <div className="w-8 h-8 border-2 border-neutral-300 border-t-neutral-900 rounded-full animate-spin" />
+          <p className="text-xs text-neutral-500 font-medium">Loading study suite...</p>
+        </div>
+      }
+    >
+      <ContentStudyView params={params} />
+    </Suspense>
+  );
+}
+
+function ContentStudyView({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const contentId = resolvedParams.id || "f0264fa07121";
 

@@ -325,7 +325,7 @@ async function handleProxy(request: NextRequest, { params }: { params: Promise<{
 
         let title = "AI is hacking the code of civilization | Yuval Noah Harari";
         let channel = "Yuval Noah Harari";
-        let duration = "40:18";
+        const duration = "40:18";
 
         try {
           const noembedRes = await fetch(
@@ -532,7 +532,14 @@ async function handleProxy(request: NextRequest, { params }: { params: Promise<{
         const questions = payload.questions || [];
         const answers = payload.answers || {};
         let score = 0;
-        const results = questions.map((q: any) => {
+        interface QuizSubmitQuestion {
+          id: string | number;
+          question: string;
+          options?: string[];
+          correctIndex?: number;
+          explanation?: string;
+        }
+        const results = (questions as QuizSubmitQuestion[]).map((q) => {
           const userAns = answers[q.id];
           const isCorrect = userAns === (q.correctIndex ?? 0);
           if (isCorrect) score++;
