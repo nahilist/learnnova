@@ -9,6 +9,7 @@ describe("LearnNova Production Route & Asset Validation", () => {
   const requiredPages = [
     "src/app/page.tsx",
     "src/app/app/page.tsx",
+    "src/app/content/[id]/page.tsx",
     "src/app/pricing/page.tsx",
     "src/app/signin/page.tsx",
     "src/app/blogs/page.tsx",
@@ -18,7 +19,7 @@ describe("LearnNova Production Route & Asset Validation", () => {
     "src/app/privacy-policy/page.tsx",
   ];
 
-  it("should have all 9 primary route entry points defined", () => {
+  it("should have all primary route entry points defined", () => {
     for (const pagePath of requiredPages) {
       const fullPath = path.join(rootDir, pagePath);
       assert.ok(

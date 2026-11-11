@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { YouTubeSummaryPreviewVideo } from "@/components/YouTubeSummaryPreviewVideo";
@@ -93,21 +94,17 @@ const FAQS = [
 ];
 
 export default function YouTubeSummarizerPage() {
+  const router = useRouter();
   const [inputUrl, setInputUrl] = useState(PRESET_VIDEOS[0].url);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const scrollToPreview = () => {
-    document.getElementById("summarizer-preview")?.scrollIntoView({
-      behavior: "smooth",
-      block: "start"
-    });
-  };
-
   const handleSelectPreset = (video: VideoPreset) => {
     setInputUrl(video.url);
     setErrorMessage("");
-    scrollToPreview();
+    const match = video.url.match(/(?:v=|\/embed\/|\/watch\?v=|youtu\.be\/|\/v\/)([^&?#/]+)/);
+    const videoId = match ? match[1] : video.id;
+    router.push(`/content/${videoId}`);
   };
 
   const handleGenerateSummary = (event: React.FormEvent) => {
@@ -120,7 +117,9 @@ export default function YouTubeSummarizerPage() {
     }
 
     setErrorMessage("");
-    scrollToPreview();
+    const match = cleanUrl.match(/(?:v=|\/embed\/|\/watch\?v=|youtu\.be\/|\/v\/)([^&?#/]+)/);
+    const videoId = match ? match[1] : "fUlMxqntE74";
+    router.push(`/content/${videoId}`);
   };
 
   return (
