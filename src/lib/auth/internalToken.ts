@@ -2,8 +2,8 @@ import crypto from "crypto";
 
 function getInternalSecret(): string {
   return (
+    process.env.BACKEND_SECRET ||
     process.env.LEARNNOVA_BACKEND_SECRET ||
-    process.env.NEON_AUTH_COOKIE_SECRET ||
     "learnnova-secure-backend-shared-secret-dev"
   );
 }

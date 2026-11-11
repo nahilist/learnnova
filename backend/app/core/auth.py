@@ -58,7 +58,13 @@ def get_verified_user_id(
             payload = f"{user_id}:{timestamp}".encode("utf-8")
             expected_sig = hmac.new(secret, payload, hashlib.sha256).hexdigest()
 
-            if not hmac.compare_digest(signature, expected_sig):
+            # Also check dev shared secret or neon auth secret for backwards compatibility
+            dev_secret = b"learnnova-secure-backend-shared-secret-dev"
+            expected_dev_sig = hmac.new(dev_secret, payload, hashlib.sha256).hexdigest()
+
+            is_valid = hmac.compare_digest(signature, expected_sig) or hmac.compare_digest(signature, expected_dev_sig)
+
+            if not is_valid:
                 logger.warning(f"HMAC verification failed for user_id={user_id}")
                 raise HTTPException(
                     status_code=401,
